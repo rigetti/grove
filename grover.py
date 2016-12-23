@@ -173,23 +173,33 @@ if __name__ == "__main__":
     import sys
     import os
     target = sys.argv[1]
+    dir_name = "grover_programs"
+    file_name = "grover{}oracle.quil".format(target)
     num_qubits = len(target) + 1
     for bit in target:
         if bit not in ["0", "1"]:
             raise ValueError("Please give a bitstring.")
+
     qubits = [num_qubits - i for i in xrange(num_qubits)]
     # Which classical bit registers to show after the computation
     ADDRESSES = range(len(qubits))
-    oracle = comp_oracle(target, qubits)
-    grover = grover(oracle, qubits)
+
+    if os.path.exists("{}/{}".format(dir_name, file_name)):
+        grover_quil = ""
+        with open("{}/{}".format(dir_name, file_name), 'r') as quil_prog:
+            for line in quil_prog:
+                grover_quil += line
+        grover = pq.Program().inst(grover_quil)
+
+    else:
+        oracle = comp_oracle(target, qubits)
+        grover = grover(oracle, qubits)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        with open('{}/{}'.format(dir_name, file_name), 'w') as target:
+            target.write(str(grover))
+
     cxn = Connection()
     grover.inst([MEASURE(qubit, addr) for qubit, addr in zip(qubits, ADDRESSES)])
-
     mem = cxn.run(grover, ADDRESSES)
-    if not os.path.exists("grover_programs"):
-        os.makedirs("grover_programs")
-    with open('grover_programs/grover{}oracle.quil'.format(target),
-              'w') as target:
-        target.write(str(grover))
-    np.set_printoptions(suppress=True)
     print mem[0][:-1]
