@@ -1,8 +1,15 @@
+"""Module for Grover's algorithm.  Uses the quadratic n-qubit controlled gate decomposition from
+Barenco et al. (1995): arXiv:quant-ph/9503016. This requires defining O(n) new gates, Makes use
+of C. Lavor et al.'s (2003) decomposition of the diffusion operator into elemenary gates :
+arXiv:quant-ph/0301079.
+
+Future work should be done to minimize gate count. For instance, linear depth n-qubit Toffoli
+gates see Saeedi and Pedram: arXiv:1303.3557. """
 import pyquil.quil as pq
-from pyquil.gates import SWAP, H, CPHASE, X, CNOT, MEASURE, Z
-import numpy as np
+from pyquil.gates import H, X, Z, RZ, MEASURE, STANDARD_GATES
 from scipy.linalg import sqrtm
-import math
+import numpy as np
+STANDARD_GATE_NAMES = STANDARD_GATES.keys()
 
 
 def n_qubit_control(controls, target, u, gate_name):
@@ -18,7 +25,7 @@ def n_qubit_control(controls, target, u, gate_name):
     :return: The controlled gate.
     """
     def controlled_program_builder(controls, target, target_gate_name, target_gate,
-                                   defined_gates=set()):
+                                   defined_gates=set(STANDARD_GATE_NAMES)):
         zero_projection = np.array([[1, 0], [0, 0]])
         one_projection = np.array([[0, 0], [0, 1]])
 
@@ -48,7 +55,7 @@ def n_qubit_control(controls, target, u, gate_name):
         else:
             p.inst(("C" + sqrt_name, controls[-1], target))
             many_toff, new_defined_gates = controlled_program_builder(
-                controls[: -1], controls[-1], 'NOT', np.array([[0, 1], [1, 0]]), set(defined_gates))
+                controls[:-1], controls[-1], 'NOT', np.array([[0, 1], [1, 0]]), set(defined_gates))
             p += many_toff
             defined_gates.union(new_defined_gates)
 
@@ -58,7 +65,7 @@ def n_qubit_control(controls, target, u, gate_name):
             many_toff.defined_gates = []
             p += many_toff
             many_root_toff, new_defined_gates = controlled_program_builder(
-                controls[: -1], target, sqrt_name, sqrtm(target_gate), set(defined_gates))
+                controls[:-1], target, sqrt_name, sqrtm(target_gate), set(defined_gates))
             p += many_root_toff
             defined_gates.union(new_defined_gates)
 
@@ -77,21 +84,20 @@ def diffusion_operator(qubits):
     operates on bistrings of the form |qubits[0], ..., qubits[-1]>.
     """
     p = pq.Program()
-    p.defgate('iI', 1.j * np.eye(2, 2))
 
     if len(qubits) == 1:
-        p.inst(("H", qubits[0]))
+        p.inst(H(qubits[0]))
         p.inst(Z(qubits[0]))
-        p.inst(("H", qubits[0]))
+        p.inst(H(qubits[0]))
 
     else:
-        p.inst([X(qubit) for qubit in qubits])
-        p.inst(("H", qubits[-1]))
-        p.inst(("iI", qubits[0]))
+        p.inst(map(X, qubits))
+        p.inst(H(qubits[-1]))
+        p.inst(RZ(-np.pi)(qubits[0]))
         p += n_qubit_control(qubits[:-1], qubits[-1], np.array([[0, 1], [1, 0]]), "NOT")
-        p.inst(("iI", qubits[0]))
-        p.inst(("H", qubits[-1]))
-        p.inst([X(qubit) for qubit in qubits])
+        p.inst(RZ(-np.pi)(qubits[0]))
+        p.inst(H(qubits[-1]))
+        p.inst(map(X, qubits))
     return p
 
 
@@ -110,11 +116,12 @@ def grover(oracle, qubits, num_iter=None):
     """
     if len(qubits) < 2:
         raise ValueError("Grover's Algorithm requires at least 2 qubits.")
+
     num_comp_qubits = len(qubits) - 1
     if num_iter is None:
-        num_iter = int(round(np.pi * np.sqrt(2**num_comp_qubits) / 4.0))
+        num_iter = int(round(np.pi * 2**(num_comp_qubits / 2.0 - 2.0)))
 
-    diff_op = diffusion_operator(qubits[: -1])
+    diff_op = diffusion_operator(qubits[:-1])
     def_gates = oracle.defined_gates + diff_op.defined_gates
     unique_gates = []
     seen_names = set()
@@ -123,28 +130,30 @@ def grover(oracle, qubits, num_iter=None):
             seen_names.add(gate.name)
             unique_gates.append(gate)
 
-    many_hadamard = pq.Program().inst([H(qubit) for qubit in qubits[:-1]])
+    many_hadamard = pq.Program().inst(map(H, qubits)[:-1])
     grover_iter = oracle + many_hadamard + diff_op + many_hadamard
+    # To prevent redefining gates, this is not the preferred way.
     grover_iter.defined_gates = []
 
     prog = pq.Program()
     prog.defined_gates = unique_gates
 
+    ancilla = qubits[-1]
     # Initialize ancilla to be in the minus state
-    prog.inst(X(qubits[-1]))
-    prog.inst(H(qubits[-1]))
+    prog.inst(X(ancilla))
+    prog.inst(H(ancilla))
 
     prog += many_hadamard
     for _ in xrange(num_iter):
         prog += grover_iter
 
     # Move the ancilla back to the zero state
-    prog.inst(H(qubits[-1]))
-    prog.inst(X(qubits[-1]))
+    prog.inst(H(ancilla))
+    prog.inst(X(ancilla))
     return prog
 
 
-def comp_oracle(bitstring, qubits):
+def basis_selector_oracle(bitstring, qubits):
     """
     Defines an oracle that selects the ith element of the computational basis.
 
@@ -156,14 +165,19 @@ def comp_oracle(bitstring, qubits):
     """
     if len(qubits) < 2:
         raise ValueError("Oracles require at least 2 qubits.")
+    if len(qubits) != len(bitstring) + 1:
+        raise ValueError("The bitstring should be the same length as the qubits, minus one for the "
+                         "query.")
+    if not (isinstance(bitstring, str) and all([num in ('0', '1') for num in bitstring])):
+        raise ValueError("The bitstring must be a string of ones and zeros.")
     prog = pq.Program()
-    for i, qubit in enumerate(qubits[: -1]):
+    for i, qubit in enumerate(qubits[:-1]):
         if bitstring[i] == '0':
             prog.inst(X(qubit))
 
     prog += n_qubit_control(qubits[:-1], qubits[-1], np.array([[0, 1], [1, 0]]), 'NOT')
 
-    for i, qubit in enumerate(qubits[: -1]):
+    for i, qubit in enumerate(qubits[:-1]):
         if bitstring[i] == '0':
             prog.inst(X(qubit))
     return prog
@@ -172,27 +186,23 @@ if __name__ == "__main__":
     from pyquil.qvm import Connection
     import sys
     import os
-    target = sys.argv[1]
+    try:
+        target = sys.argv[1]
+    except IndexError:
+        raise ValueError("Enter a target bitstring for Grover's Algorithm.")
     dir_name = "grover_programs"
     file_name = "grover{}oracle.quil".format(target)
     num_qubits = len(target) + 1
-    for bit in target:
-        if bit not in ["0", "1"]:
-            raise ValueError("Please give a bitstring.")
 
     qubits = [num_qubits - i for i in xrange(num_qubits)]
-    # Which classical bit registers to show after the computation
-    ADDRESSES = range(len(qubits))
 
     if os.path.exists("{}/{}".format(dir_name, file_name)):
-        grover_quil = ""
         with open("{}/{}".format(dir_name, file_name), 'r') as quil_prog:
-            for line in quil_prog:
-                grover_quil += line
+            grover_quil = quil_prog.read()
         grover = pq.Program().inst(grover_quil)
 
     else:
-        oracle = comp_oracle(target, qubits)
+        oracle = basis_selector_oracle(target, qubits)
         grover = grover(oracle, qubits)
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
@@ -200,6 +210,5 @@ if __name__ == "__main__":
             target.write(str(grover))
 
     cxn = Connection()
-    grover.inst([MEASURE(qubit, addr) for qubit, addr in zip(qubits, ADDRESSES)])
-    mem = cxn.run(grover, ADDRESSES)
+    mem = cxn.run_and_measure(grover, qubits)
     print mem[0][:-1]
