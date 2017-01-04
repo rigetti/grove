@@ -1,4 +1,4 @@
-import pyquil.qvm as qvm_module
+import pyquil.forest as qvm_module
 import pyquil.quil as pq
 import numpy as np
 import inspect
