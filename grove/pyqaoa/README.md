@@ -1,18 +1,8 @@
 [![Build Status](https://semaphoreci.com/api/v1/projects/858f4eed-33e0-4d04-96b3-a5284e80c22d/874232/badge.svg)](https://semaphoreci.com/ncr/pyqaoa)
 
 # pyQAOA
-The Quantum Approximate Optimization Algorithm
-
-## Installation
-
-Clone the git repository, `cd` into it, and run
-
-```
-pip install -e .
-```
-
-You may need to do prepend `sudo -H` if you do not have write-permissions.
-After doing this, the library will now be accessible globally.
+A python implementation of the Quantum Approximate Optimization Algorithm using
+pyQuil and the Rigetti Forest.
 
 ## Structure
 
@@ -51,7 +41,7 @@ start the variational-quantum-eigensolver loop in order to find  the beta, gamma
 ```
 import numpy as np
 from pyqaoa.maxcut_qaoa import maxcut_qaoa
-import pyquil.qvm as qvm
+import pyquil.forest as qvm
 qvm_connection = qvm.Connection()
 ```
 
