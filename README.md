@@ -45,6 +45,6 @@ cd docs/
 make html
 ```
 
-To view the docs navigate to the `docs/_build` directory in the pyQAOA root
+To view the docs navigate to the `docs/_build` directory in the Grove root
 directory and open the index.html file a browser. 
 
