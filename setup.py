@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(
-    name="Grove",
+    name="grove",
     version="0.0.0",
     author="Rigetti Computing",
     author_email="softapps@rigetti.com",

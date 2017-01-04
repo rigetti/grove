@@ -1,0 +1,68 @@
+from grove.VQE.vqe import VQE
+from pyquil.quil import Program
+from pyquil.gates import RX, H, RZ
+from pyquil.paulis import PauliSum, PauliTerm
+from mock import Mock, MagicMock
+import numpy as np
+from scipy.linalg import expm
+from scipy.optimize import minimize
+
+
+def test_vqe_run():
+    """VQE initialized and then minimizer is called to return result. Checks
+    correct sequence of execution"""
+    def param_prog(alpha):
+        return Program([H(0), RZ(alpha)(0)])
+
+    hamiltonian = np.array([[1, 0], [0, -1]])
+    initial_param = 0.0
+
+    minimizer = Mock(spec=minimize, func_code=minimize.func_code)
+    fake_result = Mock()
+    fake_result.fun = 1.0
+    fake_result.x = [0.0]
+    fake_result.status = 0  # adding so we avoid writing to logger
+    minimizer.return_value = fake_result
+
+    # not actually called in VQE run since we are overriding minmizer to just
+    # return a value. Still need this so I don't try to call the QVM server.
+    fake_qvm = Mock(spec=['wavefunction'])
+
+    inst = VQE(minimizer)
+
+    t_result = inst.vqe_run(param_prog, hamiltonian, initial_param,
+                            qvm=fake_qvm)
+    assert np.isclose(t_result.fun, 1.0)
+
+
+def test_expectation():
+    """expectation() routine can take a PauliSum operator on a matrix.  Check
+    this functionality and the return of the correct scalar value"""
+    X = np.array([[0, 1], [1, 0]])
+
+    def RX_gate(phi):
+        return expm(-1j*phi*X)
+
+    def rotation_wavefunction(phi):
+        state = np.array([[1], [0]])
+        return RX_gate(phi).dot(state)
+
+    prog = Program([RX(-2.5)(0)])
+    hamiltonian = PauliTerm("Z", 0, 1.0)
+
+    minimizer = MagicMock()
+    fake_result = Mock()
+    fake_result.fun = 1.0
+    minimizer.return_value = fake_result
+
+    fake_qvm = Mock(spec=['wavefunction', 'expectation'])
+    fake_qvm.wavefunction.return_value = rotation_wavefunction(-2.5)
+    fake_qvm.expectation.return_value = [0.28366219]
+
+    inst = VQE(minimizer)
+    energy = inst.expectation(prog, PauliSum([hamiltonian]), qvm=fake_qvm)
+    assert np.isclose(energy, 0.28366219)
+
+    hamiltonian = np.array([[1, 0], [0, -1]])
+    energy = inst.expectation(prog, hamiltonian, qvm=fake_qvm)
+    assert np.isclose(energy, 0.28366219)
