@@ -1,7 +1,7 @@
 from collections import Counter
 from scipy import optimize
 import numpy as np
-from pyquil.algorithms.vqe import VQE
+from grove.VQE.vqe import VQE
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum

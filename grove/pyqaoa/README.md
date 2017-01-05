@@ -1,6 +1,4 @@
-[![Build Status](https://semaphoreci.com/api/v1/projects/858f4eed-33e0-4d04-96b3-a5284e80c22d/874232/badge.svg)](https://semaphoreci.com/ncr/pyqaoa)
-
-# pyQAOA
+# pyqaoa
 A python implementation of the Quantum Approximate Optimization Algorithm using
 pyQuil and the Rigetti Forest.
 
@@ -40,7 +38,7 @@ start the variational-quantum-eigensolver loop in order to find  the beta, gamma
 
 ```
 import numpy as np
-from pyqaoa.maxcut_qaoa import maxcut_qaoa
+from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 import pyquil.forest as qvm
 qvm_connection = qvm.Connection()
 ```

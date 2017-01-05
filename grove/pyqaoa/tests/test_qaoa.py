@@ -1,10 +1,10 @@
 import numpy as np
-from pyqaoa.qaoa import QAOA
+from grove.pyqaoa.qaoa import QAOA
 import pyquil.qvm as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
-from pyquil.algorithms.vqe import VQE
+from grove.VQE.vqe import VQE
 from mock import Mock, patch
 
 
@@ -61,7 +61,7 @@ def test_get_angles():
     p = 2
     n_qubits = 2
     fakeQVM = Mock()
-    with patch('pyqaoa.qaoa.VQE', spec=VQE) as mockVQEClass:
+    with patch('grove.pyqaoa.qaoa.VQE', spec=VQE) as mockVQEClass:
         inst = mockVQEClass.return_value
         result = Mock()
         result.x = [1.2, 2.1, 3.4, 4.3]

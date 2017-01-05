@@ -2,11 +2,11 @@ from __future__ import print_function
 from pyquil.paulis import PauliTerm
 import numpy as np
 import networkx as nx
-import pyquil.qvm as qvm_module
+import pyquil.forest as qvm_module
 import pyquil.quil as pq
 from pyquil.gates import X
 from scipy.optimize import minimize
-from pyqaoa.qaoa import QAOA
+from grove.pyqaoa.qaoa import QAOA
 CXN = qvm_module.Connection()
 
 

@@ -1,8 +1,8 @@
 import numpy as np
 from pyquil.paulis import PauliTerm, PauliSum
-import pyquil.qvm as qvm_module
+import pyquil.forest as qvm_module
 from scipy.optimize import minimize
-from pyqaoa.qaoa import QAOA
+from grove.pyqaoa.qaoa import QAOA
 CXN = qvm_module.Connection()
 
 
