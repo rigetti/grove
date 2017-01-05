@@ -23,11 +23,11 @@ The package is structured as follows:
 rotation angles via the quantum-variational-eigensolver method.
 
 The following cost functions come with the package:
-* `maxcut_qaoa.py` implements the cost function for MAX-CUT
-problems.
-* `numpartition_qaoa.py` implements the cost function for
-bipartitioning a list of numbers.
-* `graphparition_qaoa.py` implements the cost function for graph
-  partitioning--i.e. minimial cut between two subgraphs of equal size
-* `graphparitioning_jaynescummingsdriver.py` implements the graph paritioning
-  problem with the constraint that the magnetization equals some constant `m`.
+
+* `maxcut_qaoa.py` implements the cost function for MAX-CUT problems.
+
+* `numpartition_qaoa.py` implements the cost function for bipartitioning a list of numbers.
+
+* `graphparition_qaoa.py` implements the cost function for graph partitioning--i.e. minimial cut between two subgraphs of equal size
+
+* `graphparitioning_jaynescummingsdriver.py` implements the graph paritioning problem with the constraint that the magnetization equals some constant `m`.

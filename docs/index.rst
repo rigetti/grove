@@ -4,17 +4,23 @@
    contain the root `toctree` directive.
 
 ==================================
-Welcome to Groves's documentation!
+Welcome to Grove's documentation!
 ==================================
+Grove is a python library containing quantum algorithms constructed with pyQuil
+and use the Rigetti Forest service.  
+
+Structure
+_________
+
+Grove is organized into modules containing self contained documentation of
+various quantum algorithms.
 
 .. toctree::
    :name: mastertoc
-   :maxdepth: 3
+   :maxdepth: 2
 
-   overview
-   installation_quickstart
-   algorithm_detail
-   sourcecode_docs
+   installation
+   algorithms
 
 Indices and tables
 ==================

@@ -40,9 +40,7 @@ Building the Docs
 To build the documentation run
 
 ```
-sphinx-apidoc -o ./docs/source ./pyquil/
-cd docs/
-make html
+sphinx-build -b html docs/ docs/_build
 ```
 
 To view the docs navigate to the `docs/_build` directory in the Grove root

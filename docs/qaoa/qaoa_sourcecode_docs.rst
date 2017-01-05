@@ -3,4 +3,4 @@ Source Code Docs
 ================
 
 .. toctree::
-    qaoa
+    qaoa_source

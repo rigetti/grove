@@ -45,10 +45,7 @@ pyQAOA Installation
 Clone the `git repository <https://github.com/rigetticomputing/pyQAOA.git>`_, `cd` into it, and
 run ::
 
-    python setup.py install
-
-You may need to do prepend `sudo -H` if you do not have write-permissions.
-After doing this, the library will now be accessible globally.
+   pip install -e . 
 
 Quick Start Examples
 --------------------
@@ -59,8 +56,8 @@ To test your installation and get going we can run QAOA to solve MAX-CUT on a sq
 .. code-block:: python
 
     import numpy as np
-    from pyqaoa.maxcut_qaoa import maxcut_qaoa
-    import pyquil.qvm as qvm
+    from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
+    import pyquil.forest as qvm
     qvm_connection = qvm.Connection()
 
 Next define the graph on which to run MAX-CUT
