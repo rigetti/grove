@@ -24,9 +24,9 @@ clauses and the driver hamiltonian for the MAX-CUT cost function.
 The package is structured as follows:
 
 `qaoa.py` contains the base QAOA class and routines for finding optimal
-rotation angles via the quantum-variational-eigensolver method.
+rotation angles via `Grove's quantum-variational-eigensolver method <../vqe/vqe.html>`_.
 
-The following cost functions come with the package:
+The following cost functions come standard with this package:
 
 * `maxcut_qaoa.py` implements the cost function for MAX-CUT problems.
 
