@@ -6,7 +6,7 @@ from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import H, X, PHASE, CNOT, RZ
 import numpy as np
 from mock import Mock, patch
-import pyquil.qvm as qvm_mod
+import pyquil.forest as qvm_mod
 
 
 def isclose(a, b, rel_tol=1e-10, abs_tol=0.0):

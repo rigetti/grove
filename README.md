@@ -2,6 +2,8 @@ Grove
 ----
 A collection of quantum algorithms built using Forest.
 
+[![Build Status](https://semaphoreci.com/api/v1/projects/af487aa0-bd6d-4b43-9610-9c8f3c3d787d/1123354/badge.svg)](https://semaphoreci.com/rigetti/grove)
+
 Installation
 ------------
 

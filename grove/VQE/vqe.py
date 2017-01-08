@@ -26,7 +26,7 @@ class VQE(object):
 
     VQE is an object that encapsulates the VQE algorithm (functional
     minimization). The main components of the VQE algorithm are a minimizer
-    function for performing the functional minization, a function that takes a
+    function for performing the functional minimization, a function that takes a
     vector of parameters and returns a parameterized Quil program, and a
     Hamiltonian of which to calculate the expectation value.
 
@@ -35,13 +35,14 @@ class VQE(object):
         1) initialize with `inst = VQE(minimizer)` where `minimizer` is a
         function that performs a gradient free minization--i.e
         scipy.optimize.minimize(. , ., method='Nelder-Mead')
-        2) call inst.vqe_run(parametric_state_evolve, hamiltonian,
-        initial_parameters). Returns the optimal parameters and minimum
+
+        2) call `inst.vqe_run(parametric_state_evolve, hamiltonian,
+        initial_parameters)`. Returns the optimal parameters and minimum
         expecation
 
     :param minimizer: function that minimizes objective f(obj, param). For
                       example the function scipy.optimize.minimize() needs
-                      at least two parameters, the objective and an inital
+                      at least two parameters, the objective and an initial
                       point for the optimization.  The args for minimizer
                       are the cost function (provided by this class),
                       initial parameters (passed to vqe_run() method, and
@@ -77,20 +78,20 @@ class VQE(object):
                                   or Z being applied before a measurement.
         :param jacobian: (optional) method of generating jacobian for parameters
                          (Default=None).
-        :param qvm: (optional, QVM) qvm connection object.
+        :param qvm: (optional, QVM) forest connection object.
         :param disp: (optional, bool) display level. If True then each iteration
                      expectation and parameters are printed at each
                      optimization iteration.
         :param return_all: (optional, bool) request to return all intermediate
                            parameters determined during the optimization.
         :return: (vqe.OptResult()) object :func:`OptResult <vqe.OptResult>`.
-                 The following fields have been initialzed in OptResult:
+                 The following fields are initialized in OptResult:
                  -x: set of w.f. ansatz parameters
                  -fun: scalar value of the objective function
                  -iteration_params: a list of all intermediate parameter vectors. Only
                                     returned if 'return_all=True' is set as a vqe_run()
                                     option.
-                 -expectation_vals: a list of all itermediate expectation values. Only
+                 -expectation_vals: a list of all intermediate expectation values. Only
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.
         """
@@ -161,7 +162,7 @@ class VQE(object):
 
     def expectation(self, quil_prog, pauli_sum, qvm):
         """
-        Computes the expectaiton value of pauli_sum over the distribution
+        Computes the expectation value of pauli_sum over the distribution
         generated from quil_prog.
 
         :param quil_prog: (quil program)
