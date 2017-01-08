@@ -10,16 +10,20 @@ _________
 The pyQAOA package contains separate modules for each type of problem
 instance: MAX-CUT, K-SAT, etc.
 Each problem instance is a class that inherits the main QAOA object and
-overrides the problem specific pieces of the algorithm: implementation of the
-cost function and reference hamiltonian, generating the program that evolves the 
-reference state to the problem's ground state, and bounds for the angles.
+overrides the problem specific pieces of the algorithm:
+
+- implementation of the cost function and reference hamiltonian,
+
+- generating the program that evolves the reference state to the problem's ground state,
+
+- and bounds for the angles.
 
 The package currently includes `maxcut_qaoa.py` which implements the cost
 clauses and the driver hamiltonian for the MAX-CUT cost function.  
 
 The package is structured as follows:
 
-`qaoa.py` contains the base QAOA class and routines for finding the optimal
+`qaoa.py` contains the base QAOA class and routines for finding optimal
 rotation angles via the quantum-variational-eigensolver method.
 
 The following cost functions come with the package:

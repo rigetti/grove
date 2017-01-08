@@ -6,14 +6,15 @@
 ==================================
 Welcome to Grove's documentation!
 ==================================
-Grove is a python library containing quantum algorithms constructed with pyQuil
-and use the Rigetti Forest service.  
+Grove is a python library containing quantum algorithms that uses
+`pyQuil <http://github.com/rigetticomputing/pyQuil>`_ and the
+`Rigetti Forest service <http://forest.rigetti.com>`_.
 
 Structure
 _________
 
-Grove is organized into modules containing self contained documentation of
-various quantum algorithms.
+Grove is organized into modules for the various quantum algorithms, each
+of which has self-contrained documentation.
 
 .. toctree::
    :name: mastertoc
