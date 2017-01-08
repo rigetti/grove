@@ -4,6 +4,14 @@ A collection of quantum algorithms built using Forest.
 
 [![Build Status](https://semaphoreci.com/api/v1/projects/af487aa0-bd6d-4b43-9610-9c8f3c3d787d/1123354/badge.svg)](https://semaphoreci.com/rigetti/grove)
 
+Grove currently includes algorithms for:
+
+* The Variational Quantum Eigensolver
+* The Quantum Approximate Optimization Algorithm
+* The Quantum Fourier Transform
+* Phase Estimation
+* Quantum Teleportation
+
 Installation
 ------------
 
@@ -30,9 +38,10 @@ will need to be installed.  Please see the
 Dependencies
 ------------
 
+* pyQuil
+* A [Forest API key](http://forest.rigetti.com)
 * Numpy
 * Scipy
-* pyQuil
 * Mock (for development testing)
 * NetworkX (for building and analyzing graphs)
 * Matplotlib (useful for plotting)
