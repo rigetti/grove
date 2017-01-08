@@ -5,7 +5,7 @@ Quantum teleportation is method for transmitting the information of a qubit
 from one location to another.  The process relies on a previously shared
 entangled state between the two locations and classical communication.
 
-In the canonical description of quantum teleportation [[1]_, [2]_] two parties (Alice
+In the canonical description of quantum teleportation [1]_ [2]_ two parties (Alice
 and Bob) are trying to transmit the state between one another.  They start with
 an Alice having half of an entangled bell pair (Bob having the other half) and
 Alice with a third qubit that she would like to transmit to Bob.  Alice then
@@ -18,21 +18,25 @@ Given that Alice's data qubit is labeled 0 and the Bell pair are labeled 1, 2
 (Bob having qubit labeled 2) the Quil program performing the transfer is as
 follows:
 
-CNOT 0 1
-H 0
-MEASURE 0 [0]
-MEASURE 1 [1]
-JUMP-WHEN @ NOX [1]
-X 2
-LABEL @NOX
-JUMP-UNLESS @NOZ [0]
-Z 2 
-LABEL @NOZ
+.. code::
+
+    CNOT 0 1
+    H 0
+    MEASURE 0 [0]
+    MEASURE 1 [1]
+    JUMP-WHEN @ NOX [1]
+    X 2
+    LABEL @NOX
+    JUMP-UNLESS @NOZ [0]
+    Z 2
+    LABEL @NOZ
 
 The Bell state preparation can be prepended to the above Quil
 
-H 1
-CNOT 1 2
+.. code::
+
+    H 1
+    CNOT 1 2
 
 ==================
 Teleport in pyQuil

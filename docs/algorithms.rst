@@ -8,9 +8,9 @@ The following algorithm examples are available in Grove:
    :name: mastertoc
    :maxdepth: 1
 
+   teleportation/teleportation
    vqe/vqe
    qaoa/qaoa
-   teleportation/teleportation
    qft/qft
    phaseestimation/phaseestimation
 
