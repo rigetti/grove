@@ -24,6 +24,7 @@ from grove.qft.fourier import qft
 def controlled(m):
     """
     Make a one-qubit-controlled version of a matrix.
+
     :param m: (numpy.ndarray) A matrix.
     :return: A controlled version of that matrix.
     """
@@ -40,6 +41,7 @@ def controlled(m):
 def phase_estimation(U, accuracy, reg_offset=0):
     """
     Generate a circuit for quantum phase estimation.
+
     :param U: (numpy.ndarray) A unitary matrix.
     :param accuracy: (int) Number of bits of accuracy desired.
     :param reg_offset: (int) Where to start writing measurements (default 0).

@@ -9,13 +9,13 @@ In the canonical description of quantum teleportation [1]_ [2]_ two parties (Ali
 and Bob) are trying to transmit a state from one to another.  They start with
 an Alice having half of an entangled bell pair (Bob having the other half) and
 Alice with a third qubit that she would like to transmit to Bob.  Alice then
-entangles the third qubit with the Bell pair, measures both her qubits, and sends the
-measurement result :math:`\{0, 1\}_{2}` to Bob.  Bob uses the classical information
+entangles the third qubit with her Bell pair qubit, measures both her qubits, and sends the
+measurement result :math:`\{0, 1\}^{2}` to Bob.  Bob uses the classical information
 from Alice to fix up his state and now has his qubit in the state of Alice's
 original qubit she wanted to transfer.
 
 Given that Alice's data qubit is labeled 0 and the Bell pair are labeled 1, 2
-(Bob having qubit labeled 2) the Quil program performing the transfer is as
+(Bob having qubit labeled 2) a Quil program performing the transfer is as
 follows:
 
 .. code::
@@ -24,7 +24,7 @@ follows:
     H 0
     MEASURE 0 [0]
     MEASURE 1 [1]
-    JUMP-WHEN @ NOX [1]
+    JUMP-UNLESS @ NOX [1]
     X 2
     LABEL @NOX
     JUMP-UNLESS @NOZ [0]

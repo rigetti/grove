@@ -41,10 +41,10 @@ construct the Hamiltonian that we wish to simulate, we use the
 
     from pyquil.paulis import sZ
     initial_angle = [0.0]
-    # our Hamiltonian is just \sigma_z on the zero-th qubit
+    # Our Hamiltonian is just \sigma_z on the zeroth qubit
     hamiltonian = sZ(0)
 
-We now use the VQE module in Grove to construct a VQE object to perform
+We now use the `vqe` module in Grove to construct a ``VQE`` object to perform
 our algorithm. In this example, we use ``scipy.optimize.minimize()``
 with Nelder-Mead as our classical minimizer, but you can choose other
 parameters or write your own minimizer.
@@ -97,7 +97,6 @@ We can loop over a range of these angles and plot the expectation value.
             for angle in angle_range]
 
     import matplotlib.pyplot as plt
-    %matplotlib inline
     plt.xlabel('Angle [radians]')
     plt.ylabel('Expectation value')
     plt.plot(angle_range, data)
@@ -145,7 +144,7 @@ Running Noisy VQE
 A great thing about VQE is that it is somewhat insensitive to noise. We
 can test this out by running the previous algorithm on a noisy qvm.
 
-Remember that pauli channels are defined as a list of three
+Remember that Pauli channels are defined as a list of three
 probabilities that correspond to the probability of a random X, Y, or Z
 gate respectively. First we'll study the impact of a channel that has
 the same probability of each random Pauli.
@@ -198,7 +197,7 @@ noise on the result of this algorithm:
     for noise in noises:
         pauli_channel = [noise] * 3
         noisy_qvm = forest.Connection(gate_noise=pauli_channel)
-        # we can pass the noise params directly into the vqe_run instead of passing the noisy connection
+        # We can pass the noise params directly into the vqe_run instead of passing the noisy connection
         result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               gate_noise=pauli_channel)
         data.append(result['fun'])
@@ -339,7 +338,7 @@ arguments.
 Links and further reading
 -------------------------
 
-This concludes our brief tour of VQE. There is lots of fascinating
+This concludes our brief tour of VQE. There is a lot of fascinating
 literature about this algorithm out there and we encourage you to both
 explore those topics as well as come up with new ideas using this
 library. Let us know if you have ideas about anything that you would like to
