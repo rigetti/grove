@@ -104,9 +104,11 @@ class VQE(object):
                  The following fields are initialized in OptResult:
                  -x: set of w.f. ansatz parameters
                  -fun: scalar value of the objective function
+
                  -iteration_params: a list of all intermediate parameter vectors. Only
                                     returned if 'return_all=True' is set as a vqe_run()
                                     option.
+
                  -expectation_vals: a list of all intermediate expectation values. Only
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.

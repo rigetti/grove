@@ -50,7 +50,7 @@ class QAOA(object):
                     PauliSum objects
         :param driver_ref: (pyQuil.quil.Program()) object to define state prep
                            for the starting state of the QAOA algorithm.
-                           Defaults to tensor product of |+> states.
+                           Defaults to tensor product of \|+> states.
         :param rand_seed: integer random seed for initial betas and gammas
                           guess.
         :param minimizer: (Optional) Minimization function to pass to the
@@ -182,8 +182,9 @@ class QAOA(object):
         Finds optimal angles with the quantum variational eigensolver method.
 
         Stored VQE result
+
         :returns: ([list], [list]) A tuple of the beta angles and the gamma
-                   angles for the optimal solution.
+		  angles for the optimal solution.
         """
         stacked_params = np.hstack((self.betas, self.gammas))
         vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
@@ -227,11 +228,11 @@ class QAOA(object):
         pre-computed angles or you have run the VQE loop to determine the
         angles.  If you have not done this you will be returning the output for
         a random set of angles.
+
         :param samples: (int, Optional) number of samples to get back from the
-                        QVM.
+       			QVM.
         :returns: tuple representing the bitstring, Counter object from
-                  collections holding all output bitstrings and their
-                  frequency.
+        	  collections holding all output bitstrings and their frequency.
         """
         if samples <= 0 and not isinstance(samples, int):
             raise ValueError("samples variable must be positive integer")
