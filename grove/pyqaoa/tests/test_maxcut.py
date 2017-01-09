@@ -17,36 +17,13 @@
 import pytest
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 from grove.pyqaoa.qaoa import QAOA
+from grove.pyqaoa.utils import compare_progs
 from pyquil.quil import Program
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import H, X, PHASE, CNOT, RZ
 import numpy as np
 from mock import Mock, patch
 import pyquil.forest as qvm_mod
-
-
-def isclose(a, b, rel_tol=1e-10, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-def compare_progs(test, reference):
-    """
-    compares two programs gate by gate, param by param
-    """
-    tinstr = test.instructions
-    rinstr = reference.instructions
-    assert len(tinstr) == len(rinstr)
-    for idx in xrange(len(tinstr)):
-        # check each field of the instruction object
-        assert tinstr[idx].operator_name == rinstr[idx].operator_name
-        assert len(tinstr[idx].parameters) == len(rinstr[idx].parameters)
-        for pp in xrange(len(tinstr[idx].parameters)):
-            cmp_val = isclose(tinstr[idx].parameters[pp], rinstr[idx].parameters[pp])
-            assert cmp_val
-
-        assert len(tinstr[idx].arguments) == len(rinstr[idx].arguments)
-        for aa in xrange(len(tinstr[idx].arguments)):
-            assert tinstr[idx].arguments[aa] == rinstr[idx].arguments[aa]
 
 
 def test_pass_hamiltonians():
@@ -90,7 +67,7 @@ def test_hamiltonians():
 def test_param_prog_p1_barbell():
     test_graph = [(0, 1)]
     p = 1
-    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod) as fakeqvm_mod:
+    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod):
         inst = maxcut_qaoa(test_graph, steps=p)
 
         param_prog = inst.get_parameterized_program()
@@ -105,7 +82,7 @@ def test_param_prog_p1_barbell():
 def test_psiref_bar_p2():
     bar = [(0, 1)]
     p = 2
-    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod) as fakeqvm_mod:
+    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod):
         inst = maxcut_qaoa(bar, steps=p)
 
     param_prog = inst.get_parameterized_program()
