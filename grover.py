@@ -6,6 +6,7 @@ arXiv:quant-ph/0301079.
 Future work should be done to minimize gate count. For instance, linear depth n-qubit Toffoli
 gates see Saeedi and Pedram: arXiv:1303.3557. """
 import pyquil.quil as pq
+from pyquil.quilbase import Qubit
 from pyquil.gates import H, X, Z, RZ, MEASURE, STANDARD_GATES
 from scipy.linalg import sqrtm
 import numpy as np
@@ -101,27 +102,27 @@ def diffusion_operator(qubits):
     return p
 
 
-def grover(oracle, qubits, num_iter=None):
+def grover(oracle, qubits, query_qubit, num_iter=None):
     """
     Implementation of Grover's Algorithm for a given oracle.
 
     The query qubit will be left in the zero state afterwards.
     :param oracle: An oracle defined as a Program. It should send |x>|q> to |x>|q \oplus f(x)>,
-    where |q> is an ancilla qubit, and the range of f is {0, 1}.
+    where |q> is a a query qubit, and the range of f is {0, 1}.
     :param qubits: List of qubits for Grover's Algorithm. The last is assumed to be query for the
      oracle.
+    :param query_qubit: The qubit |q> that the oracle write its answer to.
     :param num_iter: The number of iterations to repeat the algorithm for. The default is
     int(pi(sqrt(N))/4.
     :return: A program corresponding to the desired instance of Grover's Algorithm.
     """
-    if len(qubits) < 2:
-        raise ValueError("Grover's Algorithm requires at least 2 qubits.")
+    if len(qubits) < 1:
+        raise ValueError("Grover's Algorithm requires at least 1 qubits.")
 
-    num_comp_qubits = len(qubits) - 1
     if num_iter is None:
-        num_iter = int(round(np.pi * 2**(num_comp_qubits / 2.0 - 2.0)))
+        num_iter = int(round(np.pi * 2**(len(qubits) / 2.0 - 2.0)))
 
-    diff_op = diffusion_operator(qubits[:-1])
+    diff_op = diffusion_operator(qubits)
     def_gates = oracle.defined_gates + diff_op.defined_gates
     unique_gates = []
     seen_names = set()
@@ -130,7 +131,7 @@ def grover(oracle, qubits, num_iter=None):
             seen_names.add(gate.name)
             unique_gates.append(gate)
 
-    many_hadamard = pq.Program().inst(map(H, qubits)[:-1])
+    many_hadamard = pq.Program().inst(map(H, qubits))
     grover_iter = oracle + many_hadamard + diff_op + many_hadamard
     # To prevent redefining gates, this is not the preferred way.
     grover_iter.defined_gates = []
@@ -138,22 +139,21 @@ def grover(oracle, qubits, num_iter=None):
     prog = pq.Program()
     prog.defined_gates = unique_gates
 
-    ancilla = qubits[-1]
     # Initialize ancilla to be in the minus state
-    prog.inst(X(ancilla))
-    prog.inst(H(ancilla))
+    prog.inst(X(query_qubit))
+    prog.inst(H(query_qubit))
 
     prog += many_hadamard
     for _ in xrange(num_iter):
         prog += grover_iter
 
     # Move the ancilla back to the zero state
-    prog.inst(H(ancilla))
-    prog.inst(X(ancilla))
+    prog.inst(H(query_qubit))
+    prog.inst(X(query_qubit))
     return prog
 
 
-def basis_selector_oracle(bitstring, qubits):
+def basis_selector_oracle(bitstring, qubits, query_qubit):
     """
     Defines an oracle that selects the ith element of the computational basis.
 
@@ -161,54 +161,45 @@ def basis_selector_oracle(bitstring, qubits):
     :param bitstring: The desired bitstring, given as a string of ones and zeros. e.g. "101"
     :param qubits: The qubits the oracle is called on, the last of which is the query qubit. The
     qubits are assumed to be ordered from most significant qubit to least signicant qubit.
+    :param query_qubit: The qubit |q> that the oracle write its answer to.
     :return: A program representing this oracle.
     """
-    if len(qubits) < 2:
-        raise ValueError("Oracles require at least 2 qubits.")
-    if len(qubits) != len(bitstring) + 1:
-        raise ValueError("The bitstring should be the same length as the qubits, minus one for the "
-                         "query.")
+    if len(qubits) != len(bitstring):
+        raise ValueError("The bitstring should be the same length as the number of qubits.")
+    if not isinstance(query_qubit, Qubit):
+        raise ValueError("query_qubit should be a single qubit.")
     if not (isinstance(bitstring, str) and all([num in ('0', '1') for num in bitstring])):
         raise ValueError("The bitstring must be a string of ones and zeros.")
     prog = pq.Program()
-    for i, qubit in enumerate(qubits[:-1]):
+    for i, qubit in enumerate(qubits):
         if bitstring[i] == '0':
             prog.inst(X(qubit))
 
-    prog += n_qubit_control(qubits[:-1], qubits[-1], np.array([[0, 1], [1, 0]]), 'NOT')
+    prog += n_qubit_control(qubits, query_qubit, np.array([[0, 1], [1, 0]]), 'NOT')
 
-    for i, qubit in enumerate(qubits[:-1]):
+    for i, qubit in enumerate(qubits):
         if bitstring[i] == '0':
             prog.inst(X(qubit))
     return prog
 
+
 if __name__ == "__main__":
-    from pyquil.qvm import Connection
+    from pyquil.forest import Connection
     import sys
-    import os
     try:
         target = sys.argv[1]
     except IndexError:
         raise ValueError("Enter a target bitstring for Grover's Algorithm.")
-    dir_name = "grover_programs"
-    file_name = "grover{}oracle.quil".format(target)
-    num_qubits = len(target) + 1
 
-    qubits = [num_qubits - i for i in xrange(num_qubits)]
+    grover_program = pq.Program()
+    qubits = [grover_program.alloc() for _ in target]
+    query_qubit = grover_program.alloc()
+    oracle = basis_selector_oracle(target, qubits, query_qubit)
+    grover_program += grover(oracle, qubits, query_qubit)
 
-    if os.path.exists("{}/{}".format(dir_name, file_name)):
-        with open("{}/{}".format(dir_name, file_name), 'r') as quil_prog:
-            grover_quil = quil_prog.read()
-        grover = pq.Program().inst(grover_quil)
-
-    else:
-        oracle = basis_selector_oracle(target, qubits)
-        grover = grover(oracle, qubits)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        with open('{}/{}'.format(dir_name, file_name), 'w') as target:
-            target.write(str(grover))
-
+    # To instantiate the qubits in the program. This is just a temporary hack.
+    grover_program.out()
+    print grover_program
     cxn = Connection()
-    mem = cxn.run_and_measure(grover, qubits)
-    print mem[0][:-1]
+    mem = cxn.run_and_measure(grover_program, [q.index() for q in qubits])
+    print mem
