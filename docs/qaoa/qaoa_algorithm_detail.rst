@@ -19,9 +19,9 @@ One reason QAOA is interesting is its potential to exhibit quantum supremacy
 
 This package, which is an implementation of QAOA that runs
 on a simulated quantum computer, can be used as a stand alone optimizer or a plugin
-optimization routine in a larger environment.  The usage pipe line is as
+optimization routine in a larger environment.  The usage pipeline is as
 follows: 1) encoding the cost function into a set of Pauli operators,
-2) instantiating the problem with pyQAOA and pyQuil, and 3) retrieving ground state solution by sampling
+2) instantiating the problem with pyQAOA and pyQuil, and 3) retrieving ground state solution by sampling.
 
 .. figure:: images/generalplan.png
    :align: center
@@ -34,10 +34,10 @@ and the NP-hard problem instance used in the original paper.
 Our First NP-Hard Problem
 -----------------------------
 The maximum-cut problem (MAX-CUT) was the first application described in the
-original qauntum-approximate-optimization-algorithm paper [`2
+original quantum-approximate-optimization-algorithm paper [`2
 <https://arxiv.org/abs/1411.4028>`_ ].  This problem is similar to graph coloring.
 Given a graph of nodes and edges, color each node black or white, then score a point
-for each node that is next to a node of a different color. The aim is find a coloring
+for each node that is next to a node of a different color. The aim is to find a coloring
 that scores the most points.
 
 Stated a bit more formally, the problem is to partition the
@@ -133,7 +133,7 @@ perform a measurement on that state. Performing a measurement on the \\(N\\)-bod
 quantum state returns the bit string corresponding to the maximum cut with high
 probability.
 
-To make this clear let's return to the barbell graph. The graph requires two qubits 
+To make this clear let us return to the barbell graph. The graph requires two qubits
 in order to represent the nodes.  The Hamiltonian has the form
 \\begin{align}
 \\hat{H} = \\frac{1}{2}(\\mathbf{I} - \\sigma_{z}^{1}\\otimes \\sigma_{z}^{0})

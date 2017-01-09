@@ -6,7 +6,7 @@ The quantum Fourier transform is the quantum implementation of the
 discrete Fourier transform over the amplitudes of a wavefunction.  Detailed
 explanations can be found in references [1]_ and [2]_.  The QFT forms the basis
 of many quantum algorithms such as Shor's factoring algorithm, discrete
-logarithm, and others to be found in the quantum algorithms zoo[3]_.
+logarithm, and others to be found in the quantum algorithms zoo [3]_.
 
 
 .. rubric:: References

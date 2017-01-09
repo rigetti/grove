@@ -2,7 +2,7 @@
 Getting Started with VQE
 ========================
 
-Here we'll take you through an example of a very small variational
+Here we will take you through an example of a very small variational
 quantum eigensolver problem. In this example we will use a quantum
 circuit that consists of a single parametrized gate to calculate an
 eigenvalue of the Pauli Z matrix.
@@ -18,15 +18,15 @@ pyQuil program.
     qvm = forest.Connection()
 
 Any Python function that takes a list of numeric parameters and outputs
-a pyQuil program can be used as an ansatz function. We'll see some more
+a pyQuil program can be used as an ansatz function. We will see some more
 examples of this later. For now, we just take a parameter list with a
 single parameter.
 
 .. code:: python
 
     def small_ansatz(params):
-        return Program(RX(params[0], 0)) 
-    
+        return Program(RX(params[0], 0))
+
     print small_ansatz([1.0])
 
 .. parsed-literal::
@@ -51,14 +51,14 @@ parameters or write your own minimizer.
 
 .. code:: python
 
-    import grove.VQE as VQE
+    from grove import VQE
     from scipy.optimize import minimize
     import numpy as np
-    
-    vqe_inst = VQE(minimizer=minimize, 
+
+    vqe_inst = VQE(minimizer=minimize,
                    minimizer_kwargs={'method': 'Nelder-Mead'})
 
-Before we run the minimizer, let's look manually at what expectation
+Before we run the minimizer, let us look manually at what expectation
 values
 :math:`\langle\,\Psi(\vec{\theta})\,|\,H\,|\,\Psi(\vec{\theta})\,\rangle` we
 calculate for fixed parameters of :math:`\vec{\theta}`.
@@ -79,7 +79,7 @@ We can loop over a range of these angles and plot the expectation value.
     angle_range = np.linspace(0.0, 2 * np.pi, 20)
     data = [vqe_inst.expectation(small_ansatz([angle]), hamiltonian, qvm)
             for angle in angle_range]
-    
+
     import matplotlib.pyplot as plt
     %matplotlib inline
     plt.xlabel('Angle [radians]')
@@ -95,7 +95,7 @@ variational quantum eigensolver.
 
 .. code:: python
 
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, 
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               qvm=qvm)
     print result
 
@@ -120,7 +120,7 @@ the same probability of each random Pauli.
     pauli_channel = [0.1, 0.1, 0.1] #10% chance of each gate at each timestep
     noisy_qvm = forest.Connection(gate_noise=pauli_channel)
 
-Let's check that this QVM has noise:
+Let us check that this QVM has noise:
 
 .. code:: python
 
@@ -142,7 +142,7 @@ Let's check that this QVM has noise:
 
 .. code:: python
 
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, 
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               qvm=noisy_qvm)
     print result
 
@@ -162,7 +162,7 @@ algorithm:
         pauli_channel = [noise] * 3
         noisy_qvm = forest.Connection(gate_noise=pauli_channel)
         # we can pass the noise params directly into the vqe_run instead of passing the noisy connection
-        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, 
+        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               gate_noise=pauli_channel)
         data.append(result['fun'])
 
@@ -211,7 +211,7 @@ Again we can check to see this noise:
     for noise in noises:
         pauli_channel = [noise] * 3
         noisy_qvm = forest.Connection(gate_noise=pauli_channel)
-        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, 
+        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               qvm=noisy_meas_qvm)
         data.append(result['fun'])
 
@@ -235,8 +235,8 @@ easily change the number of gates.
 .. code:: python
 
     def smallish_ansatz(params):
-        return Program(RX(params[0], 0), RX(params[1], 0)) 
-    
+        return Program(RX(params[0], 0), RX(params[1], 0))
+
     print smallish_ansatz([1.0, 2.0])
 
 .. parsed-literal::
@@ -266,7 +266,7 @@ parameterization:
         for gate in range(gate_num):
             p.inst(X(0))
         return p
-    
+
     print variable_gate_ansatz([0.5, 3])
 
 .. parsed-literal::
@@ -291,17 +291,17 @@ parameterization:
 Note that the restriction that the ansatz function take a single list of
 floats as parameters only comes from our choice of minimizer (this is
 what ``scipy.optimize.minimize`` takes). One could easily imagine
-writing a custom minimizer that took more sophisticated forms of
+writing a custom minimizer that takes more sophisticated forms of
 arguments.
 
 
 Links and further reading
 -------------------------
 
-This concludes our brief tour of VQE. There's lots of fascinating
+This concludes our brief tour of VQE. There is lots of fascinating
 literature about this algorithm out there and we encourage you to both
 explore those topics as well as come up with new ideas using this
-library. Let us know if you have ideas about anything that you'd like to
+library. Let us know if you have ideas about anything that you would like to
 see added!
 
 Here are some links to get you started:
