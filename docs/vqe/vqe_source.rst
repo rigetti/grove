@@ -1,13 +1,13 @@
-grove.VQE package
+grove.pyvqe package
 =================
 
 Submodules
 ----------
 
-grove.VQE.vqe module
+grove.pyvqe.vqe module
 --------------------
 
-.. automodule:: grove.VQE.vqe
+.. automodule:: grove.pyvqe.vqe
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ grove.VQE.vqe module
 Module contents
 ---------------
 
-.. automodule:: grove.VQE
+.. automodule:: grove.pyvqe
     :members:
     :undoc-members:
     :show-inheritance:

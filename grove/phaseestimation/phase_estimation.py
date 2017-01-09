@@ -2,7 +2,7 @@ import pyquil.quil as pq
 from pyquil.gates import H
 import numpy as np
 from math import log
-from pyquil.algorithms.fourier import qft
+from grove.qft.fourier import qft
 
 
 def controlled(m):

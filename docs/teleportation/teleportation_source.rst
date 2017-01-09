@@ -1,13 +1,13 @@
-grove.teleportation package
+grove.teleport package
 ===========================
 
 Submodules
 ----------
 
-grove.teleportation.teleportation module
+grove.teleport.teleportation module
 ----------------------------------------
 
-.. automodule:: grove.teleportation.teleportation
+.. automodule:: grove.teleport.teleportation
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ grove.teleportation.teleportation module
 Module contents
 ---------------
 
-.. automodule:: grove.teleportation
+.. automodule:: grove.teleport
     :members:
     :undoc-members:
     :show-inheritance:

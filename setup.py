@@ -8,8 +8,8 @@ setup(
     author_email="softapps@rigetti.com",
     description="A collection of quantum algorithms built using pyQuil and Forest",
     url="https://github.com/rigetticomputing/grove.git",
-    packages=["grove", "grove.pyqaoa", "grove.VQE", "grove.qft",
-              "grove.phaseestimation", "grove.teleportation"],
+    packages=["grove", "grove.pyqaoa", "grove.pyvqe", "grove.qft",
+              "grove.phaseestimation", "grove.teleport"],
     install_requires=[
         'numpy',
         'scipy',
