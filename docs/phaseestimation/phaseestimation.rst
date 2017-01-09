@@ -6,5 +6,5 @@ The Phase Estimation Algorithm
    :name: mastertoc
    :maxdepth: 3
 
-   pea_overview
+   phaseestimation_overview
    pea_source 
