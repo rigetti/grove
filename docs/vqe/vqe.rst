@@ -48,6 +48,5 @@ makes use of the VQE module.
    :name: mastertoc
    :maxdepth: 3
 
-   vqe_overview
    vqe_example
    vqe_source 

@@ -15,4 +15,4 @@
 ##############################################################################
 
 # init for grove
-from grove.VQE.vqe import VQE
+from grove.pyvqe.vqe import VQE
