@@ -18,20 +18,14 @@ Next define the graph on which to run MAX-CUT
 
     square_ring = [(0,1),(1,2),(2,3),(3,0)]
 
-Then we specify the basic configuration parameters for the algorithm. This includes the number of
-steps to use (which loosely corresponds to the accuracy of the optimization computation), the
-number of required qubits, and the starting optimization parameters (betas and gammas):
+The optional configuration parameter for the algorithm is given by the number of
+steps to use (which loosely corresponds to the accuracy of the optimization computation).
+We instantiate the algorithm and run the optimization routine on our QVM:
 
 .. code-block:: python
 
-    steps = 2; n_qubits = 4
-    betas = np.random.uniform(0, np.pi, steps); gammas = np.random.uniform(0, 2*np.pi, steps)
-
-Now we instantiate the algorithm and run the optimization routine on our QVM:
-
-.. code-block:: python
-
-    inst = maxcut_qaoa(graph=square_ring, steps=steps, init_betas=betas, init_gammas=gammas)
+    steps = 2
+    inst = maxcut_qaoa(graph=square_ring, steps=steps)
     inst.get_angles()
 
 to see the final \\(\\mid \\beta, \\gamma \\rangle \\) state we can rebuild the
