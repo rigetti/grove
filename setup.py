@@ -34,6 +34,6 @@ setup(
         'networkx',
         'matplotlib'
     ],
-    license='Apache2',
+    license='LICENSE',
     keywords='quantum quil programming hybrid'
 )
