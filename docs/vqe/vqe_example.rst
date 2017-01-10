@@ -104,6 +104,7 @@ We can loop over a range of these angles and plot the expectation value.
     plt.show()
 
 .. image:: output_11_0.png
+    :align: center
 
 Now with sampling...
 
@@ -121,6 +122,8 @@ Now with sampling...
     plt.show()
 
 .. image:: output_11_1.png
+    :align: center
+    :scale: 75%
 
 
 We can compare this plot against the value we obtain when we run the our
@@ -208,6 +211,8 @@ noise on the result of this algorithm:
     plt.show()
 
 .. image:: output_21_0.png
+    :align: center
+    :scale: 75%
 
 
 It looks like this algorithm is pretty robust to noise up until 1% error.
@@ -256,6 +261,8 @@ for noise in noises:
     plt.show()
 
 .. image:: output_27_0.png
+    :align: center
+    :scale: 75%
 
 
 More sophisticated ansatzes
