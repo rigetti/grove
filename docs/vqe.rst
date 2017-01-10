@@ -20,7 +20,7 @@ The quantum subroutine has two fundamental steps:
 The `variational principle <https://en.wikipedia.org/wiki/Variational_method_(quantum_mechanics)>`_ ensures
 that this expectation value is always greater than the smallest eigenvalue of :math:`H`.
 
-This bound, allows us to use classical computation to run an optimization loop to find
+This bound allows us to use classical computation to run an optimization loop to find
 this eigenvalue:
 
 1. Use a classical non-linear optimizer to minimize the expectation value by varying
@@ -29,10 +29,10 @@ this eigenvalue:
 
 Practically, the quantum subroutine of VQE amounts to preparing a state based off
 of a set of parameters :math:`\vec{\theta}` and performing a series of measurements
-in the appropriate basis. The paramaterized state (or ansatz) preperation can be tricky
-in these algorithms and can dramatically effect performance.  Our vqe module allows any
+in the appropriate basis. The paramaterized state (or ansatz) preparation can be tricky
+in these algorithms and can dramatically affect performance.  Our ``VQE`` module allows any
 Python function that returns a pyQuil program to be used as an ansatz generator.  This
-function is passed into `vqe_run` as the `parameteric_state_evolve` argument. More details
+function is passed into ``vqe_run`` as the ``parameteric_state_evolve`` argument. More details
 are in the `source documentation <./vqe/vqe_source.html#grove.pyvqe.vqe.VQE.vqe_run>`_.
 
 Measurements are then performed on these states based on a Pauli operator decomposition of

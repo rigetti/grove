@@ -29,7 +29,7 @@ We instantiate the algorithm and run the optimization routine on our QVM:
     betas, gammas = inst.get_angles()
 
 to see the final \\(\\mid \\beta, \\gamma \\rangle \\) state we can rebuild the
-quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate the wave function using the **qvm**
+quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate the wave function using the QVM
 
 .. code-block:: python
 
