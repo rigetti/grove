@@ -44,7 +44,7 @@ Teleportation in pyQuil
 We have included pyQuil code that programatically generates a teleportation
 program between any two qubits using one ancilla qubit.  The ancilla qubit is
 the piece of the Bell pair that Alice holds.  Examples can be found in
-`grove.teleportation.teleportation.py`.
+`grove.teleport.teleportation.py`.
 
 .. rubric:: References
 
