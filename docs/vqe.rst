@@ -1,6 +1,6 @@
-===================================
-The Variational-Quantum-Eigensolver
-===================================
+=====================================
+Variational-Quantum-Eigensolver (VQE)
+=====================================
 
 The Variational-Quantum-Eigensolver (VQE) [`1 <https://arxiv.org/abs/1304.3061>`_,
 `2 <https://arxiv.org/abs/1509.04279>`_] is a quantum/classical hybrid
@@ -48,5 +48,5 @@ makes use of the VQE module.
    :name: mastertoc
    :maxdepth: 3
 
-   vqe_example
-   vqe_source 
+   vqe/vqe_example
+   vqe/vqe_source

@@ -6,5 +6,5 @@ Quantum Teleportation
    :name: mastertoc
    :maxdepth: 3
 
-   teleportation_overview
-   teleportation_source 
+   teleportation/teleportation_overview
+   teleportation/teleportation_source
