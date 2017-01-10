@@ -33,15 +33,15 @@ in the appropriate basis. The paramaterized state (or ansatz) preperation can be
 in these algorithms and can dramatically effect performance.  Our vqe module allows any
 Python function that returns a pyQuil program to be used as an ansatz generator.  This
 function is passed into `vqe_run` as the `parameteric_state_evolve` argument. More details
-are in the `source documentation <vqe_source.html#grove.pyvqe.vqe.VQE.vqe_run>`_.
+are in the `source documentation <./vqe/vqe_source.html#grove.pyvqe.vqe.VQE.vqe_run>`_.
 
 Measurements are then performed on these states based on a Pauli operator decomposition of
 :math:`H`. Using Quil, these measurements will end up in classical memory. Doing
 this iteratively followed by a small amount of postprocessing, one may compute a real
 expectation value for the classical optimizer to use.
 
-In this documentation there is a very small first `example of VQE <vqe_example.html>`_ and the
-implementation of the `Quantum Approximate Optimization Algorithm QAOA <../qaoa/qaoa.html>`_ also
+In this documentation there is a very small first `example of VQE <./vqe/vqe_example.html>`_ and the
+implementation of the `Quantum Approximate Optimization Algorithm QAOA <./qaoa.html>`_ also
 makes use of the VQE module.
 
 .. toctree::

@@ -14,7 +14,7 @@
 #    limitations under the License.
 ##############################################################################
 
-from grove.pyvqe.vqe import VQE
+from grove.pyvqe.vqe import VQE, parity_even_p
 from pyquil.quil import Program
 from pyquil.gates import RX, H, RZ
 from pyquil.paulis import PauliSum, PauliTerm
@@ -22,6 +22,7 @@ from mock import Mock, MagicMock
 import numpy as np
 from scipy.linalg import expm
 from scipy.optimize import minimize
+import pytest
 
 
 def test_vqe_run():
@@ -71,14 +72,33 @@ def test_expectation():
     fake_result.fun = 1.0
     minimizer.return_value = fake_result
 
-    fake_qvm = Mock(spec=['wavefunction', 'expectation'])
+    fake_qvm = Mock(spec=['wavefunction', 'expectation', 'run'])
     fake_qvm.wavefunction.return_value = rotation_wavefunction(-2.5)
     fake_qvm.expectation.return_value = [0.28366219]
+    # for testing expectation
+    fake_qvm.run.return_value = [[0], [0]]
 
     inst = VQE(minimizer)
-    energy = inst.expectation(prog, PauliSum([hamiltonian]), qvm=fake_qvm)
+    energy = inst.expectation(prog, PauliSum([hamiltonian]), None, fake_qvm)
     assert np.isclose(energy, 0.28366219)
 
     hamiltonian = np.array([[1, 0], [0, -1]])
-    energy = inst.expectation(prog, hamiltonian, qvm=fake_qvm)
+    energy = inst.expectation(prog, hamiltonian, None, fake_qvm)
     assert np.isclose(energy, 0.28366219)
+
+    prog = Program(H(0))
+    hamiltonian = PauliSum([PauliTerm('X', 0)])
+    energy = inst.expectation(prog, hamiltonian, 2, fake_qvm)
+    assert np.isclose(energy, 1.0)
+
+
+def test_parity_even_p():
+    state_index = 11
+    marked_qubits = [0, 1]
+    with pytest.raises(AssertionError):
+        parity_even_p("", marked_qubits)
+    assert parity_even_p(state_index, marked_qubits)
+
+
+if __name__ == "__main__":
+    test_expectation()

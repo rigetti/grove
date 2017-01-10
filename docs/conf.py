@@ -19,7 +19,7 @@ import sphinx_rtd_theme
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../pyqaoa/'))
+sys.path.insert(0, os.path.abspath('../grove/'))
 
 # -- General configuration ------------------------------------------------
 
@@ -60,7 +60,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyQAOA'
+project = u'Grove'
 copyright = u'2016, Rigetti Quantum Computing'
 author = u'Rigetti Quantum Computing'
 
@@ -214,7 +214,7 @@ html_static_path = []
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pyQAOAdoc'
+htmlhelp_basename = 'pygrovedoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -236,7 +236,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pyQAOA.tex', u'pyQAOA Documentation',
+    (master_doc, 'grove.tex', u'Grove Documentation',
      u'Rigetti Quantum Computing', 'manual'),
 ]
 
@@ -266,7 +266,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pyqaoa', u'pyQAOA Documentation',
+    (master_doc, 'grove', u'Grove Documentation',
      [author], 1)
 ]
 
@@ -280,8 +280,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pyQAOA', u'pyQAOA Documentation',
-     author, 'pyQAOA', 'One line description of project.',
+    (master_doc, 'grove', u'Grove Documentation',
+     author, 'grove', 'One line description of project.',
      'Miscellaneous'),
 ]
 

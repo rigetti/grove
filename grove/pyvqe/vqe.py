@@ -18,7 +18,8 @@ import pyquil.forest as qvm_module
 import pyquil.quil as pq
 import numpy as np
 import inspect
-from pyquil.gates import STANDARD_GATES
+from collections import Counter
+from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
 
 
@@ -78,7 +79,7 @@ class VQE(object):
 
     def vqe_run(self, parametric_state_evolve, hamiltonian, initial_params,
                 gate_noise=None, measurement_noise=None,
-                jacobian=None, qvm=None, disp=None, return_all=False):
+                jacobian=None, qvm=None, disp=None, samples=None, return_all=False):
         """
         functional minimization loop.
 
@@ -98,6 +99,10 @@ class VQE(object):
         :param disp: (optional, bool) display level. If True then each iteration
                      expectation and parameters are printed at each
                      optimization iteration.
+        :param samples: (int) Number of samples for calculating the expectation
+                        value of the operators.  If `None` then faster method
+                        ,dotting the wave function with the operator, is used.
+                        Default=None.
         :param return_all: (optional, bool) request to return all intermediate
                            parameters determined during the optimization.
         :return: (vqe.OptResult()) object :func:`OptResult <vqe.OptResult>`.
@@ -113,9 +118,14 @@ class VQE(object):
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.
         """
-        disp_fun = disp if disp is not None else lambda x: None
+        self._disp_fun = disp if disp is not None else lambda x: None
         iteration_params = []
         expectation_vals = []
+        self._current_expectation = None
+        if samples is None:
+            print """WARNING: Fast method for expectation will be used. Noise
+                     models will be ineffective"""
+
         if qvm is None:
             qvm = qvm_module.Connection(
                     gate_noise=gate_noise,
@@ -132,22 +142,21 @@ class VQE(object):
             :return: (float) expectation value
             """
             quil_prog = parametric_state_evolve(params)
-            E = self.expectation(quil_prog, hamiltonian, qvm)
-            return E
+            mean_value = self.expectation(quil_prog, hamiltonian, samples, qvm)
+            self._current_expectation = mean_value  # store for printing
+            return mean_value
 
         def print_current_iter(iter_vars):
-            quil_prog = parametric_state_evolve(iter_vars)
-            E = self.expectation(quil_prog, hamiltonian, self.qvm)
-            disp_fun("\tParameters: {} ".format(iter_vars))
+            self._disp_fun("\tParameters: {} ".format(iter_vars))
             if jacobian is not None:
                 grad = jacobian(iter_vars)
-                disp_fun("\tGrad-L1-Norm: {}".format(np.max(np.abs(grad))))
-                disp_fun("\tGrad-L2-Norm: {} ".format(np.linalg.norm(grad)))
+                self._disp_fun("\tGrad-L1-Norm: {}".format(np.max(np.abs(grad))))
+                self._disp_fun("\tGrad-L2-Norm: {} ".format(np.linalg.norm(grad)))
 
-            disp_fun("\tE => {}".format(E))
+            self._disp_fun("\tE => {}".format(self._current_expectation))
             if return_all:
                 iteration_params.append(iter_vars)
-                expectation_vals.append(E)
+                expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
         arguments, _, _, _ = inspect.getargspec(self.minimizer)
@@ -164,7 +173,7 @@ class VQE(object):
 
         if hasattr(result, 'status'):
             if result.status != 0:
-                disp_fun("Classical optimization exited with an error index: %i" % result.status)
+                self._disp_fun("Classical optimization exited with an error index: %i" % result.status)
 
         results = OptResults()
         if hasattr(result, 'x'):
@@ -178,7 +187,7 @@ class VQE(object):
             results.expectation_vals = expectation_vals
         return results
 
-    def expectation(self, quil_prog, pauli_sum, qvm):
+    def expectation(self, quil_prog, pauli_sum, samples, qvm):
         """
         Computes the expectation value of pauli_sum over the distribution
         generated from quil_prog.
@@ -188,6 +197,11 @@ class VQE(object):
                           operator of which to calculate the expectation value
                           or a numpy matrix representing the Hamiltonian
                           tensored up to the appropriate size.
+        :param samples: (int) number of samples used to calculate the
+                        expectation value.  If samples is None then the expectation
+                        value is calculated by calculating <psi|O|psi> on the
+                        QVM.  Error models will not work if samples is None.
+
         :param qvm: (qvm connection)
 
         :returns: (float) representing the expectation value of pauli_sum given
@@ -202,22 +216,102 @@ class VQE(object):
             if not isinstance(pauli_sum, (PauliTerm, PauliSum)):
                 raise TypeError("pauli_sum variable must be a PauliTerm or"
                                 "PauliSum object")
+
             if isinstance(pauli_sum, PauliTerm):
                 pauli_sum = PauliSum([pauli_sum])
 
-            operator_progs = []
-            operator_coeffs = []
-            for p_term in pauli_sum.terms:
-                op_prog = pq.Program()
-                for qindex, op in p_term:
-                    op_prog.inst(STANDARD_GATES[op](qindex))
-                operator_progs.append(op_prog)
-                operator_coeffs.append(p_term.coefficient)
+            if samples is None:
+                operator_progs = []
+                operator_coeffs = []
+                for p_term in pauli_sum.terms:
+                    op_prog = pq.Program()
+                    for qindex, op in p_term:
+                        op_prog.inst(STANDARD_GATES[op](qindex))
+                    operator_progs.append(op_prog)
+                    operator_coeffs.append(p_term.coefficient)
 
-            result_overlaps = qvm.expectation(quil_prog,
-                                              operator_programs=operator_progs)
-            result_overlaps = list(result_overlaps)
-            assert len(result_overlaps) == len(operator_progs), """Somehow we
-            didn't get the correct number of results back from the QVM"""
-            expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs)))
-            return expectation.real
+                result_overlaps = qvm.expectation(quil_prog,
+                                                  operator_programs=operator_progs)
+                result_overlaps = list(result_overlaps)
+                assert len(result_overlaps) == len(operator_progs), """Somehow we
+                didn't get the correct number of results back from the QVM"""
+                expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs)))
+                return expectation.real
+            else:
+                if not isinstance(samples, int):
+                    raise TypeError("samples variable must be an integer")
+                if samples <= 0:
+                    raise ValueError("samples variable must be a postive integer")
+
+                # normal execution via fake sampling
+                expectation = 0.0  # stores the sum of contributions to the energy from each operator term
+                for j, term in enumerate(pauli_sum.terms):
+                    meas_basis_change = pq.Program()
+                    qubits_to_measure = []
+                    for index, gate in term:
+                        if gate != 'I':
+                            qubits_to_measure.append(index)
+                            if gate == 'X':
+                                meas_basis_change.inst(RY(-np.pi / 2, index))
+                            elif gate == 'Y':
+                                meas_basis_change.inst(RX(np.pi / 2, index))
+
+                    meas_outcome = expectation_from_sampling(quil_prog + meas_basis_change,
+                                                             qubits_to_measure,
+                                                             qvm, samples)
+                    expectation += term.coefficient * meas_outcome
+                return expectation.real
+
+
+def parity_even_p(state, marked_qubits):
+    """
+    Calculates the parity of elements at indexes in marked_qubits
+
+    Parity is relative to the binary representation of the integer state.
+
+    :param state: The wavefunction index that corresponds to this state.
+    :param marked_qubits: The indexes to be considered in the parity sum.
+    :returns: A boolean corresponding to the parity.
+    """
+    assert isinstance(state, int), "{} is not an integer. Must call " \
+                                   "parity_even_p with an integer " \
+                                   "state.".format(state)
+    mask = 0
+    for q in marked_qubits:
+        mask |= 1 << q
+    return bin(mask & state).count("1") % 2 == 0
+
+
+def expectation_from_sampling(quil_program, marked_qubits, qvm, samples):
+    """
+    Calculation of Z_{i} at marked_qubits
+
+    Given a wavefunctions, this calculates the expectation value of the Zi
+    operator where i ranges over all the qubits given in marked_qubits.
+
+    :param quil_program: pyQuil program generating some state
+    :param marked_qubits: The qubits within the support of the Z pauli
+                          operator whose expectation value is being calculated
+    :param qvm: A QVM connection.
+    :param samples: Number of bitstrings collected to calculate expectation
+                    from sampling.
+    :returns: The expectation value as a float.
+    """
+    # construct program to measure
+    for qindex in marked_qubits:
+        quil_program.measure(qindex, qindex)
+
+    bitstring_samples = qvm.run(quil_program, range(max(marked_qubits) + 1), trials=samples)
+    bitstring_tuples = map(tuple, bitstring_samples)
+
+    freq = Counter(bitstring_tuples)
+
+    # perform weighted average
+    expectation = 0
+    for bitstring, count in freq.items():
+        bitstring_int = int("".join([str(x) for x in bitstring[::-1]]), 2)
+        if parity_even_p(bitstring_int, marked_qubits):
+            expectation += float(count)/samples
+        else:
+            expectation -= float(count)/samples
+    return expectation
