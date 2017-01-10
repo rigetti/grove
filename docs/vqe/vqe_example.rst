@@ -215,7 +215,7 @@ noise on the result of this algorithm:
     :scale: 75%
 
 
-It looks like this algorithm is pretty robust to noise up until 1% error.
+It looks like this algorithm is pretty robust to noise up until 0.6% error.
 However measurement noise might be a different story.
 
 .. code:: python
@@ -223,7 +223,7 @@ However measurement noise might be a different story.
     meas_channel = [0.1, 0.1, 0.1] #10% chance of each gate at each measurement
     noisy_meas_qvm = forest.Connection(measurement_noise=meas_channel)
 
-Again we can check to see this noise:
+Measurement noise has a different effect:
 
 .. code:: python
 
@@ -245,13 +245,13 @@ Again we can check to see this noise:
 
 .. code:: python
 
-data = []
-noises = np.linspace(0.0, 0.01, 4)
-for noise in noises:
-    meas_channel = [noise] * 3
-    noisy_qvm = forest.Connection(measurement_noise=meas_channel)
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
-    data.append(result['fun'])
+    data = []
+    noises = np.linspace(0.0, 0.01, 4)
+    for noise in noises:
+        meas_channel = [noise] * 3
+        noisy_qvm = forest.Connection(measurement_noise=meas_channel)
+        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
+        data.append(result['fun'])
 
 .. code:: python
 
@@ -264,6 +264,7 @@ for noise in noises:
     :align: center
     :scale: 75%
 
+We see this particular VQE algorithm is generally more sensitive to measurement noise than gate noise.
 
 More sophisticated ansatzes
 ---------------------------
