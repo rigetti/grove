@@ -20,7 +20,7 @@ import pyquil.forest as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
-from grove.VQE.vqe import VQE
+from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
 
 

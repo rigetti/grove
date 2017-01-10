@@ -14,7 +14,7 @@
 #    limitations under the License.
 ##############################################################################
 
-from grove.VQE.vqe import VQE
+from grove.pyvqe.vqe import VQE
 from pyquil.quil import Program
 from pyquil.gates import RX, H, RZ
 from pyquil.paulis import PauliSum, PauliTerm
