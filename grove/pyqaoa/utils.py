@@ -18,6 +18,14 @@ from pyquil.quil import Program
 
 
 def isclose(a, b, rel_tol=1e-10, abs_tol=0.0):
+    """
+    Compares two parameter values.
+    :param a: First parameter
+    :param b: Second parameter
+    :param rel_tol: Relative tolerance
+    :param abs_tol: Absolute tolerance
+    :return: Boolean telling whether or not the parameters are close enough to be the same
+    """
     return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 
@@ -32,7 +40,6 @@ def compare_progs(test, reference):
     assert len(tinstr) == len(rinstr)
     for idx in xrange(len(tinstr)):
         # check each field of the instruction object
-        print tinstr[idx]
         assert tinstr[idx][1].operator_name == rinstr[idx][1].operator_name
         assert len(tinstr[idx][1].parameters) == len(rinstr[idx][1].parameters)
         for pp in xrange(len(tinstr[idx][1].parameters)):
