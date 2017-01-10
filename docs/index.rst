@@ -3,28 +3,32 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-==================================
-Welcome to Grove's documentation!
-==================================
-Grove is a python library containing quantum algorithms that uses
-`pyQuil <http://github.com/rigetticomputing/pyQuil>`_ and the
-`Rigetti Forest service <http://forest.rigetti.com>`_.
+=======================================
+Welcome to the Documentation for Grove!
+=======================================
+Grove is a open source Python library containing quantum algorithms that uses
+the quantum programming library `pyQuil <http://github.com/rigetticomputing/pyQuil>`_
+and the `Rigetti Forest <http://forest.rigetti.com>`_ toolkit.
 
 Structure
 _________
 
 Grove is organized into modules for the various quantum algorithms, each
-of which has self-contrained documentation.
+of which has its own self-contained documentation.
 
 .. toctree::
    :name: mastertoc
    :maxdepth: 2
 
    installation
-   algorithms
+   teleportation
+   vqe
+   qaoa
+   qft
+   phaseestimation
 
-Indices and tables
-==================
+Indices and Tables
+__________________
 
 * :ref:`genindex`
 * :ref:`modindex`
