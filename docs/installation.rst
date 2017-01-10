@@ -7,8 +7,8 @@ Dependencies
 
 Grove depends on a few scientific python packages as well as the python library for Quil:
 
-* numpy
-* scipy
+* NumPy
+* SciPy
 * `pyQuil <https://github.com/rigetticomputing/pyQuil.git>`_
 * NetworkX
 * Matplotlib
@@ -18,7 +18,7 @@ Optional
 * pytest (for testing)
 * mock
 
-**Numpy** and **Scipy** can be installed with `pip` (a python package manager). ::
+**NumPy** and **SciPy** can be installed with `pip` (a Python package manager). ::
 
     pip install numpy
     pip install scipy
@@ -28,7 +28,7 @@ Or using the Conda package manager ::
     conda install numpy
     conda install scipy
 
-**pyQuil** can be installed by changing directory to where you would like to keep
+**pyQuil** can be installed by changing directories to where you would like to store
 the pyQuil repository and running ::
 
     git clone https://github.com/rigetticomputing/pyQuil.git
@@ -37,7 +37,7 @@ the pyQuil repository and running ::
 
 
 You will need to make sure that your pyQuil installation is properly configured to run with a
-QVM or quantum processor. See the pyQuil documentation for instructions on how to do this.
+QVM or quantum processor (QPU). See the pyQuil documentation for instructions on how to do this.
 
 
 Grove Installation

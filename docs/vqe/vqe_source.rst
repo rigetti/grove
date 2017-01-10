@@ -1,11 +1,11 @@
 grove.pyvqe package
-=================
+===================
 
 Submodules
 ----------
 
 grove.pyvqe.vqe module
---------------------
+----------------------
 
 .. automodule:: grove.pyvqe.vqe
     :members:
