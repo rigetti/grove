@@ -16,36 +16,13 @@
 
 import numpy as np
 from grove.pyqaoa.qaoa import QAOA
+from grove.pyqaoa.utils import compare_progs
 import pyquil.forest as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
 from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
-
-
-def isclose(a, b, rel_tol=1e-10, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-def compare_progs(test, reference):
-    """
-    compares two programs gate by gate, param by param
-    """
-    tinstr = test.instructions
-    rinstr = reference.instructions
-    assert len(tinstr) == len(rinstr)
-    for idx in xrange(len(tinstr)):
-        # check each field of the instruction object
-        assert tinstr[idx].operator_name == rinstr[idx].operator_name
-        assert len(tinstr[idx].parameters) == len(rinstr[idx].parameters)
-        for pp in xrange(len(tinstr[idx].parameters)):
-            cmp_val = isclose(tinstr[idx].parameters[pp], rinstr[idx].parameters[pp])
-            assert cmp_val
-
-        assert len(tinstr[idx].arguments) == len(rinstr[idx].arguments)
-        for aa in xrange(len(tinstr[idx].arguments)):
-            assert tinstr[idx].arguments[aa] == rinstr[idx].arguments[aa]
 
 
 def test_probabilities():
