@@ -184,7 +184,7 @@ class QAOA(object):
         Stored VQE result
 
         :returns: ([list], [list]) A tuple of the beta angles and the gamma
-		  angles for the optimal solution.
+                  angles for the optimal solution.
         """
         stacked_params = np.hstack((self.betas, self.gammas))
         vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
@@ -230,9 +230,9 @@ class QAOA(object):
         a random set of angles.
 
         :param samples: (int, Optional) number of samples to get back from the
-       			QVM.
+                        QVM.
         :returns: tuple representing the bitstring, Counter object from
-        	  collections holding all output bitstrings and their frequency.
+                  collections holding all output bitstrings and their frequency.
         """
         if samples <= 0 and not isinstance(samples, int):
             raise ValueError("samples variable must be positive integer")
@@ -242,7 +242,7 @@ class QAOA(object):
         for i in xrange(self.n_qubits):
             sampling_prog.measure(i, [i])
 
-        bitstring_samples = self.qvm.run(sampling_prog, range(self.n_qubits), trials=samples)
+        bitstring_samples = self.qvm.run_and_measure(sampling_prog, range(self.n_qubits), trials=samples)
         bitstring_tuples = map(tuple, bitstring_samples)
         freq = Counter(bitstring_tuples)
         most_frequent_bit_string = max(freq, key=lambda x: freq[x])

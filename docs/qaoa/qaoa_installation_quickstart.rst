@@ -26,14 +26,14 @@ We instantiate the algorithm and run the optimization routine on our QVM:
 
     steps = 2
     inst = maxcut_qaoa(graph=square_ring, steps=steps)
-    inst.get_angles()
+    betas, gammas = inst.get_angles()
 
 to see the final \\(\\mid \\beta, \\gamma \\rangle \\) state we can rebuild the
 quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate the wave function using the **qvm**
 
 .. code-block:: python
 
-    t = np.hstack((inst.betas, inst.gammas))
+    t = np.hstack((betas, gammas))
     param_prog = inst.get_parameterized_program()
     prog = param_prog(t)
     wf = qvm_connection.wavefunction(prog)
