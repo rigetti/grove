@@ -100,9 +100,9 @@ class VQE(object):
                      expectation and parameters are printed at each
                      optimization iteration.
         :param samples: (int) Number of samples for calculating the expectation
-                        value of the operators.  If negative then faster method
-                        by dotting the wave function with the operator is used.
-                        Default=-1.
+                        value of the operators.  If `None` then faster method
+                        ,dotting the wave function with the operator, is used.
+                        Default=None.
         :param return_all: (optional, bool) request to return all intermediate
                            parameters determined during the optimization.
         :return: (vqe.OptResult()) object :func:`OptResult <vqe.OptResult>`.

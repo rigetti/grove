@@ -72,11 +72,11 @@ calculate for fixed parameters of :math:`\vec{\theta}`.
 
     -0.4161468365471423
 
-The expectation value was calculated by running the pyQuil program out put from 
+The expectation value was calculated by running the pyQuil program output from 
 ``small_ansatz``, saving the wavefunction, and using that vector to calculate
 the expectation value.  We can sample the wavefunction as you would on a
-quantum computer by passing an integer, instead of `None`, to the third
-parameter of ``expectation()``.
+quantum computer by passing an integer, instead of `None`, as the samples
+argument of the ``expectation()`` method.
 
 .. code:: python
     
