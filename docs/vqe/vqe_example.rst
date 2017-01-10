@@ -39,7 +39,7 @@ construct the Hamiltonian that we wish to simulate, we use the
 
 .. code:: python
 
-    from pyquil.paulis import ID, sZ
+    from pyquil.paulis import sZ
     initial_angle = [0.0]
     # our Hamiltonian is just \sigma_z on the zero-th qubit
     hamiltonian = sZ(0)
@@ -55,8 +55,8 @@ parameters or write your own minimizer.
     from scipy.optimize import minimize
     import numpy as np
 
-    vqe_inst = VQE(minimizer=minimize,
-                   minimizer_kwargs={'method': 'Nelder-Mead'})
+    vqe_inst = vqe(minimizer=minimize,
+                   minimizer_kwargs={'method': 'nelder-mead'})
 
 Before we run the minimizer, let us look manually at what expectation
 values
@@ -66,18 +66,34 @@ calculate for fixed parameters of :math:`\vec{\theta}`.
 .. code:: python
 
     angle = 2.0
-    vqe_inst.expectation(small_ansatz([angle]), hamiltonian, qvm)
+    vqe_inst.expectation(small_ansatz([angle]), hamiltonian, None, qvm)
 
 .. parsed-literal::
 
     -0.4161468365471423
+
+The expectation value was calculated by running the pyQuil program out put from 
+``small_ansatz``, saving the wavefunction, and using that vector to calculate
+the expectation value.  We can sample the wavefunction as you would on a
+quantum computer by passing an integer, instead of `None`, to the third
+parameter of ``expectation()``.
+
+.. code:: python
+    
+    angle = 2.0
+    vqe_inst.expectation(small_ansatz([angle]), hamiltonian, 10000, qvm)
+   
+.. parsed-literal::
+
+    -0.42900000000000005
+
 
 We can loop over a range of these angles and plot the expectation value.
 
 .. code:: python
 
     angle_range = np.linspace(0.0, 2 * np.pi, 20)
-    data = [vqe_inst.expectation(small_ansatz([angle]), hamiltonian, qvm)
+    data = [vqe_inst.expectation(small_ansatz([angle]), hamiltonian, None, qvm)
             for angle in angle_range]
 
     import matplotlib.pyplot as plt
@@ -89,14 +105,30 @@ We can loop over a range of these angles and plot the expectation value.
 
 .. image:: output_11_0.png
 
+Now with sampling...
+
+.. code:: python
+
+    angle_range = np.linspace(0.0, 2 * np.pi, 20)
+    data = [vqe_inst.expectation(small_ansatz([angle]), hamiltonian, 1000, qvm)
+            for angle in angle_range]
+
+    import matplotlib.pyplot as plt
+    %matplotlib inline
+    plt.xlabel('Angle [radians]')
+    plt.ylabel('Expectation value')
+    plt.plot(angle_range, data)
+    plt.show()
+
+.. image:: output_11_1.png
+
 
 We can compare this plot against the value we obtain when we run the our
 variational quantum eigensolver.
 
 .. code:: python
 
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
-                              qvm=qvm)
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, None, qvm=qvm)
     print result
 
 .. parsed-literal::
@@ -140,24 +172,26 @@ Let us check that this QVM has noise:
      [1, 0],
      [0, 1]]
 
+We can run the VQE under noise.  Let's modify the classical optimizer to start
+with a larger simplex so we don't get stuck at an initial minimum.
+
 .. code:: python
 
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
-                              qvm=noisy_qvm)
+    vqe_inst.minimizer_kwargs = {'method': 'Nelder-mead', 'options': {'initial_simplex': np.array([[0.0], [0.05]]), 'xatol': 1.0e-2}}
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
     print result
 
 .. parsed-literal::
 
-    {'fun': -0.99999999954538055, 'x': array([ 3.1415625])}
+    {'fun': 0.5875999999999999, 'x': array([ 0.01874886])}
 
-
-We can plot the effect of increasing noise on the result of this
-algorithm:
+10% error is a huge amount of error! We can plot the effect of increasing
+noise on the result of this algorithm:
 
 .. code:: python
 
     data = []
-    noises = np.linspace(0.0, 0.33, 4)
+    noises = np.linspace(0.0, 0.01, 4)
     for noise in noises:
         pauli_channel = [noise] * 3
         noisy_qvm = forest.Connection(gate_noise=pauli_channel)
@@ -176,7 +210,7 @@ algorithm:
 .. image:: output_21_0.png
 
 
-It looks like this algorithm is totally insensitive to gate noise!
+It looks like this algorithm is pretty robust to noise up until 1% error.
 However measurement noise might be a different story.
 
 .. code:: python
@@ -206,14 +240,13 @@ Again we can check to see this noise:
 
 .. code:: python
 
-    data = []
-    noises = np.linspace(0.0, 0.33, 4)
-    for noise in noises:
-        pauli_channel = [noise] * 3
-        noisy_qvm = forest.Connection(gate_noise=pauli_channel)
-        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
-                              qvm=noisy_meas_qvm)
-        data.append(result['fun'])
+data = []
+noises = np.linspace(0.0, 0.01, 4)
+for noise in noises:
+    meas_channel = [noise] * 3
+    noisy_qvm = forest.Connection(measurement_noise=meas_channel)
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
+    data.append(result['fun'])
 
 .. code:: python
 
@@ -246,9 +279,10 @@ easily change the number of gates.
 
 .. code:: python
 
+    vqe_inst = vqe(minimizer=minimize,
+                   minimizer_kwargs={'method': 'nelder-mead'})
     initial_angles = [1.0, 1.0]
-    result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles,
-                              qvm=qvm)
+    result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles, None, qvm=qvm)
     print result
 
 .. parsed-literal::
@@ -279,8 +313,7 @@ parameterization:
 .. code:: python
 
     initial_params = [1.0, 3]
-    result = vqe_inst.vqe_run(variable_gate_ansatz, hamiltonian, initial_params,
-                              qvm=qvm)
+    result = vqe_inst.vqe_run(variable_gate_ansatz, hamiltonian, initial_params, None, qvm=qvm)
     print result
 
 .. parsed-literal::
