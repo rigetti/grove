@@ -35,7 +35,7 @@ def test_probabilities():
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -1.17642098e-05 - 1j*7.67538040e-06])
     fakeQVM = Mock(spec=qvm_module.Connection())
-    fakeQVM.wavefunction = Mock(return_value=wf)
+    fakeQVM.wavefunction = Mock(return_value=(wf, 0))
     inst = QAOA(fakeQVM, n_qubits, steps=p,
                 rand_seed=42)
 
