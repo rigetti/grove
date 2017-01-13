@@ -1,22 +1,12 @@
-grove.qft package
-=================
+Source Code Docs
+================
 
-Submodules
-----------
+Here you can find documentation for the different submodules in qft.
 
-grove.qft.fourier module
-------------------------
+grove.qft.fourier
+-----------------
 
 .. automodule:: grove.qft.fourier
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: grove.qft
     :members:
     :undoc-members:
     :show-inheritance:
