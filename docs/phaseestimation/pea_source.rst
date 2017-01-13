@@ -1,22 +1,12 @@
-grove.phaseestimation package
-=============================
+Source Code Docs
+================
 
-Submodules
-----------
+Here you can find documentation for the different submodules in phaseestimation.
 
-grove.phaseestimation.phase_estimation module
----------------------------------------------
+grove.phaseestimation.phase_estimation
+--------------------------------------
 
 .. automodule:: grove.phaseestimation.phase_estimation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: grove.phaseestimation
     :members:
     :undoc-members:
     :show-inheritance:
