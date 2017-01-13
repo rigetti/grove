@@ -1,22 +1,12 @@
-grove.pyvqe package
-===================
+Source Code Docs
+================
 
-Submodules
-----------
+Here you can find documentation for the different submodules in pyVQE.
 
-grove.pyvqe.vqe module
-----------------------
-
-.. automodule:: grove.pyvqe.vqe
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
+grove.pyvqe.vqe
 ---------------
 
-.. automodule:: grove.pyvqe
+.. automodule:: grove.pyvqe.vqe
     :members:
     :undoc-members:
     :show-inheritance:
