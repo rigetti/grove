@@ -1,66 +1,93 @@
 Grove
-----
-A collection of quantum algorithms built using Forest. Grove is licensed under the [Apache 2.0 
-license](https://github.com/rigetticomputing/grove/blob/master/LICENSE).
+=====
+
+A collection of quantum algorithms built using the Rigetti Forest platform.
+Grove is licensed under the [Apache 2.0 license](https://github.com/rigetticomputing/grove/blob/master/LICENSE).
 
 [![Build Status](https://semaphoreci.com/api/v1/projects/af487aa0-bd6d-4b43-9610-9c8f3c3d787d/1123354/badge.svg)](https://semaphoreci.com/rigetti/grove) 
 [![Documentation Status](https://readthedocs.org/projects/grove-docs/badge/?version=latest)](http://grove-docs.readthedocs.io/en/latest/?badge=latest)
 
-Grove currently includes algorithms for:
+Grove currently includes:
 
-* The Variational Quantum Eigensolver
-* The Quantum Approximate Optimization Algorithm
-* The Quantum Fourier Transform
-* Phase Estimation
-* Quantum Teleportation
+* [Quantum Teleportation](http://grove-docs.readthedocs.io/en/latest/teleportation.html)
+* [The Variational-Quantum-Eigensolver (VQE)](http://grove-docs.readthedocs.io/en/latest/vqe.html)
+* [The Quantum Approximate Optimization Algorithm (QAOA)](http://grove-docs.readthedocs.io/en/latest/qaoa.html)
+* [The Quantum Fourier Transform (QFT)](http://grove-docs.readthedocs.io/en/latest/qft.html)
+* [Phase Estimation Algorithm](http://grove-docs.readthedocs.io/en/latest/phaseestimation.html)
 
 Documentation
 -------------
 
-Documentation is hosted at http://grove-docs.readthedocs.io/en/latest/
+Documentation is hosted at [http://grove-docs.readthedocs.io/en/latest/](http://grove-docs.readthedocs.io/en/latest/)
 
 Installation
 ------------
 
-Grove depends on pyQuil, numpy, scipy, networkx, pytest, mock, and matplotlib.
-To ensure binaries of these modules are installed along with the grove library
-we recommend installing with `pip`.  First clone the Grove repo and `cd` into
-it.
-
+You can install Grove directly from the Python package manager `pip` using:
 ```
-git clone https://github.com/rigetticomputing/grove.git
-cd grove
+pip install quantum-grove
 ```
 
-Now the library can be installed with pip.
-
+To instead install Grove from source, clone this repository, `cd` into it, and run:
 ```
-pip install -e ./
+pip install -e .
 ```
 
-In order to access the Rigetti Forest service an API key or configuration file
-will need to be installed.  Please see the
-[pyQuil](https://github.com/rigetticomputing/pyQuil-dev) documentation.
+This will install Grove’s dependencies if you do not already have them.
+However, you will still need to install pyQuil and set up a connection to
+the Rigetti Forest (see below).
 
 Dependencies
 ------------
 
-* pyQuil
-* A [Forest API key](http://forest.rigetti.com)
-* Numpy
-* Scipy
-* Mock (for development testing)
+* NumPy
+* SciPy
 * NetworkX (for building and analyzing graphs)
 * Matplotlib (useful for plotting)
+* pytest (optional, for development testing)
+* mock (optional, for development testing)
+
+Forest and pyQuil
+-----------------
+
+Grove also requires the Python library for Quil, called
+[pyQuil](http://pyquil.readthedocs.io/en/latest/index.html).
+
+You can install pyQuil directly from the Python package manager `pip` using:
+```
+pip install pyquil
+```
+
+To instead install pyQuil from source, clone the
+[pyQuil GitHub repository](https://github.com/rigetticomputing/pyquil),
+`cd` into it, and run:
+```
+pip install -e .
+```
+
+You will need to make sure that your pyQuil installation is properly
+configured to run with a quantum virtual machine (QVM) or real quantum processor
+(QPU) hosted on the  [Rigetti Forest](forest.rigetti.com), which requires an API key.
+See the pyQuil [docs](http://pyquil.readthedocs.io/en/latest/index.html) for
+instructions on how to do this.
 
 Building the Docs
-------------
-To build the documentation run
+-----------------
+
+We use sphinx to build the documentation. To do this, navigate into Grove's top-level directory and run:
 
 ```
 sphinx-build -b html docs/ docs/_build
 ```
 
-To view the docs navigate to the `docs/_build` directory in the Grove root
-directory and open the index.html file a browser. 
+To view the docs navigate to the newly-created `docs/_build` directory and open
+the `index.html` file in a browser. Note that we use the Read the Docs theme for
+our documentation, so this may need to be installed using `pip install sphinx_rtd_theme`.
 
+Development and Testing
+-----------------------
+
+We use pytest for testing. Tests can be run from the top-level directory using:
+```
+pytest
+```
