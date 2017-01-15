@@ -23,9 +23,6 @@ Cost Functions
 
 * ``numpartition_qaoa.py`` implements the cost function for bipartitioning a list of numbers.
 
-* ``graphpartition_qaoa.py`` implements the cost function for graph partitioning--i.e. minimial cut between two subgraphs of equal size
-
-* ``graphpartitioning_jaynescummingsdriver.py`` implements the graph partitioning problem with the constraint that the magnetization equals some constant `m`.
 
 Quickstart Examples
 -------------------
@@ -415,18 +412,10 @@ Source Code Docs
 
 Here you can find documentation for the different submodules in pyQAOA.
 
-grove.pyqaoa.graphpartition_jcdriver
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+grove.pyqaoa.qaoa
+~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.pyqaoa.graphpartition_jcdriver
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-grove.pyqaoa.graphpartition_qaoa
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: grove.pyqaoa.graphpartition_qaoa
+.. automodule:: grove.pyqaoa.qaoa
     :members:
     :undoc-members:
     :show-inheritance:
@@ -443,14 +432,6 @@ grove.pyqaoa.numpartition_qaoa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: grove.pyqaoa.numpartition_qaoa
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-grove.pyqaoa.qaoa
-~~~~~~~~~~~~~~~~~
-
-.. automodule:: grove.pyqaoa.qaoa
     :members:
     :undoc-members:
     :show-inheritance:

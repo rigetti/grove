@@ -209,7 +209,7 @@ class VQE(object):
         """
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
-            wf = qvm.wavefunction(quil_prog)
+            wf, _ = qvm.wavefunction(quil_prog)
             average_exp = np.conj(wf).T.dot(pauli_sum.dot(wf)).real
             return average_exp
         else:
