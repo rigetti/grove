@@ -89,5 +89,5 @@ Development and Testing
 
 We use pytest for testing. Tests can be run from the top-level directory using:
 ```
-pytest
+py.test
 ```
