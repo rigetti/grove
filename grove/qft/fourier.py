@@ -60,5 +60,37 @@ def qft(qubits):
     return p + bit_reversal(qubits)
 
 
+def inverse_qft(qubits):
+    """
+    Generate a program to compute the inverse quantum Fourier transform on
+    a set of qubits.
+
+    :param qubits: A list of qubit indexes.
+    :return: A Quil program to compute the inverse Fourier transform of the 
+             qubits.
+    """
+    
+    def core_inverse_qft(qubits):
+        q = qubits[0]
+        qs = qubits[1:]
+        if 1 == len(qubits):
+            return [H(q)]
+        else:
+            n = 1 + len(qs)
+            cR = []
+            for idx, i in enumerate(xrange(n - 1, 0, -1)):
+                q_idx = qs[idx]
+                angle = math.pi / 2 ** (n - i)
+                cR.append(CPHASE(-angle)(q, q_idx))
+            return core_inverse_qft(qs) + list(reversed(cR)) + [H(q)]
+    
+    qft_result = pq.Program().inst(core_inverse_qft(qubits))
+    qft_result = qft_result + bit_reversal(qubits)
+    inverse_qft = pq.Program()
+    while len(qft_result.actions) > 0:
+        new_inst = qft_result.actions.pop()[1]
+        inverse_qft.inst(new_inst)
+    return inverse_qft
+
 if __name__ == '__main__':
     print qft([0, 1, 2, 3])
