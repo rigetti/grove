@@ -15,27 +15,35 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+#
 ##############################################################################
 
-import pyquil.forest as Forest
 from pyquil.gates import X
 from grove.qft.fourier import *
+from grove.pyqaoa.utils import compare_progs # This would be nice to have in
+                                             # general purpose Util module
 
-def test_inverse_qft():
+def test_simple_inverse_qft():
     
-    qvm = Forest.Connection()
+    trial_prog = pq.Program()
+    trial_prog.inst(X(0))
+    trial_prog = trial_prog + inverse_qft([0])
     
-    p = pq.Program()
+    result_prog = pq.Program().inst([X(0), H(0)])
     
-    # Apply the QFT to 0, 1, 1, 0, 1, 0 (from n - 1 to 0), apply the QFT^-1,
-    # and verify that the original result is obtained
-    p.inst(X(1), X(2), X(4))
-    p = p + qft([0, 1, 2, 3, 4, 5])
-    p = p + inverse_qft([0, 1, 2, 3, 4, 5])
-    p.measure(0, 0).measure(1, 1).measure(2, 2).measure(3, 3).measure(4, 4).measure(5, 5)
-    wave_fn = qvm.wavefunction(p)
-    result = qvm.run(p, [0, 1, 2, 3, 4, 5])
+    compare_progs(trial_prog, result_prog)
     
-    assert result == [[0, 1, 1, 0, 1, 0]]
-    # 010110 = 22, accounting for float precision errors
-    assert abs(wave_fn[0][22] - 1) < 10 ** -9
+def test_multi_qubit_qft():
+    
+    trial_prog = pq.Program()
+    trial_prog.inst(X(0), X(1), X(2))
+    trial_prog = trial_prog + inverse_qft([0, 1, 2])
+    
+    result_prog = pq.Program().inst([X(0), X(1), X(2),
+                                     SWAP(0, 2), H(0),
+                                     CPHASE(-1.5707963267948966, 0, 1),
+                                     CPHASE(-0.7853981633974483, 0, 2),
+                                     H(1), CPHASE(-1.5707963267948966, 1, 2),
+                                     H(2)])
+    
+    compare_progs(trial_prog, result_prog)
