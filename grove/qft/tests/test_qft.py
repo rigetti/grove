@@ -1,8 +1,5 @@
 ##############################################################################
-#
-#    A collection of tests for the inverse quantum Fourier transform.
-#
-#    Written by Aaron Vontell on January 28th, 2017
+# Copyright 2016-2017 Rigetti Computing
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,11 +12,11 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
 ##############################################################################
 
-from pyquil.gates import X
-from grove.qft.fourier import *
+from pyquil.gates import *
+from grove.qft.fourier import inverse_qft
+import pyquil.quil as pq
 from grove.pyqaoa.utils import compare_progs # This would be nice to have in
                                              # general purpose Util module
 
@@ -45,6 +42,5 @@ def test_multi_qubit_qft():
                                      CPHASE(-0.7853981633974483, 0, 2),
                                      H(1), CPHASE(-1.5707963267948966, 1, 2),
                                      H(2)])
-    print(trial_prog)
-    print(result_prog)
+    
     compare_progs(trial_prog, result_prog)
