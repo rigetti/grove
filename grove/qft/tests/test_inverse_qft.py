@@ -45,5 +45,6 @@ def test_multi_qubit_qft():
                                      CPHASE(-0.7853981633974483, 0, 2),
                                      H(1), CPHASE(-1.5707963267948966, 1, 2),
                                      H(2)])
-    
+    print(trial_prog)
+    print(result_prog)
     compare_progs(trial_prog, result_prog)
