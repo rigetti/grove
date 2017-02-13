@@ -103,7 +103,7 @@ parameters or write your own minimizer.
     from scipy.optimize import minimize
     import numpy as np
 
-    vqe_inst = vqe(minimizer=minimize,
+    vqe_inst = VQE(minimizer=minimize,
                    minimizer_kwargs={'method': 'nelder-mead'})
 
 Before we run the minimizer, let us look manually at what expectation
