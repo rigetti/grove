@@ -4,7 +4,7 @@ Grove
 A collection of quantum algorithms built using the Rigetti Forest platform.
 Grove is licensed under the [Apache 2.0 license](https://github.com/rigetticomputing/grove/blob/master/LICENSE).
 
-[![Build Status](https://semaphoreci.com/api/v1/projects/af487aa0-bd6d-4b43-9610-9c8f3c3d787d/1123354/badge.svg)](https://semaphoreci.com/rigetti/grove) 
+[![Build Status](https://semaphoreci.com/api/v1/rigetti/grove/branches/master/badge.svg)](https://semaphoreci.com/rigetti/grove)
 [![Documentation Status](https://readthedocs.org/projects/grove-docs/badge/?version=latest)](http://grove-docs.readthedocs.io/en/latest/?badge=latest)
 
 Grove currently includes:
