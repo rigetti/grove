@@ -30,7 +30,7 @@ def print_fun(x):
     print x
 
 
-def maxcut_qaoa(graph, steps=1, rand_seed=None):
+def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None):
     """
     Max cut set up method
     """
@@ -47,7 +47,9 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None):
     for i in graph.nodes():
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
-    qaoa_inst = QAOA(CXN, len(graph.nodes()), steps=steps, cost_ham=cost_operators,
+    if connection is None:
+        connection = CXN
+    qaoa_inst = QAOA(connection, len(graph.nodes()), steps=steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
                      minimizer=minimize,
