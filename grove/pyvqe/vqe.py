@@ -248,18 +248,22 @@ class VQE(object):
                 for j, term in enumerate(pauli_sum.terms):
                     meas_basis_change = pq.Program()
                     qubits_to_measure = []
-                    for index, gate in term:
-                        if gate != 'I':
+                    if term.id() == "":
+                        meas_outcome = 1.0
+                    else:
+                        for index, gate in term:
                             qubits_to_measure.append(index)
                             if gate == 'X':
                                 meas_basis_change.inst(RY(-np.pi / 2, index))
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                    meas_outcome = expectation_from_sampling(quil_prog + meas_basis_change,
-                                                             qubits_to_measure,
-                                                             qvm, samples)
+                            meas_outcome = expectation_from_sampling(quil_prog + meas_basis_change,
+                                                                     qubits_to_measure,
+                                                                     qvm, samples)
+
                     expectation += term.coefficient * meas_outcome
+
                 return expectation.real
 
 

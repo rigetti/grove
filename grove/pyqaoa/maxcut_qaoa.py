@@ -30,9 +30,35 @@ def print_fun(x):
     print x
 
 
-def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None):
+def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
+                initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
+                vqe_option=None):
     """
     Max cut set up method
+
+    :param graph: Graph definition. Either networkx or list of tuples
+    :param steps: (Optional. Default=1) Trotterization order for the
+                  QAOA algorithm.
+    :param rand_seed: (Optional. Default=None) random seed when beta and
+                      gamma angles are not provided.
+    :param connection: (Optional) connection to the QVM. Default is None.
+    :param samples: (Optional. Default=None) VQE option. Number of samples
+                    (circuit preparation and measurement) to use in operator
+                    averaging.
+    :param initial_beta: (Optional. Default=None) Initial guess for beta
+                         parameters.
+    :param initial_gamma: (Optional. Default=None) Initial guess for gamma
+                          parameters.
+    :param minimizer_kwargs: (Optional. Default=None). Minimizer optional
+                             arguments.  If None set to
+                             {'method': 'Nelder-Mead',
+                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
+                                        'disp': False}
+    :param vqe_option: (Optional. Default=None). VQE optional
+                             arguments.  If None set to
+                       vqe_option = {'disp': print_fun, 'return_all': True,
+                       'samples': samples}
+
     """
     if not isinstance(graph, nx.Graph) and isinstance(graph, list):
         maxcut_graph = nx.Graph()
@@ -49,15 +75,24 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None):
 
     if connection is None:
         connection = CXN
+
+    if minimizer_kwargs is None:
+        minimizer_kwargs = {'method': 'Nelder-Mead',
+                            'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
+                                        'disp': False}}
+    if vqe_option is None:
+        vqe_option = {'disp': print_fun, 'return_all': True,
+                      'samples': samples}
+        print vqe_option
+
     qaoa_inst = QAOA(connection, len(graph.nodes()), steps=steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
+                     init_betas=initial_beta,
+                     init_gammas=initial_gamma,
                      minimizer=minimize,
-                     minimizer_kwargs={'method': 'Nelder-Mead',
-                                       'options': {'ftol': 1.0e-2,
-                                                   'xtol': 1.0e-2,
-                                                   'disp': False}},
-                     vqe_options={'disp': print_fun, 'return_all': True})
+                     minimizer_kwargs=minimizer_kwargs,
+                     vqe_options=vqe_option)
 
     return qaoa_inst
 
@@ -66,7 +101,7 @@ if __name__ == "__main__":
     # Sample Run:
     # Cutting 0 - 1 - 2 graph!
     inst = maxcut_qaoa([(0, 1), (1, 2)],
-                       steps=2, rand_seed=42)
+                       steps=2, rand_seed=42, samples=None)
     betas, gammas = inst.get_angles()
     probs = inst.probabilities(np.hstack((betas, gammas)))
     for state, prob in zip(inst.states, probs):
@@ -74,5 +109,5 @@ if __name__ == "__main__":
 
     print "Most frequent bitstring from sampling"
     most_freq_string, sampling_results = inst.get_string(
-            betas, gammas, samples=100)
+            betas, gammas)
     print most_freq_string
