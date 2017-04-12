@@ -83,7 +83,6 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     if vqe_option is None:
         vqe_option = {'disp': print_fun, 'return_all': True,
                       'samples': samples}
-        print vqe_option
 
     qaoa_inst = QAOA(connection, len(graph.nodes()), steps=steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
