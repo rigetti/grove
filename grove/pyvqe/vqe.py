@@ -44,7 +44,7 @@ class VQE(object):
     VQE is an object that encapsulates the VQE algorithm (functional
     minimization). The main components of the VQE algorithm are a minimizer
     function for performing the functional minimization, a function that takes a
-    vector of parameters and returns a parameterized Quil program, and a
+    vector of parameters and returns a Quil program, and a
     Hamiltonian of which to calculate the expectation value.
 
     Using this object:
@@ -53,7 +53,7 @@ class VQE(object):
         function that performs a gradient free minization--i.e
         scipy.optimize.minimize(. , ., method='Nelder-Mead')
 
-        2) call `inst.vqe_run(parametric_state_evolve, hamiltonian,
+        2) call `inst.vqe_run(variational_state_evolve, hamiltonian,
         initial_parameters)`. Returns the optimal parameters and minimum
         expecation
 
@@ -77,13 +77,13 @@ class VQE(object):
         self.minimizer_kwargs = minimizer_kwargs
         self.n_qubits = None
 
-    def vqe_run(self, parametric_state_evolve, hamiltonian, initial_params,
+    def vqe_run(self, variational_state_evolve, hamiltonian, initial_params,
                 gate_noise=None, measurement_noise=None,
                 jacobian=None, qvm=None, disp=None, samples=None, return_all=False):
         """
         functional minimization loop.
 
-        :param parametric_state_evolve: function that takes a set of parameters
+        :param variational_state_evolve: function that takes a set of parameters
                                         and returns a quil program.
         :param hamiltonian: (PauliSum) object representing the hamiltonian of
                             which to take the expectation value.
@@ -141,7 +141,7 @@ class VQE(object):
                            the function of the functional.
             :return: (float) expectation value
             """
-            quil_prog = parametric_state_evolve(params)
+            quil_prog = variational_state_evolve(params)
             mean_value = self.expectation(quil_prog, hamiltonian, samples, qvm)
             self._current_expectation = mean_value  # store for printing
             return mean_value
