@@ -44,7 +44,7 @@ class VQE(object):
     VQE is an object that encapsulates the VQE algorithm (functional
     minimization). The main components of the VQE algorithm are a minimizer
     function for performing the functional minimization, a function that takes a
-    vector of parameters and returns a parameterized Quil program, and a
+    vector of parameters and returns a pyQuil program, and a
     Hamiltonian of which to calculate the expectation value.
 
     Using this object:
@@ -53,7 +53,7 @@ class VQE(object):
         function that performs a gradient free minization--i.e
         scipy.optimize.minimize(. , ., method='Nelder-Mead')
 
-        2) call `inst.vqe_run(parametric_state_evolve, hamiltonian,
+        2) call `inst.vqe_run(variational_state_evolve, hamiltonian,
         initial_parameters)`. Returns the optimal parameters and minimum
         expecation
 
@@ -77,14 +77,14 @@ class VQE(object):
         self.minimizer_kwargs = minimizer_kwargs
         self.n_qubits = None
 
-    def vqe_run(self, parametric_state_evolve, hamiltonian, initial_params,
+    def vqe_run(self, variational_state_evolve, hamiltonian, initial_params,
                 gate_noise=None, measurement_noise=None,
                 jacobian=None, qvm=None, disp=None, samples=None, return_all=False):
         """
         functional minimization loop.
 
-        :param parametric_state_evolve: function that takes a set of parameters
-                                        and returns a quil program.
+        :param variational_state_evolve: function that takes a set of parameters
+                                        and returns a pyQuil program.
         :param hamiltonian: (PauliSum) object representing the hamiltonian of
                             which to take the expectation value.
         :param initial_params: (ndarray) vector of initial parameters for the
@@ -141,8 +141,8 @@ class VQE(object):
                            the function of the functional.
             :return: (float) expectation value
             """
-            quil_prog = parametric_state_evolve(params)
-            mean_value = self.expectation(quil_prog, hamiltonian, samples, qvm)
+            pyquil_prog = variational_state_evolve(params)
+            mean_value = self.expectation(pyquil_prog, hamiltonian, samples, qvm)
             self._current_expectation = mean_value  # store for printing
             return mean_value
 
@@ -187,12 +187,12 @@ class VQE(object):
             results.expectation_vals = expectation_vals
         return results
 
-    def expectation(self, quil_prog, pauli_sum, samples, qvm):
+    def expectation(self, pyquil_prog, pauli_sum, samples, qvm):
         """
         Computes the expectation value of pauli_sum over the distribution
-        generated from quil_prog.
+        generated from pyquil_prog.
 
-        :param quil_prog: (quil program)
+        :param pyquil_prog: (pyQuil program)
         :param pauli_sum: (PauliSum, ndarray) PauliSum representing the
                           operator of which to calculate the expectation value
                           or a numpy matrix representing the Hamiltonian
@@ -209,7 +209,7 @@ class VQE(object):
         """
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
-            wf, _ = qvm.wavefunction(quil_prog)
+            wf, _ = qvm.wavefunction(pyquil_prog)
             average_exp = np.conj(wf).T.dot(pauli_sum.dot(wf)).real
             return average_exp
         else:
@@ -230,7 +230,7 @@ class VQE(object):
                     operator_progs.append(op_prog)
                     operator_coeffs.append(p_term.coefficient)
 
-                result_overlaps = qvm.expectation(quil_prog,
+                result_overlaps = qvm.expectation(pyquil_prog,
                                                   operator_programs=operator_progs)
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
@@ -258,7 +258,7 @@ class VQE(object):
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = expectation_from_sampling(quil_prog + meas_basis_change,
+                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
                                                                      qubits_to_measure,
                                                                      qvm, samples)
 
@@ -286,14 +286,14 @@ def parity_even_p(state, marked_qubits):
     return bin(mask & state).count("1") % 2 == 0
 
 
-def expectation_from_sampling(quil_program, marked_qubits, qvm, samples):
+def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     """
     Calculation of Z_{i} at marked_qubits
 
     Given a wavefunctions, this calculates the expectation value of the Zi
     operator where i ranges over all the qubits given in marked_qubits.
 
-    :param quil_program: pyQuil program generating some state
+    :param pyquil_program: pyQuil program generating some state
     :param marked_qubits: The qubits within the support of the Z pauli
                           operator whose expectation value is being calculated
     :param qvm: A QVM connection.
@@ -303,9 +303,9 @@ def expectation_from_sampling(quil_program, marked_qubits, qvm, samples):
     """
     # construct program to measure
     for qindex in marked_qubits:
-        quil_program.measure(qindex, qindex)
+        pyquil_program.measure(qindex, qindex)
 
-    bitstring_samples = qvm.run(quil_program, range(max(marked_qubits) + 1), trials=samples)
+    bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
     bitstring_tuples = map(tuple, bitstring_samples)
 
     freq = Counter(bitstring_tuples)
