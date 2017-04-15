@@ -61,7 +61,7 @@ quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate t
     t = np.hstack((betas, gammas))
     param_prog = inst.get_parameterized_program()
     prog = param_prog(t)
-    wf = qvm_connection.wavefunction(prog)
+    wf, _ = qvm_connection.wavefunction(prog)
 
 ``wf`` is now a numpy array of complex-valued amplitudes for each computational
 basis state.  To visualize the distribution iterate over the states and
