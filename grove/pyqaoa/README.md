@@ -15,19 +15,6 @@ pairs and implements the cost function for MAX-CUT problems.
 `numberpartiition_qaoa.py` takes a list of numbers and set sup a QAOA instance
 for determining the equal biparitioning of the list.
 
-`graphpartion_qaoa.py` contains the `graphpart_qaoa()` method that can be used
-to construct the QAOA instance for finding the minimum cut between two equal
-sized partitions.  Like `maxcut_qaoa`, `graphpart_qaoa` accepts a NetworkX
-graph of a list of tuples defining the edges.  The method returns a QAOA instance
-with the appropriate cost Hamiltonians and driver Hamiltonians instantiated.
-
-`graphpartition_jaynescummingsdriver.py` contains the `graphpart_jc_qaoa()`
-method that can be used to construct the minimum cut between equal partition
-QAOA instance.  In this method the driver Hamiltonian is exchanged for the
-XY-Hamiltonian and the penalty term enforcing equal partitions is removed from
-the cost Hamiltonian.  The returned QAOA instance is an example of using the
-XY-Hamiltonian to satisfy linear constraints on the bit strings.
-
 ## Run
  
 The simplest way to interact with the QAOA library is through the methods provided for each problem instance.  For example, to run max cut import `maxcut_qaoa` from `maxcut_qaoa.py` and pass graph to the script. 
