@@ -34,7 +34,7 @@ of a set of parameters :math:`\vec{\theta}` and performing a series of measureme
 in the appropriate basis. The paramaterized state (or ansatz) preparation can be tricky
 in these algorithms and can dramatically affect performance.  Our ``VQE`` module allows any
 Python function that returns a pyQuil program to be used as an ansatz generator.  This
-function is passed into ``vqe_run`` as the ``parameteric_state_evolve`` argument. More details
+function is passed into ``vqe_run`` as the ``variational_state_evolve`` argument. More details
 are in the `source documentation <./vqe/vqe_source.html#grove.pyvqe.vqe.VQE.vqe_run>`_.
 
 Measurements are then performed on these states based on a Pauli operator decomposition of
@@ -162,7 +162,6 @@ Now with sampling...
             for angle in angle_range]
 
     import matplotlib.pyplot as plt
-    %matplotlib inline
     plt.xlabel('Angle [radians]')
     plt.ylabel('Expectation value')
     plt.plot(angle_range, data)
@@ -334,7 +333,7 @@ easily change the number of gates.
 
 .. code:: python
 
-    vqe_inst = vqe(minimizer=minimize,
+    vqe_inst = VQE(minimizer=minimize,
                    minimizer_kwargs={'method': 'nelder-mead'})
     initial_angles = [1.0, 1.0]
     result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles, None, qvm=qvm)
