@@ -19,6 +19,7 @@ def n_qubit_control(controls, target, u, gate_name):
 
     Uses a number of gates quadratic in the number of qubits, and defines a linear number of new
     gates. (Roots and adjoints of u.)
+
     :param controls: The indices of the qubits to condition the gate on.
     :param target: The index of the target of the gate.
     :param u: The unitary gate to be controlled, given as a numpy array.
@@ -81,8 +82,9 @@ def diffusion_operator(qubits):
     significant qubit to least significant qubit.
 
     The diffusion operator is the diagonal operator given by(1, -1, -1, ..., -1).
+
     :param qubits: A list of ints corresponding to the qubits to operate on. The operator
-    operates on bistrings of the form |qubits[0], ..., qubits[-1]>.
+                   operates on bistrings of the form |qubits[0], ..., qubits[-1]>.
     """
     p = pq.Program()
 
@@ -107,13 +109,14 @@ def grover(oracle, qubits, query_qubit, num_iter=None):
     Implementation of Grover's Algorithm for a given oracle.
 
     The query qubit will be left in the zero state afterwards.
+
     :param oracle: An oracle defined as a Program. It should send |x>|q> to |x>|q \oplus f(x)>,
-    where |q> is a a query qubit, and the range of f is {0, 1}.
+                   where |q> is a a query qubit, and the range of f is {0, 1}.
     :param qubits: List of qubits for Grover's Algorithm. The last is assumed to be query for the
-     oracle.
+                   oracle.
     :param query_qubit: The qubit |q> that the oracle write its answer to.
     :param num_iter: The number of iterations to repeat the algorithm for. The default is
-    int(pi(sqrt(N))/4.
+                     int(pi(sqrt(N))/4.
     :return: A program corresponding to the desired instance of Grover's Algorithm.
     """
     if len(qubits) < 1:
@@ -158,9 +161,10 @@ def basis_selector_oracle(bitstring, qubits, query_qubit):
     Defines an oracle that selects the ith element of the computational basis.
 
     Sends the state |x>|q> -> |x>|!q> if x==bitstring and |x>|q> otherwise.
+
     :param bitstring: The desired bitstring, given as a string of ones and zeros. e.g. "101"
     :param qubits: The qubits the oracle is called on, the last of which is the query qubit. The
-    qubits are assumed to be ordered from most significant qubit to least signicant qubit.
+                   qubits are assumed to be ordered from most significant qubit to least signicant qubit.
     :param query_qubit: The qubit |q> that the oracle write its answer to.
     :return: A program representing this oracle.
     """
