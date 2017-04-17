@@ -26,6 +26,7 @@ of which has its own self-contained documentation.
    qaoa
    qft
    phaseestimation
+   grover
 
 Indices and Tables
 __________________
