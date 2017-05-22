@@ -15,25 +15,22 @@
 ##############################################################################
 
 """
-Implementation of the Jordan-Wigner Transform
+The Jordan-Wigner Transform
 """
 from pyquil.paulis import PauliTerm
 
 
-class JW(object):
-
-    def __init__(self):
-        """
-        Jordan-Wigner object the appropriate Pauli operators
-        """
-
+class JWTransform(object):
+    """
+    Jordan-Wigner object the appropriate Pauli operators
+    """
     def create(self, index, boson=False):
         """
         Fermion creation operator at orbital 'n'
 
         :param Int n: creation index
         """
-        return self._operator_generator(index, 1.0, boson=boson)
+        return self._operator_generator(index, -1.0)
 
     def kill(self, index, boson=False):
         """
@@ -41,25 +38,21 @@ class JW(object):
 
         :param Int n: annihilation index
         """
-        return self._operator_generator(index, 1.0, boson=boson)
+        return self._operator_generator(index, 1.0)
 
-    def _operator_generator(self, index, conj, boson=False):
+    def _operator_generator(self, index, conj):
         """
         Internal method to generate the appropriate operator
         """
         pterm = PauliTerm('I', 0, 1.0)
         Zstring = PauliTerm('I', 0, 1.0)
-        if not boson:
-            for j in range(index):
-                Zstring = Zstring*PauliTerm('Z', j, 1.0)
+        for j in range(index):
+            Zstring = Zstring*PauliTerm('Z', j, 1.0)
 
-            pterm1 = Zstring*PauliTerm('X', index, 0.5)
-
-            scalar = 0.5 * conj * 1.0j
-
-            pterm2 = Zstring*PauliTerm('Y', index, scalar)
-
-            pterm = pterm * (pterm1 + pterm2)
+        pterm1 = Zstring*PauliTerm('X', index, 0.5)
+        scalar = 0.5 * conj * 1.0j
+        pterm2 = Zstring*PauliTerm('Y', index, scalar)
+        pterm = pterm * (pterm1 + pterm2)
 
         pterm = pterm.simplify()
         return pterm
