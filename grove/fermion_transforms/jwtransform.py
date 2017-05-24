@@ -24,7 +24,7 @@ class JWTransform(object):
     """
     Jordan-Wigner object the appropriate Pauli operators
     """
-    def create(self, index, boson=False):
+    def create(self, index):
         """
         Fermion creation operator at orbital 'n'
 
@@ -32,7 +32,7 @@ class JWTransform(object):
         """
         return self._operator_generator(index, -1.0)
 
-    def kill(self, index, boson=False):
+    def kill(self, index):
         """
         Fermion annihilation operator at orbital 'n'
 
