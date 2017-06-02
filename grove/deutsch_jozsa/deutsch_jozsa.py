@@ -122,6 +122,7 @@ if __name__ == "__main__":
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancilla, scratch_bit)
     deutsch_program += deutsch_jozsa(oracle, qubits, ancilla)
+    deutsch_program.out()
 
     print deutsch_program
     qvm = forest.Connection()
