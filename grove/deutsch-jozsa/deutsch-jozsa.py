@@ -1,3 +1,5 @@
+"""Module for the Deutsch-Jozsa Algorithm."""
+
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
@@ -17,10 +19,9 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
-    # answer bit may or may not be a data bit
     bits_for_funct = [scratch_bit] + qubits
-
     p = pq.Program()
+
     p.defgate("FUNCT", unitary_funct)
     p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
     p.inst(tuple(['FUNCT'] + bits_for_funct))
@@ -55,7 +56,25 @@ def deutsch_jozsa(oracle, qubits, ancilla):
     return p
 
 def unitary_function(mappings):
+    """
+    Creates a unitary transformation that maps each state to the values specified
+    in mappings.
 
+    Some (but not all) of these transformations involve a scratch qubit, so one is
+    always provided. That is, if given the mapping of n qubits, the calculated transformation
+    will be on n + 1 qubits, where the 0th is the scratch bit and the return value
+    of the function is left in the 1st.
+
+    :param list mappings: List of the mappings of f(x) on all length n bitstrings.
+           For example, the following mapping:
+           00 -> 0
+           01 -> 1
+           10 -> 1
+           11 -> 0
+           Would be represented as [0, 1, 1, 0].
+    :return: Matrix representing specified unitary transformation.
+    :rtype: numpy array
+    """
     n = int(np.log2(len(mappings)))
     SWAP_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
                             [0, 1, 0, 0], [0, 0, 0, 1]])
@@ -99,7 +118,6 @@ if __name__ == "__main__":
     qubits = [deutsch_program.alloc() for _ in range(n)]
     ancilla = deutsch_program.alloc()
     scratch_bit = deutsch_program.alloc()
-
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancilla, scratch_bit)
