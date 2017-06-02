@@ -19,6 +19,7 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
+    assert is_unitary(unitary_funct), "Function must be unitary."
     bits_for_funct = [scratch_bit] + qubits
     p = pq.Program()
 
@@ -100,6 +101,12 @@ def unitary_function(mappings):
 
 def integer_to_bitstring(x, n):
     return ''.join([str((x >> i) & 1) for i in range(0, n)])
+
+def is_unitary(matrix):
+    rows, cols = matrix.shape
+    if rows != cols:
+        return False
+    return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
 
 if __name__ == "__main__":
     import pyquil.forest as forest
