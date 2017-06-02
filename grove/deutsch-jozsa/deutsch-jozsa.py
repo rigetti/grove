@@ -66,12 +66,12 @@ def unitary_function(mappings):
     of the function is left in the 1st.
 
     :param list mappings: List of the mappings of f(x) on all length n bitstrings.
-           For example, the following mapping:
-           00 -> 0
-           01 -> 1
-           10 -> 1
-           11 -> 0
-           Would be represented as [0, 1, 1, 0].
+                          For example, the following mapping:
+                          00 -> 0
+                          01 -> 1
+                          10 -> 1
+                          11 -> 0
+                          Would be represented as [0, 1, 1, 0].
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
