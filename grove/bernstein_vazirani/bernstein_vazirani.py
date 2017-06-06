@@ -60,8 +60,8 @@ def unitary_function(vec_a, b):
     always provided. That is, if given the mapping of n qubits, the calculated transformation
     will be on n + 1 qubits, where the 0th is the scratch bit and the return value
     of the function is left in the 1st.
-    :param numpy array vec_a:
-    :param int b:
+    :param numpy array vec_a: the vector representing a in the Bernstein-Vazirani function
+    :param int b: the bit representing b in the Bernstein-Vazirani function
     Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
@@ -73,6 +73,11 @@ def unitary_function(vec_a, b):
                                 [0, 1, 0, 0], [0, 0, 0, 1]])
 
         return np.kron(SWAP_matrix, np.identity(2 ** (n - 1)))
+
+    # Utilizes the fact that, when vec_a is not all zero, exactly half of the outputs will be 0 and half will be 1
+    # as per Deutsch-Jozsa.
+    # This implementation also uses the property that having exactly one 1 in every row and column
+    # means the matrix is unitary.
     for j in range(2 ** n):
         val = (int(np.dot(vec_a, bitstring_to_array(integer_to_bitstring(j, n)))) + b) % 2
         i = index_lists[val].pop()
