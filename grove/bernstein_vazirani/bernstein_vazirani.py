@@ -89,7 +89,7 @@ def unitary_function(vec_a, b):
     return np.kron(np.identity(2), unitary_funct)
 
 def integer_to_bitstring(x, n):
-    return ''.join([str((x >> i) & 1) for i in range(0, n)])
+    return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
 
 def bitstring_to_array(bitstring):
     return np.array(map(int, bitstring))
@@ -128,4 +128,4 @@ if __name__ == "__main__":
     print bv_program
     qvm = forest.Connection()
     results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
-    print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
+    print "The bitstring a is given by: ", "".join(map(str, results[0]))
