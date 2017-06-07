@@ -66,13 +66,16 @@ def unitary_function(vec_a, b):
     :rtype: numpy array
     """
     n = len(vec_a)
-    unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
-    index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
     if sum(vec_a) == 0:
         SWAP_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
                                 [0, 1, 0, 0], [0, 0, 0, 1]])
 
         return np.kron(SWAP_matrix, np.identity(2 ** (n - 1)))
+
+    unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
+    index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
+
+    index_map = {0: 0, 1: 2**(n-1)}
 
     # Utilizes the fact that, when vec_a is not all zero, exactly half of the outputs will be 0 and half will be 1
     # as per Deutsch-Jozsa.
@@ -80,8 +83,9 @@ def unitary_function(vec_a, b):
     # means the matrix is unitary.
     for j in range(2 ** n):
         val = (int(np.dot(vec_a, bitstring_to_array(integer_to_bitstring(j, n)))) + b) % 2
-        i = index_lists[val].pop()
+        i = index_map[val]
         unitary_funct[i, j] = 1
+        index_map[val] += 1
     return np.kron(np.identity(2), unitary_funct)
 
 def integer_to_bitstring(x, n):
