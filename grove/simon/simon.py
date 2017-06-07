@@ -124,7 +124,7 @@ if __name__ == "__main__":
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
     for i in range(2 ** n):
-        val = str(input(integer_to_bitstring(i, n) + ': '))
+        val = raw_input(integer_to_bitstring(i, n) + ': ')
         assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
         mappings.append(val)
 
@@ -136,9 +136,8 @@ if __name__ == "__main__":
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
     simon_program += simon(oracle, qubits)
-    simon_program.out()
 
     print simon_program
     qvm = forest.Connection()
-    results = qvm.run_and_measure(simon_program, [q.index() for q in qubits] + [a.index() for a in ancillas], 10)
+    results = qvm.run_and_measure(simon_program, [q.index() for q in qubits], 10)
     print results
