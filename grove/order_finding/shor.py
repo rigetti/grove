@@ -15,6 +15,8 @@
 ##############################################################################
 
 import random
+import pyquil.forest as forest
+from order_finding import calculate_order
 
 def factor(N):
     '''
@@ -37,6 +39,7 @@ def factor(N):
     
     # Within this loop, N is the currently selected value for the factor list
     while True:
+        print("In loop ", factors)
         
         # Done if at end of list
         if index == len(factors):
@@ -63,9 +66,9 @@ def factor(N):
             continue
             
         # Continue with the quantum part of Shor's if unlucky with X
-        quantum_algo = quantum_subroutine(X, N) # returns the program
-        
-        r = # run it?
+        print("Starting order calc")
+        r = calculate_order(X, N) # returns the program
+        print("Got order result")
         
         # Compute p and q
         a = X**(r/2) + 1
@@ -88,6 +91,14 @@ def isPrime(n):
     :param n: The number to check the primality of
     :return: true if n is prime, and false otherwise
     '''
+    if n % 2 == 0:
+        return False
+    i = 3
+    while i*i <= n:
+        if n % i == 0:
+            return False
+        i += 2
+    return True
     
 def gcd(a, b):
     '''
@@ -96,6 +107,7 @@ def gcd(a, b):
     :param b: The second value to consider
     :return: The greatest common denominator of a and b
     '''
+    print("In gcd")
     
     while b != 0:
         bTemp = b
@@ -103,12 +115,4 @@ def gcd(a, b):
         a = bTemp
     return a
 
-def quantum_subroutine(X, N):
-    '''
-    Returns the quantum subroutine required for Shor's algorithm. Will find the
-    period of the function f(x) = X^r mod N
-    :param X: The X value to plug into the equation above
-    :param N: The N value to plug into the equation above
-    :return: A Quil program which will find period of the function f(x) = 
-             X^r mod N
-    '''
+print factor(3*7*5)
