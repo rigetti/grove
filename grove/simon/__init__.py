@@ -1,0 +1,1 @@
+# Simon's algorithm init
