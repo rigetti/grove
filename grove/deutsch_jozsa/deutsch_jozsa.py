@@ -24,7 +24,7 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     p = pq.Program()
 
     p.defgate("FUNCT", unitary_funct)
-    p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
+    p.defgate("FUNCT-INV", unitary_funct.T.conj())
     p.inst(tuple(['FUNCT'] + bits_for_funct))
     p.inst(CNOT(qubits[0], ancilla))
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
