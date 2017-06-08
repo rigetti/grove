@@ -1,1 +1,0 @@
-# Bernstein-Vazirani algorithm init
