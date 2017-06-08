@@ -89,6 +89,9 @@ def integer_to_bitstring(x, n):
 def bitstring_to_array(bitstring):
     return np.array(map(int, bitstring))
 
+def bitstring_to_integer(bitstring):
+    return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
+
 def is_unitary(matrix):
     rows, cols = matrix.shape
     if rows != cols:
@@ -97,3 +100,9 @@ def is_unitary(matrix):
 
 def get_n_bits(prog, n):
     return [prog.alloc() for _ in range(n)]
+
+def most_siginifcant_bit(lst):
+    msb = 0
+    while lst[msb] != 1:
+        msb += 1
+    return msb

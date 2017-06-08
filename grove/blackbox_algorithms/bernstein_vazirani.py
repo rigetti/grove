@@ -1,4 +1,4 @@
-"""Module for the General Black Box Algorithms."""
+"""Module for the Bernstein-Vazirani Algorithm."""
 
 import pyquil.quil as pq
 from pyquil.gates import *
