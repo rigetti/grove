@@ -7,9 +7,16 @@ import utils as bbu
 from blackbox import AbstractBlackBoxAlgorithm
 
 class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
-    def __init__(self, n, m, vec_a, b):
+    def __init__(self, n, vec_a, b):
+        """
+        Creates an instance of an object to simulate the Bernstein-Vazirani Algorithm
+        such that the function f(x) is given by a * x + b, where a is a bitwise dot product and all additions are mod 2.
+        :param n: the number of bits in the domain of the function
+        :param vec_a: a length n vector of 0s and 1s
+        :param b: a binary bit, either 0 or 1
+        """
         func = lambda x: (int(np.dot(vec_a, bbu.bitstring_to_array(bbu.integer_to_bitstring(x, len(vec_a))))) + b) % 2
-        AbstractBlackBoxAlgorithm.__init__(self, n, m, func)
+        AbstractBlackBoxAlgorithm.__init__(self, n, 1, func)
 
     def generate_prog(self, oracle):
         """
@@ -35,6 +42,8 @@ if __name__ == "__main__":
     import pyquil.forest as forest
     import sys
 
+    # vec_a should be entered as a bitstring
+    # for example: python bernstein_vazirani.py 1010 1
     if len(sys.argv) != 3:
         raise ValueError("Use program as: python bernstein_vazirani.py vec_a b")
     bitstring = sys.argv[1]
@@ -48,7 +57,7 @@ if __name__ == "__main__":
 
     n = len(vec_a)
 
-    bv = BernsteinVaziraniAlgorithm(n, 1, vec_a, b)
+    bv = BernsteinVaziraniAlgorithm(n, vec_a, b)
     bv_program = bv.get_program()
     qubits = bv.get_input_bits()
 
@@ -56,4 +65,7 @@ if __name__ == "__main__":
     print bv_program
     qvm = forest.Connection()
     results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
+
+    # Classical post-processing
+    # The string of bits given by the end state of the input qubits gives the vector a.
     print "The bitstring a is given by: ", "".join(map(str, results[0]))

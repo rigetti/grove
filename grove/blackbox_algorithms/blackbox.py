@@ -11,7 +11,9 @@ class AbstractBlackBoxAlgorithm(object):
         """
         :param n: the number of bits in the domain of the function
         :param m: the number of bits in the range of the function
-        :param func: the function that the blackbox oracle is to emulate
+        :param func: the function that the blackbox oracle is to emulate. While the input space and output spaces are binary strings,
+        the function itself is expected to take base 10 integer inputs from 0 to 2^n - 1, inclusive, and output in the space of base 10 integers
+        from 0 to 2^m - 1, inclusive
         """
         self._n = n
         self._m = m
