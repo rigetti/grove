@@ -17,10 +17,6 @@ class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
         For given a in {0,1}^n and b in {0,1}, can determine a with one query to an oracle
         that provides f(x) = a*x+b (mod 2) for x in {0,1}^n.
         :param oracle: Program representing unitary application of function.
-        :param qubits: List of qubits that enter as state |x>.
-        :param ancilla: Qubit to serve as input |y>.
-        :return: A program corresponding to the desired instance of the
-                 Bernstein-Vazirani Algorithm.
         :rtype: Program
         """
         p = pq.Program()

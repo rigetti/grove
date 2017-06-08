@@ -1,4 +1,4 @@
-"""Module for the Bernstein-Vazirani Algorithm."""
+"""Module for Simon's Algorithm."""
 
 import pyquil.quil as pq
 from pyquil.gates import *
@@ -13,15 +13,9 @@ class Simon(AbstractBlackBoxAlgorithm):
 
     def generate_prog(self, oracle):
         """
-        Implementation of the Bernstein-Vazirani Algorithm.
-        For given a in {0,1}^n and b in {0,1}, can determine a with one query to an oracle
-        that provides f(x) = a*x+b (mod 2) for x in {0,1}^n.
+        Implementation of Simon's Algorithm.
+        For given f: {0,1}^n -> {0,1}^n, determine if f is one-to-one, or two-to-one with a non-zero mask s.
         :param oracle: Program representing unitary application of function.
-        :param qubits: List of qubits that enter as state |x>.
-        :param ancilla: Qubit to serve as input |y>.
-        :return: A program corresponding to the desired instance of the
-                 Bernstein-Vazirani Algorithm.
-        :rtype: Program
         """
         p = pq.Program()
 
@@ -44,11 +38,6 @@ if __name__ == "__main__":
         val = raw_input(bbu.integer_to_bitstring(i, n) + ': ')
         assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
         mappings.append(val)
-
-    simon_program = pq.Program()
-    qubits = [simon_program.alloc() for _ in range(n)]
-    ancillas = [simon_program.alloc() for _ in range(n)]
-    scratch_bit = simon_program.alloc()
 
     simon = Simon(n, n, mappings)
     simon_program = simon.get_program()
