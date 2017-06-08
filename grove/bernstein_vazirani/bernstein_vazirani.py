@@ -73,7 +73,6 @@ def unitary_function(vec_a, b):
         return np.kron(SWAP_matrix, np.identity(2 ** (n - 1)))
 
     unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
-    index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
 
     index_map = {0: 0, 1: 2**(n-1)}
 
