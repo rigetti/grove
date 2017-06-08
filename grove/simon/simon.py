@@ -1,9 +1,8 @@
-"""Module for the Bernstein-Vazirani Algorithm."""
+"""Module for the Simon's Algorithm."""
 
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
-from operator import xor
 
 def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     """
