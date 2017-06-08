@@ -179,5 +179,23 @@ if __name__ == "__main__":
                 W = np.insert(W, len(W), z, 0)
 
     # Generate one final vector that is not orthonormal to the mask s
+    insert_row_num = 0
+    while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
+        insert_row_num += 1
 
+    new_row = np.zeros(shape=(n,))
+    new_row[insert_row_num] = 1
+    W = np.insert(W, insert_row_num, new_row, 0)
+
+    s = np.zeros(shape=(n,))
+    s[insert_row_num] = 1
+
+    # iterate backwards, starting from second to last row
+    for row_num in range(n-2, -1, -1):
+        row = W[row_num]
+        for col_num in range(row_num+1, n):
+            if row[col_num] == 1:
+                s[row_num] = int(s[row_num]) ^ int(s[col_num])
+
+    print "The mask s is ", ''.join([str(int(bit)) for bit in s])
     print "Iterations of the algorithm: ", iterations
