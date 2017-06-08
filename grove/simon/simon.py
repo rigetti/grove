@@ -3,6 +3,7 @@
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
+from operator import xor
 
 def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     """
@@ -10,7 +11,7 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     |x>|y> -> |x>|f(x) xor y>
     :param unitary_funct: Matrix representation of the function f, i.e. the
                           unitary transformation that must be applied to a
-                          state |x> to put f(x) in qubit 0.
+                          state |x> to get |f(x)>
     :param qubits: List of qubits that enter as input |x>.
     :param ancillas: List of qubits to serve as the ancilliary input |y>.
     :param scratch_bit: Empty qubit to be used as scratch space.
@@ -100,8 +101,9 @@ def unitary_function(mappings):
 
     return unitary_funct
 
+# TODO: merge with Deutsch-Jozsa code and decide on a standard
 def integer_to_bitstring(x, n):
-    return ''.join([str((x >> i) & 1) for i in range(0, n)])[::-1]
+    return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
 
 def bitstring_to_integer(bitstring):
     return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
@@ -114,6 +116,12 @@ def is_unitary(matrix):
     if rows != cols:
         return False
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
+
+def most_siginifcant_bit(lst):
+    msb = 0
+    while lst[msb] != 1:
+        msb += 1
+    return msb
 
 if __name__ == "__main__":
     import pyquil.forest as forest
@@ -139,5 +147,37 @@ if __name__ == "__main__":
 
     print simon_program
     qvm = forest.Connection()
-    results = qvm.run_and_measure(simon_program, [q.index() for q in qubits], 10)
-    print results
+
+    # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
+    iterations = 0
+    W = None
+    while True:
+        if W is not None and len(W) == n-1:
+            break
+        z = np.array(qvm.run_and_measure(simon_program, [q.index() for q in qubits])[0])
+        iterations += 1
+        while np.any(z): # while it's not all zeros
+            if W is None:
+                W = z
+                W = W.reshape(1, n)
+                break
+            msb_z = most_siginifcant_bit(z)
+
+            got_to_end = True
+            for row_num in range(len((W))):
+                row = W[row_num]
+                msb_row = most_siginifcant_bit(row)
+                if msb_row == msb_z:
+                    z = np.array([z[i] ^ row[i] for i in range(n)])
+                    got_to_end = False
+                    break
+                elif msb_row > msb_z:
+                    W = np.insert(W, row_num, z, 0)
+                    got_to_end = False
+                    break
+            if got_to_end:
+                W = np.insert(W, len(W), z, 0)
+
+    # Generate one final vector that is not orthonormal to the mask s
+
+    print "Iterations of the algorithm: ", iterations
