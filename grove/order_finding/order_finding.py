@@ -47,7 +47,7 @@ def order_finding(a, N):
     # The number of bits needed to specify N
     L = int(np.log2(len(U)))
 
-    # Can have as many bits as desired. For accuracy > 1/4, use at least 2L + 3
+    # Can have as many bits as desired. For accuracy > 3/4, use at least 2L + 3
     t = 2*L + 3
 
     # instantiate registers
@@ -104,7 +104,7 @@ def calculate_order(a, N, iteration_scalar=8, verbose=False):
 
     if verbose:
         print "The following Quil code was generated:"
-        print p, '\n'
+        print p
 
     qvm = forest.Connection()
 
@@ -179,6 +179,7 @@ def gcd(a, b):
     return gcd(b, a % b)
 
 
+
 if __name__ == "__main__":
 
 
@@ -194,5 +195,7 @@ if __name__ == "__main__":
 
     if order_quantum != order_classical:
         print "Try again with more iterations or higher precision (more qubits in register 1)."
+
+
 
 
