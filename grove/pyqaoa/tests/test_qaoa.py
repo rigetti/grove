@@ -21,6 +21,7 @@ import pyquil.forest as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
+from pyquil.wavefunction import Wavefunction
 from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
 
@@ -35,7 +36,7 @@ def test_probabilities():
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -1.17642098e-05 - 1j*7.67538040e-06])
     fakeQVM = Mock(spec=qvm_module.Connection())
-    fakeQVM.wavefunction = Mock(return_value=(wf, 0))
+    fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf), 0))
     inst = QAOA(fakeQVM, n_qubits, steps=p,
                 rand_seed=42)
 
