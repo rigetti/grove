@@ -76,14 +76,14 @@ if __name__ == "__main__":
             if W is None:
                 W = z.reshape(1, n)
                 break
-            msb_z = bbu.most_siginifcant_bit(z)
+            msb_z = bbu.most_significant_bit(z)
 
             # Search for a row to insert z into, so that it has an early significant bit than the row below
             # and a later one than the row above (when reading left-to-right)
             got_to_end = True
             for row_num in range(len((W))):
                 row = W[row_num]
-                msb_row = bbu.most_siginifcant_bit(row)
+                msb_row = bbu.most_significant_bit(row)
                 if msb_row == msb_z:
                     # special case: if equality, xor with row for another potential orthonormal vector
                     z = np.array([z[i] ^ row[i] for i in range(n)])

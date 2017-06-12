@@ -129,7 +129,7 @@ def get_n_bits(prog, n):
     """
     return [prog.alloc() for _ in range(n)]
 
-def most_siginifcant_bit(lst):
+def most_significant_bit(lst):
     """
     Finds the position of the most significant bit in a list of 1s and 0s, i.e. the first position where a 1 appears, reading left to right.
     :param lst: a list of 0s and 1s
