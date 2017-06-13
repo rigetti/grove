@@ -26,17 +26,15 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bits):
     p.defgate("FUNCT-INV", unitary_funct.T.conj())  # inverse of a unitary is given by the conjugate transpose
 
     p.inst(tuple(['FUNCT'] + bits_for_funct))
-    p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits[-len(ancillas):], ancillas)))  # copy bits from lowest bits onto ancillas
+    p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits[-len(ancillas):], ancillas)))  #  copy bits from lowest bits onto ancillas
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
 
     return p
 
+
 def unitary_from_function(func, num_domain_bits, num_range_bits):
     """
-    Creates a unitary function from a given function, assuming that the range space is not larger than the domain space,
-    i.e. num_domain_bits >= num_range_bits.
-
-    This makes sense given that blackbox problems typically map the domain down to a space of smaller or equal size
+    Creates a unitary matrix from a given function.
 
     :param func: function that maps {0,1}^num_domain_bits to {0,1}^num_range_bits
                  function should be callable as f(x), where x is in [0, 2^num_domain_bits) and f(x) is in [0, 2^num_range_bits)
@@ -87,6 +85,7 @@ def unitary_from_function(func, num_domain_bits, num_range_bits):
 
     return (U, new_bits)
 
+
 def integer_to_bitstring(x, n):
     """
     :param x: a positive base 10 integer
@@ -96,6 +95,7 @@ def integer_to_bitstring(x, n):
     """
     return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
 
+
 def bitstring_to_array(bitstring):
     """
     :param bitstring: bitstring to convert into an array
@@ -103,12 +103,14 @@ def bitstring_to_array(bitstring):
     """
     return np.array(map(int, bitstring))
 
+
 def bitstring_to_integer(bitstring):
     """
     :param bitstring: The binary string to convert
     :return: the base 10 number corresponding bitstring, presumed to be in binary.
     """
     return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
+
 
 def is_unitary(matrix):
     """
@@ -120,6 +122,7 @@ def is_unitary(matrix):
         return False
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
 
+
 def get_n_bits(prog, n):
     """
     Produces n new qubits for a program and returns them in a list
@@ -129,10 +132,11 @@ def get_n_bits(prog, n):
     """
     return [prog.alloc() for _ in range(n)]
 
+
 def most_significant_bit(lst):
     """
     Finds the position of the most significant bit in a list of 1s and 0s, i.e. the first position where a 1 appears, reading left to right.
-    :param lst: a list of 0s and 1s
+    :param lst: a list of 0s and 1s with at least one 1
     :return: the first position in lst that a 1 appears
     """
     msb = 0
