@@ -19,7 +19,8 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
-    assert is_unitary(unitary_funct), "Function must be unitary."
+    if not is_unitary(unitary_funct):
+        raise ValueError, "Function must be unitary."
     bits_for_funct = [scratch_bit] + qubits
     p = pq.Program()
 
