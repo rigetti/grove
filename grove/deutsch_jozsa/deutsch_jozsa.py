@@ -100,7 +100,7 @@ def unitary_function(mappings):
 
 
 def integer_to_bitstring(x, n):
-    return ''.join([str((x >> i) & 1) for i in range(0, n)])
+    return ''.join([str((x >> i) & 1) for i in xrange(0, n)])
 
 def is_unitary(matrix):
     rows, cols = matrix.shape
