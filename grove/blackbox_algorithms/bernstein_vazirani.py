@@ -17,6 +17,8 @@ class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
         :param n: the number of bits in the domain of the function
         :param vec_a: a length n vector of 0s and 1s
         :param b: a binary bit, either 0 or 1
+        :return: An instance of the Bernstein-Vazirani Algorithm with n bit domain simulating f(x) = vec_a * x + b, as described above.
+        :rtype: BernsteinVaziraniAlgorithm
         """
         func = lambda x: (int(np.dot(vec_a, bbu.bitstring_to_array(bbu.integer_to_bitstring(x, len(vec_a))))) + b) % 2
         AbstractBlackBoxAlgorithm.__init__(self, n, 1, func)
@@ -27,6 +29,7 @@ class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
         For given a in {0,1}^n and b in {0,1}, can determine a with one query to an oracle
         that provides f(x) = a*x+b (mod 2) for x in {0,1}^n.
         :param oracle: Program representing unitary application of function.
+        :return: a Program that has all the gates needed to simulate the Bernstein-Vazirani Algorithm. Note that measurements are not taken.
         :rtype: Program
         """
         p = pq.Program()
