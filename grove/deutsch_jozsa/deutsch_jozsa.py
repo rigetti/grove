@@ -100,13 +100,28 @@ def unitary_function(mappings):
 
 
 def integer_to_bitstring(x, n):
+    """
+    Converts a positive integer into a bitstring.
+
+    :param int x: The integer to convert
+    :param int n: The length of the desired bitstring
+    :return: x as an n-bit string
+    :rtype: str
+    """
     return ''.join([str((x >> i) & 1) for i in xrange(0, n)])
 
-def is_unitary(matrix):
-    rows, cols = matrix.shape
+def is_unitary(mat):
+    """
+    Checks if a matrix is unitary.
+
+    :param matrix mat:
+    :return: Whether or not mat is unitary
+    :rtype: bool
+    """
+    rows, cols = mat.shape
     if rows != cols:
         return False
-    return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
+    return np.allclose(np.eye(rows), mat.dot(mat.T.conj()))
 
 if __name__ == "__main__":
     import pyquil.forest as forest
@@ -116,7 +131,7 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
-    for i in range(2 ** n):
+    for i in xrange(2 ** n):
         val = int(input(integer_to_bitstring(i, n) + ': '))
         assert val in [0,1], "f(x) must return only 0 and 1"
         mappings.append(val)
