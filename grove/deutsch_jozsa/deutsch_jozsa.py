@@ -10,12 +10,12 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
 
-    :param unitary_funct: Matrix representation of the function f, i.e. the
+    :param matrix unitary_funct: Matrix representation of the function f, i.e. the
                           unitary transformation that must be applied to a
                           state |x> to put f(x) in qubit 0.
-    :param qubits: List of qubits that enter as input |x>.
-    :param ancilla: Qubit to serve as input |y>.
-    :param scratch_bit: Empty qubit to be used as scratch space.
+    :param list qubits: List of qubits that enter as input |x>.
+    :param Qubit ancilla: Qubit to serve as input |y>.
+    :param Qubit scratch_bit: Empty qubit to be used as scratch space.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
@@ -38,9 +38,9 @@ def deutsch_jozsa(oracle, qubits, ancilla):
     Can determine whether a function f mapping {0,1}^n to {0,1} is constant
     or balanced, provided that it is one of them.
 
-    :param oracle: Program representing unitary application of function.
-    :param qubits: List of qubits that enter as state |x>.
-    :param ancilla: Qubit to serve as input |y>.
+    :param Program oracle: Program representing unitary application of function.
+    :param list qubits: List of qubits that enter as state |x>.
+    :param Qubit ancilla: Qubit to serve as input |y>.
     :return: A program corresponding to the desired instance of the
              Deutsch-Jozsa Algorithm.
     :rtype: Program
