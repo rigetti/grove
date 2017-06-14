@@ -22,8 +22,7 @@ For more information, see arXiv:quant-ph/0005055.
 '''
 
 import pyquil.quil as pq
-from pyquil.quilbase import Qubit
-from pyquil.gates import H, X, Z, RZ, MEASURE, STANDARD_GATES
+from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 from scipy.linalg import sqrtm
 import numpy as np
 STANDARD_GATE_NAMES = STANDARD_GATES.keys()
@@ -31,18 +30,26 @@ STANDARD_GATE_NAMES = STANDARD_GATES.keys()
 
 # Start with A|0>
 
-def amplify(A, U_w, qubits, init=False):
-    
-    p = pq.Program()
-    
-    # Apply inital A if init is true
-    if init:
-        p = A
-    
-    # A (2|0><0| - I) A^-1 (I - 2|w><w|) A|0>
-    p = p + U_w + A.adjoint() + diffusion_operator(qubits) + A;
-    
-    return p;
+def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
+    """
+    Returns a program that does n rounds of amplification, given a measurement-less algorithm A, an oracle U_w, and a list of qubits to operate on.
+    :param A: a program representing a measurement-less algorithm run on qubits
+    :param A_inv: a program representing the inverse algorithm of A.
+            TODO: figure out a way to invert a program, may or may not be feasible with current construct
+    :param U_w: an oracle maps any basis vector to either |0> or |1>
+    :param qubits: the qubits to operate on
+    :param num_iter: number of iterations of amplifications to run
+    :param init: a boolean flag that is set to True if and only if A is to be applied initially on the input qubits. By default, it is set to True.
+    :return:
+    """
+
+    p = A if init else pq.Program()
+
+    for _ in xrange(num_iter):
+        # A (2|0><0| - I) A^-1 (I - 2|w><w|) n times
+        p += U_w + A_inv + diffusion_operator(qubits) + A
+
+    return p
     
 def n_qubit_control(controls, target, u, gate_name):
     """
@@ -133,25 +140,3 @@ def diffusion_operator(qubits):
         p.inst(H(qubits[-1]))
         p.inst(map(X, qubits))
     return p
-
-
-if __name__ == "__main__":
-    from pyquil.forest import Connection
-    import sys
-    try:
-        target = sys.argv[1]
-    except IndexError:
-        raise ValueError("Enter a target bitstring for Grover's Algorithm.")
-
-    grover_program = pq.Program()
-    qubits = [grover_program.alloc() for _ in target]
-    query_qubit = grover_program.alloc()
-    oracle = basis_selector_oracle(target, qubits, query_qubit)
-    grover_program += grover(oracle, qubits, query_qubit)
-
-    # To instantiate the qubits in the program. This is just a temporary hack.
-    grover_program.out()
-    print grover_program
-    cxn = Connection()
-    mem = cxn.run_and_measure(grover_program, [q.index() for q in qubits])
-    print mem
