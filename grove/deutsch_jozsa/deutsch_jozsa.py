@@ -127,7 +127,7 @@ if __name__ == "__main__":
     import pyquil.forest as forest
 
     # Read function mappings from user
-    n = int(input("How many bits? "))
+    n = int(raw_input("How many bits? "))
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
