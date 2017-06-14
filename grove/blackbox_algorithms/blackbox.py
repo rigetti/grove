@@ -14,6 +14,8 @@ class AbstractBlackBoxAlgorithm(object):
         :param func: the function that the blackbox oracle is to emulate. While the input space and output spaces are binary strings,
         the function itself is expected to take base 10 integer inputs from 0 to 2^n - 1, inclusive, and output in the space of base 10 integers
         from 0 to 2^m - 1, inclusive
+        :return: an object that emulates an algorithm with a black box oracle that maps inputs to outputs according to f: {0,1}^n -> {0,1}^m
+        :rtype: AbstractBlackBoxAlgorithm
         """
         self._n = n
         self._m = m
@@ -49,35 +51,41 @@ class AbstractBlackBoxAlgorithm(object):
         An abstract method that fully creates the quantum program, given the oracle. Must be overwritten for specific blackbox algorithm implementations.
         :param oracle: the oracle that emulates func, to be included in the quantum program for querying
         :return: Program object that represents
+        :rtype: Program
         """
         raise NotImplementedError("Should be overridden")
 
     def get_program(self):
         """
         :return: the Quil program that this object represents
+        :rtype: Program
         """
         return self._prog
 
     def num_domain_bits(self):
         """
         :return: the number of bits in the domain of the oracle function
+        :rtype: int
         """
         return self._n
 
     def num_range_bits(self):
         """
         :return: the number of bits in the range of the oracle function
+        :rtype: int
         """
         return self._m
 
     def get_input_bits(self):
         """
         :return: the input qubits
+        :rtype: list of Qubit
         """
         return self._input_bits
 
     def get_ancillia_bits(self):
         """
         :return: the ancilliary qubits
+        :rtype: list of Qubit
         """
         return self._ancilla_bits
