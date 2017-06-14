@@ -20,6 +20,8 @@ class Simon(AbstractBlackBoxAlgorithm):
                           10 -> 10
                           11 -> 00
                           Would be represented as ['00', '10', '10', '00'].
+        :return: An instance of Simon's Algorithm with n bit domain and range simulating f(x) = mappings[x], as described above.
+        :rtype: Simon
         """
         func = lambda x: bbu.bitstring_to_integer(mappings[x])
         AbstractBlackBoxAlgorithm.__init__(self, n, n, func)
@@ -29,6 +31,9 @@ class Simon(AbstractBlackBoxAlgorithm):
         Implementation of Simon's Algorithm.
         For given f: {0,1}^n -> {0,1}^n, determine the nonzero mask s of the two-to-one function.
         :param oracle: Program representing unitary application of function.
+        :return: a Program that has all the gates needed to simulate one iteration of the quantum part of Simon's algorithm.
+                 Note that measurements are not taken.
+        :rtype: Program
         """
         p = pq.Program()
 
