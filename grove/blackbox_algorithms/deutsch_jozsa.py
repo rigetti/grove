@@ -15,6 +15,8 @@ class DeutschJozsa(AbstractBlackBoxAlgorithm):
                           10 -> 1
                           11 -> 0
                           Would be represented as [0, 1, 1, 0].
+        :return: An instance of the Deutsch-Jozsa Algorithm with n bit domain simulating f(x) = mappings[x] as described above.
+        :rtype: DeutschJozsa
         """
         func = lambda x: mappings[x]
         AbstractBlackBoxAlgorithm.__init__(self, n, 1, func)
