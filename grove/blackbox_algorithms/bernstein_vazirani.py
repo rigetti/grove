@@ -1,4 +1,7 @@
-"""Module for the Bernstein-Vazirani Algorithm."""
+"""Module for the Bernstein-Vazirani Algorithm.
+
+Additional information for this algorithm can be found at: http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
+"""
 
 import pyquil.quil as pq
 from pyquil.gates import *
