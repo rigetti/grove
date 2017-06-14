@@ -1,14 +1,13 @@
 """Module for Grover's algorithm. Based off standalone grover implementation. Uses the amplitude amplification library."""
 
 import pyquil.quil as pq
-from pyquil.quilbase import Qubit
 from pyquil.gates import H, X, STANDARD_GATES
 import numpy as np
 import amplification as amp
 
 STANDARD_GATE_NAMES = STANDARD_GATES.keys()
 
-def grover(oracle, qubits, query_qubit, num_iter=None):
+def grover(oracle, qubits, num_iter=None):
     """
     Implementation of Grover's Algorithm for a given oracle.
 
@@ -18,7 +17,6 @@ def grover(oracle, qubits, query_qubit, num_iter=None):
                    where |q> is a a query qubit, and the range of f is {0, 1}.
     :param qubits: List of qubits for Grover's Algorithm. The last is assumed to be query for the
                    oracle.
-    :param query_qubit: The qubit |q> that the oracle write its answer to.
     :param num_iter: The number of iterations to repeat the algorithm for. The default is
                      int(pi(sqrt(N))/4.
     :return: A program corresponding to the desired instance of Grover's Algorithm.
@@ -32,21 +30,10 @@ def grover(oracle, qubits, query_qubit, num_iter=None):
     many_hadamard = pq.Program().inst(map(H, qubits))
     amp_prog = amp.amplify(many_hadamard, many_hadamard, oracle, qubits, num_iter)
 
-    prog = pq.Program()
-
-    # Initialize ancilla to be in the minus state
-    prog.inst(X(query_qubit))
-    prog.inst(H(query_qubit))
-
-    prog += amp_prog
-
-    # Move the ancilla back to the zero state
-    prog.inst(H(query_qubit))
-    prog.inst(X(query_qubit))
-    return prog
+    return amp_prog
 
 
-def basis_selector_oracle(bitstring, qubits, query_qubit):
+def basis_selector_oracle(bitstring, qubits):
     """
     Defines an oracle that selects the ith element of the computational basis.
 
@@ -55,13 +42,10 @@ def basis_selector_oracle(bitstring, qubits, query_qubit):
     :param bitstring: The desired bitstring, given as a string of ones and zeros. e.g. "101"
     :param qubits: The qubits the oracle is called on, the last of which is the query qubit. The
                    qubits are assumed to be ordered from most significant qubit to least signicant qubit.
-    :param query_qubit: The qubit |q> that the oracle write its answer to.
     :return: A program representing this oracle.
     """
     if len(qubits) != len(bitstring):
         raise ValueError("The bitstring should be the same length as the number of qubits.")
-    if not isinstance(query_qubit, Qubit):
-        raise ValueError("query_qubit should be a single qubit.")
     if not (isinstance(bitstring, str) and all([num in ('0', '1') for num in bitstring])):
         raise ValueError("The bitstring must be a string of ones and zeros.")
     prog = pq.Program()
@@ -69,7 +53,7 @@ def basis_selector_oracle(bitstring, qubits, query_qubit):
         if bitstring[i] == '0':
             prog.inst(X(qubit))
 
-    prog += amp.n_qubit_control(qubits, query_qubit, np.array([[0, 1], [1, 0]]), 'NOT')
+    prog += amp.n_qubit_control(qubits[:-1], qubits[-1], np.array([[1, 0], [0, -1]]), 'Z')
 
     for i, qubit in enumerate(qubits):
         if bitstring[i] == '0':
@@ -87,9 +71,8 @@ if __name__ == "__main__":
 
     grover_program = pq.Program()
     qubits = [grover_program.alloc() for _ in target]
-    query_qubit = grover_program.alloc()
-    oracle = basis_selector_oracle(target, qubits, query_qubit)
-    grover_program += grover(oracle, qubits, query_qubit)
+    oracle = basis_selector_oracle(target, qubits)
+    grover_program += grover(oracle, qubits)
 
     # To instantiate the qubits in the program. This is just a temporary hack.
     grover_program.out()
