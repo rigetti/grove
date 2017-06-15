@@ -30,6 +30,10 @@ def factor(N):
     # Initial check for bad or obvious N
     if N == 0:
         raise ValueError("N = 0 has not prime factorization")
+    elif N < 0:
+        raise ValueError("The prime factorization of negative numbers is not defined (your N = " + N + ")")
+    elif int(N) != N:
+        raise ValueError("N must be an integer (your N = " + N + ")")
     elif N == 1 or N == 2 or N == 3:
         return [N]
     
@@ -39,7 +43,6 @@ def factor(N):
     
     # Within this loop, N is the currently selected value for the factor list
     while True:
-        print("In loop ", factors)
         
         # Done if at end of list
         if index == len(factors):
@@ -66,9 +69,7 @@ def factor(N):
             continue
             
         # Continue with the quantum part of Shor's if unlucky with X
-        print("Starting order calc")
         r = calculate_order(X, N) # returns the program
-        print("Got order result")
         
         # Compute p and q
         a = X**(r/2) + 1
@@ -91,6 +92,11 @@ def isPrime(n):
     :param n: The number to check the primality of
     :return: true if n is prime, and false otherwise
     '''
+    
+    #TODO: Use a faster isPrime implementation, such as ECPP
+    
+    if n == 2:
+        return True
     if n % 2 == 0:
         return False
     i = 3
@@ -107,7 +113,6 @@ def gcd(a, b):
     :param b: The second value to consider
     :return: The greatest common denominator of a and b
     '''
-    print("In gcd")
     
     while b != 0:
         bTemp = b
@@ -115,4 +120,4 @@ def gcd(a, b):
         a = bTemp
     return a
 
-print factor(3*7*5)
+print factor(2*7*3)
