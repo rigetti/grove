@@ -47,7 +47,7 @@ def order_finding(a, N):
     # The number of bits needed to specify N
     L = int(np.log2(len(U)))
 
-    # Can have as many bits as desired. For accuracy > 1/4, use at least 2L + 3
+    # Can have as many bits as desired. For accuracy > 3/4, use at least 2L + 3
     t = 2*L + 3
 
     # instantiate registers
@@ -88,19 +88,29 @@ def calculate_order(a, N, iteration_scalar=8, verbose=False):
     :return: Order of f(x)
     :rtype: int
     """
+
+    # The number of bits to represent N
     L = int(np.ceil(np.log2(N + 1)))
+
+    # The number of bits in the first register
+    # Can be as large as desired, recommended at least 2*L + 3 for accuracy > 3/4
     t = 2 * L + 3
+
     if verbose:
         print "Instantiating", t, "qubits into register 1"
         print "Instantiating", L, "qubits into register 2"
 
     p = order_finding(a, N)
+
     if verbose:
         print "The following Quil code was generated:"
-        print p, '\n'
+        print p
 
     qvm = forest.Connection()
+
+    # running O(log N) iterations
     num_iters = iteration_scalar * L
+
     if verbose:
         print "Running for O(log N) iterations"
 
@@ -120,16 +130,16 @@ def multiplication_operator(a, N):
     :return: Unitary operator for multiplication by a (mod N)
     :rtype: matrix
     """
-    n = int(2**np.ceil(np.log2(N + 1)))
-    U = np.zeros(shape=(n, n))
-    for i in range(n):
-        col = np.zeros(n)
+    L = int(2**np.ceil(np.log2(N + 1)))
+    U = np.zeros(shape=(L, L))
+    for i in range(L):
+        col = np.zeros(L)
         if i < N:
             col[a*i % N] = 1
         else:
             col[i] = 1
         U[i] = col
-    assert np.allclose(np.eye(n), U.dot(U.T.conj())), "Operator should be unitary"
+    assert np.allclose(np.eye(L), U.dot(U.T.conj())), "Operator should be unitary"
     return U.T
 
 
@@ -143,11 +153,9 @@ def calculate_order_classical(a, N):
     :return: Order of f(x)
     :rtype: int
     """
-    f = lambda x : a**x % N
     r = 1
     while True:
-        val = f(r)
-        if val == 1:
+        if a**r % N == 1:
             return r
         r += 1
 
@@ -171,6 +179,7 @@ def gcd(a, b):
     return gcd(b, a % b)
 
 
+
 if __name__ == "__main__":
 
 
@@ -186,5 +195,7 @@ if __name__ == "__main__":
 
     if order_quantum != order_classical:
         print "Try again with more iterations or higher precision (more qubits in register 1)."
+
+
 
 

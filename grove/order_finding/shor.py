@@ -15,14 +15,14 @@
 ##############################################################################
 
 import random
-import pyquil.forest as forest
-from order_finding import calculate_order
+from order_finding import calculate_order, gcd
 
-def factor(N):
+def factor(N, verbose=False):
     '''
     Computes the prime factors of N using a modified Shor's algorithm, which
     handles cases where there may exist more than two prime factors. Algorithm 
     and notes can be found at https://en.wikipedia.org/wiki/Shor's_algorithm.
+
     :param N: The integer N = p*q*r*... to find the prime factors of.
     :return: An array of prime factors of N (including duplicates)
     '''
@@ -49,8 +49,9 @@ def factor(N):
             break
             
         # If prime, move to the next factor in the list
-        # TODO: An efficient primality test that runs in less than O(n^3)
         if isPrime(factors[index]):
+            if verbose:
+                print "Found prime factor p =", factors[index]
             index += 1
             continue
         
@@ -60,22 +61,30 @@ def factor(N):
         
         # Pick X < N and find the GCD
         X = random.randint(1, N) # Double check this range
+        if verbose:
+            print "Trying modular base X =", X
         
         gcd_val = gcd(X, N)
         if gcd_val != 1:
             # Good guess on X!
+            if verbose:
+                print "Good guess! GCD produced a factor."
             factors += [gcd_val]
             factors += [N / gcd_val]
             continue
             
         # Continue with the quantum part of Shor's if unlucky with X
-        r = calculate_order(X, N) # returns the program
+        if verbose:
+            print "Begininning quantum order finding subroutine."
+        r = calculate_order(X, N, verbose=verbose) # returns the program
+        if verbose:
+            print "Calculated order r =", r
         
         # Compute p and q
         a = X**(r/2) + 1
         p = gcd(a, N)
         q = N / p
-        
+
         factors += [p]
         factors += [q]
         
@@ -89,6 +98,7 @@ def factor(N):
 def isPrime(n):
     '''
     An efficient algorithm which determines if the given number is prime
+
     :param n: The number to check the primality of
     :return: true if n is prime, and false otherwise
     '''
@@ -105,6 +115,7 @@ def isPrime(n):
             return False
         i += 2
     return True
+<<<<<<< HEAD
     
 def gcd(a, b):
     '''
@@ -121,3 +132,11 @@ def gcd(a, b):
     return a
 
 print factor(2*7*3)
+=======
+
+if __name__ == "__main__":
+    N = input("Enter a number to factor: ")
+    factors = factor(N, True)
+    print "Factors of", N, "are", factors
+    assert reduce(int.__mul__, factors) == N, "Try again with more iterations of the order finding subroutine"
+>>>>>>> 5dfcfbcbf1bf6945f3e06e647236edb0ee16a955
