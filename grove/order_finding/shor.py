@@ -84,6 +84,11 @@ def factor(N, verbose=False):
         a = X**(r/2) + 1
         p = gcd(a, N)
         q = N / p
+        
+        # If p or q are not integers, restart (most likely indicates noisy r)
+        if p != int(p) or q != int(q):
+            factors.append(N)
+            continue
 
         factors += [p]
         factors += [q]
