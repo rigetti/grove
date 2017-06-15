@@ -78,7 +78,7 @@ def order_finding(a, N):
 
     return p
 
-def calculate_order(a, N, iteration_scalar=8, verbose=False):
+def calculate_order(a, N, iteration_scalar=2, verbose=False):
     """
     Calculates the order of f(x) = a^x (mod N) using a quantum subroutine.
 
@@ -116,7 +116,8 @@ def calculate_order(a, N, iteration_scalar=8, verbose=False):
 
     results = qvm.run_and_measure(p, range(t), num_iters)
     results = filter(lambda x: x != 0, map(binary_to_integer, results))
-    return 2 ** t / min(results)
+    gcd_val = reduce(gcd, results)
+    return 2**t / gcd_val
 
 
 def multiplication_operator(a, N):

@@ -77,6 +77,9 @@ def factor(N, verbose=False):
         if verbose:
             print "Begininning quantum order finding subroutine."
         r = calculate_order(X, N, verbose=verbose) # returns the program
+        if r > N:
+            factors.append(N)
+            continue
         if verbose:
             print "Calculated order r =", r
         
@@ -120,28 +123,11 @@ def isPrime(n):
             return False
         i += 2
     return True
-<<<<<<< HEAD
-    
-def gcd(a, b):
-    '''
-    Finds the greatest common denominator of a and b
-    :param a: The first value to consider
-    :param b: The second value to consider
-    :return: The greatest common denominator of a and b
-    '''
-    
-    while b != 0:
-        bTemp = b
-        b = a % b
-        a = bTemp
-    return a
 
-print factor(2*7*3)
-=======
 
 if __name__ == "__main__":
     N = input("Enter a number to factor: ")
     factors = factor(N, True)
     print "Factors of", N, "are", factors
     assert reduce(int.__mul__, factors) == N, "Try again with more iterations of the order finding subroutine"
->>>>>>> 5dfcfbcbf1bf6945f3e06e647236edb0ee16a955
+
