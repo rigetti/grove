@@ -4,7 +4,7 @@ import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
 
-def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
+def oracle_function(vec_a, b, qubits, ancilla):
     """
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
@@ -17,15 +17,13 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
-    assert is_unitary(unitary_funct), "Function must be unitary."
-    bits_for_funct = [scratch_bit] + qubits
+    n = len(qubits)
     p = pq.Program()
-
-    p.defgate("FUNCT", unitary_funct)
-    p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
-    p.inst(tuple(['FUNCT'] + bits_for_funct))
-    p.inst(CNOT(qubits[0], ancilla))
-    p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
+    if b == 1:
+        p.inst(X(ancilla))
+    for i in xrange(n):
+        if vec_a[i] == 1:
+            p.inst(CNOT(qubits[n-1-i], ancilla))
     return p
 
 
@@ -52,79 +50,39 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     p.inst(map(H, qubits))
     return p
 
-
-def unitary_function(vec_a, b):
-    """
-    Creates a unitary transformation that maps each state to the value specified by vec_a and b.
-    Some (but not all) of these transformations involve a scratch qubit, so one is
-    always provided. That is, if given the mapping of n qubits, the calculated transformation
-    will be on n + 1 qubits, where the 0th is the scratch bit and the return value
-    of the function is left in the 1st.
-    :param numpy array vec_a: the vector representing a in the Bernstein-Vazirani function
-    :param int b: the bit representing b in the Bernstein-Vazirani function
-    Matrix representing specified unitary transformation.
-    :rtype: numpy array
-    """
-    n = len(vec_a)
-    if sum(vec_a) == 0:
-        SWAP_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
-                                [0, 1, 0, 0], [0, 0, 0, 1]])
-
-        return np.kron(SWAP_matrix, np.identity(2 ** (n - 1)))
-
-    unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
-
-    index_map = {0: 0, 1: 2**(n-1)}
-
-    # Utilizes the fact that, when vec_a is not all zero, exactly half of the outputs will be 0 and half will be 1
-    # as per Deutsch-Jozsa.
-    # This implementation also uses the property that having exactly one 1 in every row and column
-    # means the matrix is unitary.
-    for j in range(2 ** n):
-        val = (int(np.dot(vec_a, bitstring_to_array(integer_to_bitstring(j, n)))) + b) % 2
-        i = index_map[val]
-        unitary_funct[i, j] = 1
-        index_map[val] += 1
-    return np.kron(np.identity(2), unitary_funct)
-
-def integer_to_bitstring(x, n):
-    return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
-
 def bitstring_to_array(bitstring):
     return np.array(map(int, bitstring))
 
-def is_unitary(matrix):
-    rows, cols = matrix.shape
-    if rows != cols:
-        return False
-    return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
-
 if __name__ == "__main__":
     import pyquil.forest as forest
-    import sys
-    if len(sys.argv) != 3:
-        raise ValueError("Use program as: python bernstein_vazirani.py vec_a b")
-    bitstring = sys.argv[1]
-    if not (all([num in ('0', '1') for num in bitstring])):
-        raise ValueError("The bitstring must be a string of ones and zeros.")
-    if not sys.argv[2] in {'0', '1'}:
-        raise ValueError("b must be 0 or 1.")
 
+    bitstring = raw_input("Give a bitstring representation for the vector a: ")
+    while not (all([num in ('0', '1') for num in bitstring])):
+        print "The bitstring must be a string of ones and zeros."
+        bitstring = raw_input("Give a bitstring representation for the vector a: ")
     vec_a = bitstring_to_array(bitstring)
-    b = int(sys.argv[2])
+
+
+    b = int(raw_input("Give a single bit for b: "))
+    while b not in {0, 1}:
+        print "b must be either 0 or 1"
+        b = int(raw_input("Give a single bit for b: "))
 
 
     bv_program = pq.Program()
     qubits = [bv_program.alloc() for _ in range(len(vec_a))]
     ancilla = bv_program.alloc()
-    scratch_bit = bv_program.alloc()
 
-    unitary_funct = unitary_function(vec_a, b)
-    oracle = oracle_function(unitary_funct, qubits, ancilla, scratch_bit)
+    oracle = oracle_function(vec_a, b, qubits, ancilla)
     bv_program += bernstein_vazirani(oracle, qubits, ancilla)
     bv_program.out()
 
     print bv_program
     qvm = forest.Connection()
     results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
-    print "The bitstring a is given by: ", "".join(map(str, results[0]))
+    print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
+
+    bv_program.inst(RESET)
+    bv_program += oracle
+    results = qvm.run_and_measure(bv_program, [ancilla.index()])
+    print "b is given by: ", results[0][0]
