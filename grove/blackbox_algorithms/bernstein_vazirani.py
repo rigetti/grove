@@ -20,8 +20,9 @@ class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
         :return: An instance of the Bernstein-Vazirani Algorithm with n bit domain simulating f(x) = vec_a * x + b, as described above.
         :rtype: BernsteinVaziraniAlgorithm
         """
-        func = lambda x: (int(np.dot(vec_a, bbu.bitstring_to_array(bbu.integer_to_bitstring(x, len(vec_a))))) + b) % 2
-        AbstractBlackBoxAlgorithm.__init__(self, n, 1, func)
+        self.vec_a = vec_a
+        self.b = b
+        AbstractBlackBoxAlgorithm.__init__(self, n, 1)
 
     def generate_prog(self, oracle):
         """
@@ -43,35 +44,47 @@ class BernsteinVaziraniAlgorithm(AbstractBlackBoxAlgorithm):
         p.inst(map(H, self._input_bits))
         return p
 
+    def generate_oracle(self):
+        qubits = self._input_bits
+        ancilla = self._ancilla_bits[0]
+        n = len(qubits)
+        p = pq.Program()
+        if self.b == 1:
+            p.inst(X(ancilla))
+        for i in xrange(n):
+            if self.vec_a[i] == 1:
+                p.inst(CNOT(qubits[n - 1 - i], ancilla))
+        return p
 
 if __name__ == "__main__":
     import pyquil.forest as forest
-    import sys
 
-    # vec_a should be entered as a bitstring
-    # for example: python bernstein_vazirani.py 1010 1
-    if len(sys.argv) != 3:
-        raise ValueError("Use program as: python bernstein_vazirani.py vec_a b")
-    bitstring = sys.argv[1]
-    if not (all([num in ('0', '1') for num in bitstring])):
-        raise ValueError("The bitstring must be a string of ones and zeros.")
-    if not sys.argv[2] in {'0', '1'}:
-        raise ValueError("b must be 0 or 1.")
-
+    bitstring = raw_input("Give a bitstring representation for the vector a: ")
+    while not (all([num in ('0', '1') for num in bitstring])):
+        print "The bitstring must be a string of ones and zeros."
+        bitstring = raw_input("Give a bitstring representation for the vector a: ")
     vec_a = bbu.bitstring_to_array(bitstring)
-    b = int(sys.argv[2])
+
+    b = int(raw_input("Give a single bit for b: "))
+    while b not in {0, 1}:
+        print "b must be either 0 or 1"
+        b = int(raw_input("Give a single bit for b: "))
 
     n = len(vec_a)
 
     bv = BernsteinVaziraniAlgorithm(n, vec_a, b)
     bv_program = bv.get_program()
     qubits = bv.get_input_bits()
+    ancilla = bv.get_ancillia_bits()[0]
 
-    bv_program.out()
     print bv_program
     qvm = forest.Connection()
     results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
+    print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
 
-    # Classical post-processing
-    # The string of bits given by the end state of the input qubits gives the vector a.
-    print "The bitstring a is given by: ", "".join(map(str, results[0]))
+    # reset all qubits to zero to find by by querying oracle for |0> state
+    bv_program.inst(RESET)
+    oracle = bv.generate_oracle()
+    bv_program += oracle
+    results = qvm.run_and_measure(bv_program, [ancilla.index()])
+    print "b is given by: ", results[0][0]
