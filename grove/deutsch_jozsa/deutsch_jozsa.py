@@ -5,7 +5,7 @@ from pyquil.gates import *
 import numpy as np
 
 
-def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
+def oracle_function(unitary_funct, qubits, ancilla):
     """
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
@@ -15,15 +15,14 @@ def oracle_function(unitary_funct, qubits, ancilla, scratch_bit):
                           state |x> to put f(x) in qubit 0.
     :param list qubits: List of qubits that enter as input |x>.
     :param Qubit ancilla: Qubit to serve as input |y>.
-    :param Qubit scratch_bit: Empty qubit to be used as scratch space.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
     if not is_unitary(unitary_funct):
         raise ValueError, "Function must be unitary."
-    bits_for_funct = [scratch_bit] + qubits
     p = pq.Program()
-
+    scratch_bit = p.alloc()
+    bits_for_funct = [scratch_bit] + qubits
     p.defgate("FUNCT", unitary_funct)
     p.defgate("FUNCT-INV", unitary_funct.T.conj())
     p.inst(tuple(['FUNCT'] + bits_for_funct))
@@ -62,7 +61,7 @@ def unitary_function(mappings):
     Creates a unitary transformation that maps each state to the values specified
     in mappings.
 
-    Some (but not all) of these transformations involve a scratch qubit, so one is
+    Some (but not all) of these transformations involve a scratch qubit, so room for one is
     always provided. That is, if given the mapping of n qubits, the calculated transformation
     will be on n + 1 qubits, where the 0th is the scratch bit and the return value
     of the function is left in the 1st.
@@ -143,7 +142,7 @@ if __name__ == "__main__":
     scratch_bit = deutsch_program.alloc()
 
     unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancilla, scratch_bit)
+    oracle = oracle_function(unitary_funct, qubits, ancilla)
     deutsch_program += deutsch_jozsa(oracle, qubits, ancilla)
     deutsch_program.out()
 
