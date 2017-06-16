@@ -1,4 +1,8 @@
-"""Module for the Deutsch-Jozsa Algorithm."""
+"""
+Module for the Deutsch-Jozsa Algorithm.
+Based off description in "Quantum Computation
+and Quantum Information" by Neilson and Chuang.
+"""
 
 import pyquil.quil as pq
 from pyquil.gates import *
