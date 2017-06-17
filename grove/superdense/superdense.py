@@ -204,7 +204,7 @@ class SDClient:
         
         
         
-class MockConnection:
+class MockSDConnection:
     '''
     Mocks a connection between the server and client. In the future when
     hardware and infrastructure are available to support it, a real
@@ -306,7 +306,7 @@ if __name__ == "__main__":
     client = SDClient(bell_pairs, "sdc://rigetti.com/channel", range(1,11))
 
     # Create a mock connection (to be replaced with real connection in future)
-    connection = MockConnection(server, client)
+    connection = MockSDConnection(server, client)
     server.connect(connection)
     client.connect(connection)
 
@@ -321,7 +321,7 @@ if __name__ == "__main__":
     # Server and client separate some distance, or wait for some time, etc...
     # ... until ready to send information from the server to the client
     server_bitstream = list(np.random.randint(2, size=10))
-    print server_bitstream
+    #print server_bitstream
     for i in range(0, len(server_bitstream), 2):
         bit1 = server_bitstream[i]
         bit2 = server_bitstream[i+1]
