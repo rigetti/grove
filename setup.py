@@ -19,18 +19,18 @@ from setuptools import setup
 
 setup(
     name="quantum-grove",
-    version="0.0.3",
+    version="1.0.0",
     author="Rigetti Computing",
     author_email="softapps@rigetti.com",
     description="A collection of quantum algorithms built using pyQuil and Forest",
     url="https://github.com/rigetticomputing/grove.git",
-    download_url="https://github.com/rigetticomputing/grove/tarball/0.0.3",
+    download_url="https://github.com/rigetticomputing/grove/tarball/1.0.0",
     packages=["grove", "grove.pyqaoa", "grove.pyvqe", "grove.qft",
               "grove.phaseestimation", "grove.teleport", "grove.grover"],
     install_requires=[
         'numpy',
         'scipy',
-        'pyquil',
+        'pyquil >= 1.0.0',
         'mock',
         'networkx',
         'matplotlib'
