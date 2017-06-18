@@ -16,7 +16,7 @@
 
 from grove.teleport.teleportation import make_bell_pair
 from pyquil.quil import Program
-import pyquil.forest as forest
+import pyquil.api as api
 from pyquil.gates import RESET, FALSE, MEASURE, X, Z, SWAP, CNOT, H
 import numpy as np
 
@@ -222,7 +222,7 @@ class MockSDConnection:
         assert self.server.qubit_count >= self.client.qubit_count, "The client must have enough qubit registers left to receive from the client"
         assert self.server.namespace == self.client.namespace, "The server and client cannot be connected, as they do not share the same namespace address"
         
-        self.forest = forest.Connection();
+        self.api = api.SyncConnection();
         self.final_program = Program()
         
         # Server and client will essentially use the same physical QVM or QPU for now
@@ -282,7 +282,7 @@ class MockSDConnection:
         :return: The received message
         '''
         
-        return self.forest.run(self.final_program, registers)[0]
+        return self.api.run(self.final_program, registers)[0]
             
 def clear_registers(classical_reg, registers, p):
     '''
