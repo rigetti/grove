@@ -23,7 +23,7 @@ from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import H, X, PHASE, CNOT, RZ
 import numpy as np
 from mock import Mock, patch
-import pyquil.forest as qvm_mod
+import pyquil.api as qvm_mod
 
 
 def test_pass_hamiltonians():
