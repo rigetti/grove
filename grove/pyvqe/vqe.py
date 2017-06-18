@@ -14,14 +14,13 @@
 #    limitations under the License.
 ##############################################################################
 
-import pyquil.forest as qvm_module
+import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
 import inspect
 from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
-
 
 class OptResults(dict):
     """
@@ -127,7 +126,7 @@ class VQE(object):
                      models will be ineffective"""
 
         if qvm is None:
-            qvm = qvm_module.Connection(
+            qvm = api.SyncConnection(
                     gate_noise=gate_noise,
                     measurement_noise=measurement_noise)
         else:
@@ -210,6 +209,7 @@ class VQE(object):
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
             wf, _ = qvm.wavefunction(pyquil_prog)
+            wf = np.reshape(wf.amplitudes, (-1, 1))
             average_exp = np.conj(wf).T.dot(pauli_sum.dot(wf)).real
             return average_exp
         else:

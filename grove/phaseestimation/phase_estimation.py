@@ -77,8 +77,8 @@ def phase_estimation(U, accuracy, reg_offset=0):
 
 
 if __name__ == '__main__':
-    import pyquil.forest as forest
-    qvm = forest.Connection()
+    import pyquil.api as api
+    qvm = api.SyncConnection()
     X = np.asarray([[0.0, 1.0], [1.0, 0.0]])
     Y = np.asarray([[0.0, -1.0j], [1.0j, 0.0]])
     Rx = np.exp(X * np.pi / 8)

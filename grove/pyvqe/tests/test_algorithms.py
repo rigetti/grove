@@ -16,6 +16,7 @@
 
 from grove.pyvqe.vqe import VQE, parity_even_p
 from pyquil.quil import Program
+from pyquil.wavefunction import Wavefunction
 from pyquil.gates import RX, H, RZ
 from pyquil.paulis import PauliSum, PauliTerm
 from mock import Mock, MagicMock
@@ -73,7 +74,7 @@ def test_expectation():
     minimizer.return_value = fake_result
 
     fake_qvm = Mock(spec=['wavefunction', 'expectation', 'run'])
-    fake_qvm.wavefunction.return_value = (rotation_wavefunction(-2.5), [0])
+    fake_qvm.wavefunction.return_value = (Wavefunction(rotation_wavefunction(-2.5)), [0])
     fake_qvm.expectation.return_value = [0.28366219]
     # for testing expectation
     fake_qvm.run.return_value = [[0], [0]]

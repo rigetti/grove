@@ -214,7 +214,7 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         prog = param_prog(angles)
         wf, _ = self.qvm.wavefunction(prog)
-        wf = wf.reshape((-1, 1))
+        wf = wf.amplitudes.reshape((-1, 1))
         probs = np.zeros_like(wf)
         for xx in xrange(2 ** self.n_qubits):
             probs[xx] = np.conj(wf[xx]) * wf[xx]
