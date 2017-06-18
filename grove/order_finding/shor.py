@@ -30,11 +30,11 @@ def factor(N, verbose=False):
     
     # Initial check for bad or obvious N
     if N == 0:
-        raise ValueError("N = 0 has not prime factorization")
+        raise ValueError("N = 0 has no prime factorization")
     elif N < 0:
-        raise ValueError("The prime factorization of negative numbers is not defined (your N = " + N + ")")
+        raise ValueError("The prime factorization of negative numbers is not defined (your N = " + str(N) + ")")
     elif int(N) != N:
-        raise ValueError("N must be an integer (your N = " + N + ")")
+        raise ValueError("N must be an integer (your N = " + str(N) + ")")
     elif N == 1 or N == 2 or N == 3:
         return [N]
     
