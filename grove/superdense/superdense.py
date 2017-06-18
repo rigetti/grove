@@ -14,7 +14,6 @@
 #    limitations under the License.
 ##############################################################################
 
-from grove.qft.fourier import inverse_qft
 from grove.teleport.teleportation import make_bell_pair
 from pyquil.quil import Program
 import pyquil.forest as forest
