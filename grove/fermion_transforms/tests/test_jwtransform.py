@@ -1,6 +1,6 @@
-#from grove.fermion_transforms.jwtransform import JWTransform
-import pytest
-JWTransform = pytest.importorskip("grove.fermion_transforms.jwtransform")
+from grove.fermion_transforms.jwtransform import JWTransform
+
+
 def test_create():
     """
     Testing creation operator produces 0.5 * (X - iY)
