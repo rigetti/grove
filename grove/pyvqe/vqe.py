@@ -14,7 +14,7 @@
 #    limitations under the License.
 ##############################################################################
 
-import pyquil.forest as qvm_module
+import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
 import inspect
@@ -126,7 +126,7 @@ class VQE(object):
                      models will be ineffective"""
 
         if qvm is None:
-            qvm = qvm_module.Connection(
+            qvm = api.SyncConnection(
                     gate_noise=gate_noise,
                     measurement_noise=measurement_noise)
         else:
