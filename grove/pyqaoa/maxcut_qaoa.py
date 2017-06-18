@@ -18,12 +18,12 @@
 Finding a maximum cut by QAOA.
 """
 import numpy as np
-import pyquil.forest as qvm_module
+import pyquil.api as api
 from pyquil.paulis import PauliTerm, PauliSum
 import networkx as nx
 from scipy.optimize import minimize
 from grove.pyqaoa.qaoa import QAOA
-CXN = qvm_module.Connection()
+CXN = api.SyncConnection()
 
 
 def print_fun(x):
