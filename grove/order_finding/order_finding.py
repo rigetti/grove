@@ -20,7 +20,7 @@ Subroutine for Shor's Algorithm.
 """
 
 import pyquil.quil as pq
-import pyquil.forest as forest
+import pyquil.api as api
 import numpy as np
 from pyquil.gates import *
 from grove.phaseestimation.phase_estimation import controlled
@@ -106,7 +106,7 @@ def calculate_order(a, N, iteration_scalar=2, verbose=False):
         print "The following Quil code was generated:"
         print p
 
-    qvm = forest.Connection()
+    qvm = api.SyncConnection()
 
     # running O(log N) iterations
     num_iters = iteration_scalar * L
