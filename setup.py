@@ -33,7 +33,8 @@ setup(
         'pyquil',
         'mock',
         'networkx',
-        'matplotlib'
+        'matplotlib',
+        'primefac'
     ],
     license='LICENSE',
     keywords='quantum quil programming hybrid'

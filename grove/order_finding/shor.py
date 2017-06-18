@@ -15,6 +15,7 @@
 ##############################################################################
 
 import random
+import primefac
 from order_finding import calculate_order, gcd
 
 def factor(N, verbose=False):
@@ -49,7 +50,7 @@ def factor(N, verbose=False):
             break
             
         # If prime, move to the next factor in the list
-        if isPrime(factors[index]):
+        if primefac.isprime(factors[index]):
             if verbose:
                 print "Found prime factor p =", factors[index]
             index += 1
@@ -101,28 +102,6 @@ def factor(N, verbose=False):
         factors.remove(1)
         
     return factors
-        
-        
-def isPrime(n):
-    '''
-    An efficient algorithm which determines if the given number is prime
-
-    :param n: The number to check the primality of
-    :return: true if n is prime, and false otherwise
-    '''
-    
-    #TODO: Use a faster isPrime implementation, such as ECPP
-    
-    if n == 2:
-        return True
-    if n % 2 == 0:
-        return False
-    i = 3
-    while i*i <= n:
-        if n % i == 0:
-            return False
-        i += 2
-    return True
 
 
 if __name__ == "__main__":
