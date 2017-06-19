@@ -34,8 +34,8 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
     """
     Returns a program that does n rounds of amplification, given a measurement-less algorithm A, an oracle U_w, and a list of qubits to operate on.
     :param A: a program representing a measurement-less algorithm run on qubits
-    :param A_inv: a program representing the inverse algorithm of A.
-            TODO: figure out a way to invert a program, may or may not be feasible with current construct
+    :param A_inv: a program representing the inverse algorithm of A. This can be done using the Program
+                  object's adjoint() method
     :param U_w: an oracle maps any basis vector to either |0> or |1>
     :param qubits: the qubits to operate on
     :param num_iter: number of iterations of amplifications to run
@@ -53,7 +53,7 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
     
 def n_qubit_control(controls, target, u, gate_name):
     """
-    Returns a controlled u gate with n-1 controls.
+    Returns a controlled u gate with n-1 controls. Useful for constructing oracles.
 
     Uses a number of gates quadratic in the number of qubits, and defines a linear number of new
     gates. (Roots and adjoints of u.)
@@ -113,7 +113,6 @@ def n_qubit_control(controls, target, u, gate_name):
 
     p = controlled_program_builder(controls, target, gate_name, u)[0]
     return p
-
 
 def diffusion_operator(qubits):
     """Constructs the (Grover) diffusion operator on qubits, assuming they are ordered from most

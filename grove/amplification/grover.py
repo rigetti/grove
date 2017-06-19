@@ -60,9 +60,8 @@ def basis_selector_oracle(bitstring, qubits):
             prog.inst(X(qubit))
     return prog
 
-
 if __name__ == "__main__":
-    from pyquil.forest import Connection
+    from pyquil.api import SyncConnection
     import sys
     try:
         target = sys.argv[1]
@@ -77,6 +76,6 @@ if __name__ == "__main__":
     # To instantiate the qubits in the program. This is just a temporary hack.
     grover_program.out()
     print grover_program
-    cxn = Connection()
+    cxn = SyncConnection()
     mem = cxn.run_and_measure(grover_program, [q.index() for q in qubits])
     print mem
