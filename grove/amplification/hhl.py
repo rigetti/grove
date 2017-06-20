@@ -12,18 +12,31 @@ Development notes:
 
 '''
 
-def HHL(A, b, qubits):
+import pyquil.quil as pq
+import numpy as np
+
+def HHL(A, b_regs):
     '''
     Returns a program that accomplishes the HHL algorithm using the provided
     matrix A and vector b, using the given qubit working space
+    
+    :param A: A numpy matrix to be used in solved A|x> = |b>
+    :param b_regs: A list of registers holding the value of |b>
+    :return: A Program that performs the HHL algorithm
     '''
+    
+    p = pq.Program()
     
     # If A is not Hermitian, use definition 1 from (1) to create a Hermitian
     # matrix, keeping track to make a reduction later in the algorithm
+    hermitian = np.equal(A, A.getH())
+    if !hermitian:
+        raise ValueError("Not yet excepting Hermitian matrices")
     
     # Create a unitary operator e^(iAt) using arXiv:quant-ph/0508139
+    unitary_program = eiat(A)
     
-    # Prepare state |b> using either a pre-computed state ona given register,
+    # Prepare state |b> using either a pre-computed state on a given register,
     # or by constructing it via arXiv:quant-ph/0208112
     
     # Decompose |b> in the eigenvector basis using phase estimation
