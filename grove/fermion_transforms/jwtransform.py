@@ -40,6 +40,24 @@ class JWTransform(object):
         """
         return self._operator_generator(index, 1.0)
 
+    def product_ops(self, indices, conjugate):
+        """
+        Convert a list of site indices and coefficients to a Pauli Operators
+        list with the Jordan-Wigner (JW) transformation
+
+        :param List indices: list of ints specifying the site the fermionic operator acts on,
+                             e.g. [0,2,4,6]
+        :param List conjugate: List of -1, 1 specifying which of the indices are
+                               creation operators (-1) and which are annihilation
+                               operators (1).  e.g. [-1,-1,1,1]
+        """
+        pterm = PauliTerm('I', 0, 1.0)
+        for conj, index in zip(conjugate, indices):
+            pterm = pterm * self._operator_generator(index, conj)
+
+        pterm = pterm.simplify()
+        return pterm
+
     def _operator_generator(self, index, conj):
         """
         Internal method to generate the appropriate operator
