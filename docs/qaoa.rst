@@ -34,8 +34,8 @@ To test your installation and get going we can run QAOA to solve MAX-CUT on a sq
 
     import numpy as np
     from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-    import pyquil.forest as qvm
-    qvm_connection = qvm.Connection()
+    import pyquil.api as qvm
+    qvm_connection = qvm.SyncConnection()
 
 Next define the graph on which to run MAX-CUT
 
@@ -62,6 +62,7 @@ quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate t
     param_prog = inst.get_parameterized_program()
     prog = param_prog(t)
     wf, _ = qvm_connection.wavefunction(prog)
+    wf = wf.amplitudes
 
 ``wf`` is now a numpy array of complex-valued amplitudes for each computational
 basis state.  To visualize the distribution iterate over the states and

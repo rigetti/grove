@@ -16,10 +16,10 @@
 
 import numpy as np
 from pyquil.paulis import PauliTerm, PauliSum
-import pyquil.forest as qvm_module
+import pyquil.api as api
 from scipy.optimize import minimize
 from grove.pyqaoa.qaoa import QAOA
-CXN = qvm_module.Connection()
+CXN = api.SyncConnection()
 
 
 def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
