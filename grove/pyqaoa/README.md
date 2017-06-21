@@ -45,7 +45,8 @@ us |beta,gamma> and evaluate the wave function using the **qvm**
 t = np.hstack((inst.betas, inst.gammas))
 param_prog = inst.get_parameterized_program()
 prog = param_prog(t)
-wf = qvm_connection.wavefunction(prog)
+wf, _ = qvm_connection.wavefunction(prog)
+wf = wf.amplitudes
 ```
 
 `wf` is now a numpy array of complex-valued amplitudes for each computational
