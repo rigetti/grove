@@ -51,7 +51,7 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     return p
 
 if __name__ == "__main__":
-    import pyquil.forest as forest
+    import pyquil.api as api
 
     # ask user to input the value for a
     bitstring = raw_input("Give a bitstring representation for the vector a: ")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         print "b must be either 0 or 1"
         b = int(raw_input("Give a single bit for b: "))
 
-
+    print "-----------------------------------"
     # First, create the program to find a
     bv_program = pq.Program()
     qubits = [bv_program.alloc() for _ in range(len(vec_a))]
@@ -76,16 +76,14 @@ if __name__ == "__main__":
     bv_program += bernstein_vazirani(oracle, qubits, ancilla)
     bv_program.out()
 
-    qvm = forest.Connection()
+    qvm = api.SyncConnection()
     results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
     print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
 
-    # Reset the qubits to all 0s and feed through to get b
-    bv_program.inst(RESET)
-    bv_program += oracle
-    results = qvm.run_and_measure(bv_program, [ancilla.index()])
+    # Feed through all zeros to get b
+    results = qvm.run_and_measure(oracle, [ancilla.index()])
 
     print "b is given by: ", results[0][0]
-
+    print "-----------------------------------"
     print "Full program given by: "
     print bv_program
