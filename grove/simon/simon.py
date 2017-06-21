@@ -32,7 +32,8 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
 def simon(oracle, qubits):
     """
     Implementation of Simon's Algorithm.
-    For given f: {0,1}^n -> {0,1}^n, determine if f is one-to-one, or two-to-one with a non-zero mask s.
+    For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
+    f(x) = f(y) if and only if (x xor y) = s.
     :param oracle: Program representing unitary application of function.
     :param qubits: List of qubits that enter as state |x>.
     :return: A program corresponding to the desired instance of
@@ -63,13 +64,13 @@ def unitary_function(mappings):
                           10 -> 10
                           11 -> 00
                           Would be represented as ['00', '10', '10', '00'].
-            Requires mappings to either be one-to-one, or two-to-one with unique mask s.
+            Requires mappings to be two-to-one with unique mask s.
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
     n = int(np.log2(len(mappings)))
     distinct_outputs = len(set(mappings))
-    assert distinct_outputs in {2**n, 2**(n-1)}, "Function must be one-to-one or two-to-one"
+    assert distinct_outputs in {2**(n-1)}, "Function must be two-to-one"
 
     # Strategy: add an extra qubit by default and force the function to be one-to-one
     output_counts = {x: 0 for x in range(2**n)}
@@ -100,30 +101,74 @@ def unitary_function(mappings):
 
     return unitary_funct
 
-# TODO: merge with Deutsch-Jozsa code and decide on a standard
+
 def integer_to_bitstring(x, n):
+    """
+    :param x: a positive base 10 integer
+    :param n: the number of bits that the bitstring should be
+    :return: the lowest n significant digits of the binary representation of x
+             with 0s padded if needed. Significance decreases from left to right.
+    :rtype: str
+    """
     return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
 
-def bitstring_to_integer(bitstring):
-    return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
 
 def bitstring_to_array(bitstring):
+    """
+    :param bitstring: bitstring to convert into an array
+    :return: the array corresponding to the bitstring
+    :rtype: numpy array
+    """
     return np.array(map(int, bitstring))
 
+
+def bitstring_to_integer(bitstring):
+    """
+    :param bitstring: The binary string to convert
+    :return: the base 10 number corresponding bitstring, presumed to be in binary.
+    :rtype: int
+    """
+    return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
+
+
 def is_unitary(matrix):
+    """
+    :param matrix: a matrix to test unitarity of
+    :return: true if and only if matrix is unitary
+    :rtype: bool
+    """
     rows, cols = matrix.shape
     if rows != cols:
         return False
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
 
-def most_siginifcant_bit(lst):
+
+def get_n_bits(prog, n):
+    """
+    Produces n new qubits for a program and returns them in a list
+    :param prog: the program from which to allocate qubits
+    :param n: the number of qubits to allocate
+    :return: a list of the n allocated qubits
+    :rtype: list
+    """
+    return [prog.alloc() for _ in range(n)]
+
+
+def most_significant_bit(lst):
+    """
+    Finds the position of the most significant bit in a list of 1s and 0s, i.e. the first position where a 1 appears, reading left to right.
+    :param lst: a list of 0s and 1s with at least one 1
+    :return: the first position in lst that a 1 appears
+    :rtype: int
+    """
     msb = 0
     while lst[msb] != 1:
         msb += 1
     return msb
 
+
 if __name__ == "__main__":
-    import pyquil.forest as forest
+    import pyquil.api as api
 
     # Read function mappings from user
     n = int(input("How many bits? "))
@@ -145,9 +190,11 @@ if __name__ == "__main__":
     simon_program += simon(oracle, qubits)
 
     print simon_program
-    qvm = forest.Connection()
+    qvm = api.SyncConnection()
 
     # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
+    # Done so by running the Simon program repeatedly and building up a row-echelon matrix W
+    # See http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
     iterations = 0
     W = None
     while True:
@@ -155,17 +202,20 @@ if __name__ == "__main__":
             break
         z = np.array(qvm.run_and_measure(simon_program, [q.index() for q in qubits])[0])
         iterations += 1
-        while np.any(z): # while it's not all zeros
+        # attempt to insert into W so that W remains in row-echelon form and all rows are linearly independent
+        while np.any(z):  # while it's not all zeros
             if W is None:
                 W = z
                 W = W.reshape(1, n)
                 break
-            msb_z = most_siginifcant_bit(z)
+            msb_z = most_significant_bit(z)
 
+            # Search for a row to insert z into, so that it has an early significant bit than the row below
+            # and a later one than the row above (when reading left-to-right)
             got_to_end = True
             for row_num in range(len((W))):
                 row = W[row_num]
-                msb_row = most_siginifcant_bit(row)
+                msb_row = most_significant_bit(row)
                 if msb_row == msb_z:
                     z = np.array([z[i] ^ row[i] for i in range(n)])
                     got_to_end = False
@@ -178,6 +228,8 @@ if __name__ == "__main__":
                 W = np.insert(W, len(W), z, 0)
 
     # Generate one final vector that is not orthonormal to the mask s
+    # can do by adding a vector with a single 1
+    # that can be inserted so that diag(W) is all ones
     insert_row_num = 0
     while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
         insert_row_num += 1
@@ -189,7 +241,7 @@ if __name__ == "__main__":
     s = np.zeros(shape=(n,))
     s[insert_row_num] = 1
 
-    # iterate backwards, starting from second to last row
+    # iterate backwards, starting from second to last row for back-substitution
     for row_num in range(n-2, -1, -1):
         row = W[row_num]
         for col_num in range(row_num+1, n):
