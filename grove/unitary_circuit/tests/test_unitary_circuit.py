@@ -23,7 +23,14 @@ def test_state_generation_complex_length_eight():
 def test_state_generation_complex_length_huge():
     _state_generation_test_helper(np.array(range(50))*1j)
 
+def test_padded_zeros():
+    _state_generation_test_helper([1, 0, 0])
 
+def test_single_one():
+    _state_generation_test_helper([1])
+
+def test_long_padded_zeros():
+    _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0])
 def _state_generation_test_helper(v):
     # encode vector in quantum state
     p = create_arbitrary_state(v)

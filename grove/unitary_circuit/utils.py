@@ -4,7 +4,6 @@ import numpy as np
 from scipy.linalg import sqrtm
 import pyquil.quil as pq
 from pyquil.parametric import ParametricProgram
-from pyquil.api import SyncConnection
 
 ############### Circuits from single bit unitaries and controlled unitaries ######################
 # see                                                                                            #
@@ -49,6 +48,8 @@ def get_one_qubit_gate_from_unitary_params(params, qubit):
     """
     p = pq.Program()
     d_phase, alpha, beta, theta = params
+
+    # can make simplifications if theta is 0
     if theta == 0:
         z_angle = beta + alpha - 2*d_phase
         if z_angle != 0:
@@ -61,7 +62,7 @@ def get_one_qubit_gate_from_unitary_params(params, qubit):
 
         p.inst(RY(theta, qubit))
 
-        if alpha != 0:
+        if (alpha - 2*d_phase) != 0:
             p.inst(RZ(alpha-2*d_phase, qubit))
         if d_phase != 0:
             p.inst(PHASE(2*d_phase, qubit))
@@ -81,12 +82,27 @@ def get_one_qubit_controlled_from_unitary_params(params, control, target):
     """
     p = pq.Program()
     d_phase, alpha, beta, theta = params
-    p.inst(RZ((beta-alpha)/2, target))\
-        .inst(CNOT(control, target)) \
-        .inst(RZ(-(beta + alpha) / 2, target)).inst(RY(-theta/2, target))\
-        .inst(CNOT(control, target))\
-        .inst(RY(theta/2, target)).inst(RZ(alpha, target))\
-        .inst(PHASE(d_phase, control))
+    # p.inst(RZ((beta-alpha)/2, target))\
+    #     .inst(CNOT(control, target)) \
+    #     .inst(RZ(-(beta + alpha) / 2, target)).inst(RY(-theta/2, target))\
+    #     .inst(CNOT(control, target))\
+    #     .inst(RY(theta/2, target)).inst(RZ(alpha, target))\
+    #     .inst(PHASE(d_phase, control))
+    #
+    if beta-alpha != 0:
+        p.inst(RZ((beta-alpha)/2, target))
+    p.inst(CNOT(control, target))
+    if beta+alpha != 0:
+        p.inst(RZ(-(beta+alpha)/2, target))
+    if theta != 0:
+        p.inst(RY(-theta/2, target))
+    p.inst(CNOT(control, target))
+    if theta != 0:
+        p.inst(RY(theta/2, target))
+    if alpha != 0:
+        p.inst(RZ(alpha, target))
+    if d_phase != 0:
+        p.inst(PHASE(d_phase, control))
     return p
 
 
@@ -106,7 +122,7 @@ def create_arbitrary_state(vector):
     n = int(np.ceil(np.log2(len(vector))))
     N = 2 ** n
 
-    p = pq.Program()
+    p = pq.Program().inst(map(I, range(n)))
 
     last = 0  # the last state created
 
@@ -116,6 +132,9 @@ def create_arbitrary_state(vector):
     unset_coef = 1
 
     for i in range(1, N):
+        # if there are padded 0s, just add 0s until you reach the end
+        if unset_coef == 0:
+            return p
         # Generate the Gray Code corresponding to i
         current = i ^ (i >> 1)
         flipped = 0
@@ -175,12 +194,13 @@ def create_arbitrary_state(vector):
         last = current
 
     # fix the phase of the final qubit
-    a_i = vector[last]
-    z_i = a_i / unset_coef
-    theta = np.angle(z_i)
-    p.inst(map(X, zeros))
-    p += n_qubit_controlled_PHASE(list(zeros), n-1, theta)
-    p.inst(map(X, zeros))
+    if unset_coef not in {0, 1}:
+        a_i = vector[last]
+        z_i = a_i / unset_coef
+        theta = np.angle(z_i)
+        p.inst(map(X, zeros))
+        p += n_qubit_controlled_PHASE(list(zeros), n-1, theta)
+        p.inst(map(X, zeros))
 
     return p
 
