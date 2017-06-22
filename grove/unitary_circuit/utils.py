@@ -27,8 +27,8 @@ def get_one_qubit_gate_params(U):
         alpha = -np.angle(U[0, 0])
         beta = alpha
     else:
-        alpha = -np.angle(U[0,0]/U[1,0])
-        beta = -np.angle(U[0,0]*U[1,0])
+        alpha = -np.angle(U[0,0]) + np.angle(U[1,0])
+        beta = -np.angle(U[0,0]) - np.angle(U[1,0])
 
     theta = 2*np.arctan2(np.abs(U[1, 0]), np.abs(U[0, 0]))
     return d_phase, alpha, beta, theta
@@ -92,44 +92,49 @@ def create_arbitrary_state(vector, verbose=False):
             ones.remove(flipped)
             flipped_to_one = False
 
-        else:
-            if flipped in zeros:
-                zeros.remove(flipped)
+        elif flipped in zeros:
+            zeros.remove(flipped)
 
         a_i = 0. if last >= len(vector) else vector[last]
         z_i = a_i/unset_coef
-        alpha = -np.angle(z_i**2)
         beta = 2 * np.arccos(np.abs(z_i))
+
+        # set all zero controls to 1
+#        if verbose: print zeros, ones, flipped
+
+        p.inst(map(X, zeros))
+
+        z_i /= np.cos(beta/2)
+        alpha = -2*np.angle(z_i)
 
         if not flipped_to_one:
             alpha *= -1
 
         if a_i == 0:
             alpha = 0
-            beta = np.pi
-
-        if verbose: print bin(last), bin(current), flipped_to_one, unset_coef, a_i, z_i, alpha, beta
-        # set all zero controls to 1
-        if verbose: print zeros, ones
-
-        p.inst(map(X, zeros))
-
-        # make a z rotation to get the correct phase
-        p += n_qubit_controlled_RZ(list(zeros | ones), flipped, alpha)
 
         # make a y rotation to get correct magnitude
-        p += n_qubit_controlled_RY(list(zeros | ones), flipped, beta)
+        if beta != 0:
+            p += n_qubit_controlled_RY(list(zeros | ones), flipped, beta)
+
+        # make a z rotation to get the correct phase
+        if alpha != 0:
+            p += n_qubit_controlled_RZ(list(zeros | ones), flipped, alpha)
+
+#        if verbose: print bin(last), bin(current), flipped_to_one, unset_coef, a_i, z_i, alpha, beta
 
         # flip all zeros back to 1
         p.inst(map(X, zeros))
 
         if flipped_to_one:
             ones.add(flipped)
-            unset_coef *= np.exp(-1j*alpha/2)*np.sin(beta/2)
+            print "Set Coef ", unset_coef * np.exp(-1j*alpha/2)*np.cos(beta/2)
+            unset_coef *= np.exp(1j*alpha/2)*np.sin(beta/2)
 
         else:
             zeros.add(flipped)
-            unset_coef *= -np.exp(1j*alpha/2)*np.sin(beta/2)
+            print "Set Coef ", unset_coef * np.exp(1j*alpha/2)*np.cos(beta/2)
+            unset_coef *= -np.exp(-1j*alpha/2)*np.sin(beta/2)
 
         last = current
         if verbose: wf, _ = cxn.wavefunction(p)
@@ -171,7 +176,6 @@ def n_qubit_controlled_RY(controls, target, theta):
     u = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
     return n_qubit_control(controls, target, u)
 
-
 def n_qubit_control(controls, target, u):
     """
     Returns a controlled u gate with n-1 controls.
@@ -193,17 +197,20 @@ def n_qubit_control(controls, target, u):
         sqrt_params = get_one_qubit_gate_params(sqrt_gate)
 
         adj_sqrt_params = get_one_qubit_gate_params(np.conj(sqrt_gate).T)
+
         if len(controls) == 0:
             p += get_one_qubit_gate_from_unitary_params(params, target)
 
         elif len(controls) == 1:
             # controlled U
             p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
-        else:
-            # controlled V
-            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
 
+        else:
             many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
+
+            # n-2 controlled V
+            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
+
             p += many_toff
 
             # controlled V_adj
@@ -211,8 +218,8 @@ def n_qubit_control(controls, target, u):
 
             p += many_toff
 
-            # n-2 controlled V
-            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
+            # controlled V
+            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
 
         return p
 
