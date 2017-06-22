@@ -1,6 +1,7 @@
 """Tests for utils"""
 
-from grove.unitary_circuit.utils import *
+from grove.unitary_circuit.arbitrary_state import create_arbitrary_state
+import numpy as np
 from pyquil.api import SyncConnection
 
 
@@ -51,12 +52,3 @@ def _state_generation_test_helper(v):
     # wavefunction amplitudes should resemble vector
     for pair in zip(v_norm, wf.amplitudes):
         assert np.allclose(*pair)
-
-if __name__ == "__main__":
-    v = list(input("Give your array: "))
-    p = create_arbitrary_state(v)
-    qvm = SyncConnection()
-    wf, _ = qvm.wavefunction(p)
-    print list(v / np.linalg.norm(v))
-    print wf
-    print p.out()

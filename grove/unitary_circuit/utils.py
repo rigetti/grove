@@ -3,14 +3,14 @@ from pyquil.gates import *
 import numpy as np
 from scipy.linalg import sqrtm
 import pyquil.quil as pq
-from pyquil.parametric import ParametricProgram
 
 ############### Circuits from single bit unitaries and controlled unitaries ######################
 # see                                                                                            #
 #       -http://d.umn.edu/~vvanchur/2015PHYS4071/Chapter4.pdf                                    #
 #       - http://fab.cba.mit.edu/classes/862.16/notes/computation/Barenco-1995.pdf               #
 # for more information                                                                           #
-# NOTE: these papers may use different conventions.                                              #
+# NOTE: these papers may use different conventions sign and phase conventions                    #
+#       for rotation gates.                                                                      #
 ##################################################################################################
 
 
@@ -36,6 +36,7 @@ def get_one_qubit_gate_params(U):
 
     theta = 2*np.arctan2(np.abs(U[1, 0]), np.abs(U[0, 0]))
     return d_phase, alpha, beta, theta
+
 
 def get_one_qubit_gate_from_unitary_params(params, qubit):
     """
@@ -82,13 +83,7 @@ def get_one_qubit_controlled_from_unitary_params(params, control, target):
     """
     p = pq.Program()
     d_phase, alpha, beta, theta = params
-    # p.inst(RZ((beta-alpha)/2, target))\
-    #     .inst(CNOT(control, target)) \
-    #     .inst(RZ(-(beta + alpha) / 2, target)).inst(RY(-theta/2, target))\
-    #     .inst(CNOT(control, target))\
-    #     .inst(RY(theta/2, target)).inst(RZ(alpha, target))\
-    #     .inst(PHASE(d_phase, control))
-    #
+
     if beta-alpha != 0:
         p.inst(RZ((beta-alpha)/2, target))
     p.inst(CNOT(control, target))
@@ -103,105 +98,6 @@ def get_one_qubit_controlled_from_unitary_params(params, control, target):
         p.inst(RZ(alpha, target))
     if d_phase != 0:
         p.inst(PHASE(d_phase, control))
-    return p
-
-
-def create_arbitrary_state(vector):
-    """
-    This function makes a program that can generate an arbitrary state.
-
-    Given a complex vector a with components a_i (i from 0 to N-1), produce a function
-    that takes in |0> and gives sum_i=1^N a_i/|a| |i>
-    :param vector: the vector to put into qubit form.
-    :return: a program that takes in |0> and produces a state that represents this vector.
-    :rtype: Program
-    """
-    # start with normalizing
-    vector = vector/np.linalg.norm(vector)
-
-    n = int(np.ceil(np.log2(len(vector))))
-    N = 2 ** n
-
-    p = pq.Program().inst(map(I, range(n)))
-
-    last = 0  # the last state created
-
-    ones = set()  # the bits that are ones
-    zeros = {0}  # the bits that are zeros
-
-    unset_coef = 1
-
-    for i in range(1, N):
-        # if there are padded 0s, just add 0s until you reach the end
-        if unset_coef == 0:
-            return p
-        # Generate the Gray Code corresponding to i
-        current = i ^ (i >> 1)
-        flipped = 0
-
-        # Find the position of the bit that was flipped
-        difference = last ^ current
-        while difference & 1 == 0:
-            difference = difference >> 1
-            flipped += 1
-
-        # See if the flip was 0 to 1 or 1 to 0
-        flipped_to_one = True
-        if flipped in ones:
-            ones.remove(flipped)
-            flipped_to_one = False
-
-        elif flipped in zeros:
-            zeros.remove(flipped)
-
-
-        a_i = 0. if last >= len(vector) else vector[last]
-        z_i = a_i/unset_coef
-
-        # Write z_i = e^(+/- i*alpha/2) * cos(beta/2), depending on if it is 0 to 1 or 1 to 0
-        beta = 2 * np.arccos(np.abs(z_i))  # to get the right angle for the magnitude
-        z_i /= np.cos(beta/2)
-        alpha = -2*np.angle(z_i)  # to get the right angle for the phase
-
-        # set all zero controls to 1
-        p.inst(map(X, zeros))
-
-        if not flipped_to_one:
-            alpha *= -1
-
-        if a_i == 0:
-            alpha = 0
-
-        # make a y rotation to get correct magnitude
-        if beta != 0:
-            p += n_qubit_controlled_RY(list(zeros | ones), flipped, beta)
-
-        # make a z rotation to get the correct phase
-        if alpha != 0:
-            p += n_qubit_controlled_RZ(list(zeros | ones), flipped, alpha)
-
-        # flip all zeros back to 1
-        p.inst(map(X, zeros))
-
-        if flipped_to_one:
-            ones.add(flipped)
-            unset_coef *= np.exp(1j*alpha/2)*np.sin(beta/2)
-
-        else:
-            zeros.add(flipped)
-            unset_coef *= -np.exp(-1j*alpha/2)*np.sin(beta/2)
-
-        last = current
-
-    # fix the phase of the final qubit
-    if len(vector) > 1 and unset_coef != 0:
-        a_i = vector[last]
-        z_i = a_i / unset_coef
-        theta = np.angle(z_i)
-        p.inst(map(X, zeros))
-        p += n_qubit_controlled_PHASE(list(zeros), n-1, theta)
-        p.inst(map(X, zeros))
-
     return p
 
 
@@ -252,7 +148,7 @@ def n_qubit_control(controls, target, u):
     """
     Returns a controlled u gate with n-1 controls.
 
-    Does not define new gates. Follows arXiv:quant-ph/9503016, but flips the order of the gates due to convention.
+    Does not define new gates. Follows arXiv:quant-ph/9503016. Uses the same format as in grove.grover.grover.
 
     :param controls: The indices of the qubits to condition the gate on.
     :param target: The index of the target of the gate.
@@ -279,10 +175,10 @@ def n_qubit_control(controls, target, u):
             p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
 
         else:
+            # controlled V
             many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
 
-            # n-2 controlled V
-            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
+            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
 
             p += many_toff
 
@@ -291,8 +187,8 @@ def n_qubit_control(controls, target, u):
 
             p += many_toff
 
-            # controlled V
-            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
+            # n-2 controlled V
+            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
 
         return p
 
