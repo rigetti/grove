@@ -194,7 +194,7 @@ def create_arbitrary_state(vector):
         last = current
 
     # fix the phase of the final qubit
-    if unset_coef not in {0, 1}:
+    if len(vector) > 1 and unset_coef != 0:
         a_i = vector[last]
         z_i = a_i / unset_coef
         theta = np.angle(z_i)

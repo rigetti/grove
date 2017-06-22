@@ -31,6 +31,12 @@ def test_single_one():
 
 def test_long_padded_zeros():
     _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0])
+
+
+def test_forward_padded_zeros():
+    _state_generation_test_helper([0, 0, 1])
+
+
 def _state_generation_test_helper(v):
     # encode vector in quantum state
     p = create_arbitrary_state(v)
