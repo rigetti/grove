@@ -38,12 +38,12 @@ def test_padded_zeros():
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def test_single_one():
-    _state_generation_test_helper([1])
+    _state_generation_test_helper([1], 4)
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def test_long_padded_zeros():
-    _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0])
+    _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0], 3)
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -51,7 +51,7 @@ def test_forward_padded_zeros():
     _state_generation_test_helper([0, 0, 1])
 
 
-def _state_generation_test_helper(v):
+def _state_generation_test_helper(v, offset=0):
     # encode vector in quantum state
     p = create_arbitrary_state(v)
     qvm = SyncConnection()

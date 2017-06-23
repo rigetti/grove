@@ -6,7 +6,7 @@ from pyquil.gates import *
 from pyquil.api import SyncConnection
 
 
-def create_arbitrary_state(vector):
+def create_arbitrary_state(vector, offset=0):
     """
     This function makes a program that can generate an arbitrary state.
 
@@ -20,11 +20,19 @@ def create_arbitrary_state(vector):
     where :math:`i` is given in its binary expansion.
 
     :param vector: the vector to put into qubit form.
+    :param offset: Which qubit to begin encoding the state into. The gates of the program will be applied on
+                   qubits offset, offset+1, ..., offset+n-1, where n is the number of qubits needed
+                   to represent the vector.
     :return: a program that takes in :math:`|0>` and produces a state that represents this vector.
     :rtype: Program
     """
     vec_norm = vector/np.linalg.norm(vector)
     n = int(np.ceil(np.log2(len(vec_norm))))  # number of qubits needed
+    if n == 0:  # if vec_norm is of length 1
+        n += 1
+
+    qubits = range(offset, offset+n)
+
     N = 2 ** n  # number of coefficients
     while len(vec_norm) < N:
         vec_norm = np.append(vec_norm, 0)  # pad with zeros
@@ -78,23 +86,23 @@ def create_arbitrary_state(vector):
         # phase unification
         for j in range(len(converted_z_thetas)):
             if converted_z_thetas[j] != 0:
-                reversed_gates.append(RZ(-converted_z_thetas[j], 0))  # negative angle in conjugated/reversed circuit
+                reversed_gates.append(RZ(-converted_z_thetas[j], qubits[0]))  # negative angle in conjugated/reversed circuit
             if step < n-1:
-                reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
+                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]], qubits[0]))
 
         # probability unification
         for j in range(len(converted_y_thetas)):
             if converted_y_thetas[j] != 0:
-                reversed_gates.append(RY(-converted_y_thetas[j], 0))  # negative angle in conjugated/reversed circuit
+                reversed_gates.append(RY(-converted_y_thetas[j], qubits[0]))  # negative angle in conjugated/reversed circuit
             if step < n-1:
-                reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
+                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]], qubits[0]))
 
         # just retain upper left square
         M = M[0:len(M)/2, 0:len(M)/2]*2
 
         if step < n-1:
             # swap
-            reversed_gates.append(SWAP(0, step+1))
+            reversed_gates.append(SWAP(qubits[0], qubits[step+1]))
 
             mask = 1 + (1 << (step + 1))
             for i in range(N):
@@ -109,11 +117,12 @@ def create_arbitrary_state(vector):
             rotation_cnots[-1] -= 1
 
     # Add Hadamard gates to unentangle to the 0 state
-    reversed_gates += map(H, range(n))
+    reversed_gates += map(H, qubits)
 
+    print vector, n
     # Correct the overall phase
-    reversed_gates.append(PHASE(2*phases[0], 0))
-    reversed_gates.append(RZ(-2*phases[0], 0))
+    reversed_gates.append(PHASE(2*phases[0], qubits[0]))
+    reversed_gates.append(RZ(-2*phases[0], qubits[0]))
 
     # Apply all gates in reverse
     p = pq.Program().inst([reversed_gates[::-1]])
@@ -127,7 +136,8 @@ if __name__ == "__main__":
         v = [v]
     else:
         v = list(v)
-    p = create_arbitrary_state(v)
+    offset = input("Input a positive integer offset:\n")
+    p = create_arbitrary_state(v, offset)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
     print "Normalized Vector: ", list(v / np.linalg.norm(v))
