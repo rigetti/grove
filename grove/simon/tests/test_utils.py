@@ -1,50 +1,6 @@
-"""Test class for methods found in the black box utils."""
+"""Test class for helper methods found simon"""
 
 from grove.simon.simon import *
-import pyquil.quil as pq
-from pyquil.resource_manager import Qubit
-
-
-class TestIntegerToBitstring(object):
-    def test_integer_five(self):
-        assert integer_to_bitstring(5, 3) == '101'
-
-    def test_integer_fourteen(self):
-        assert integer_to_bitstring(14, 4) == '1110'
-
-    def test_integer_zero(self):
-        assert integer_to_bitstring(0, 1) == '0'
-
-    def test_integer_three_with_leading_zeros(self):
-        assert integer_to_bitstring(3, 6) == '000011'
-
-    def test_integer_eleven_truncated(self):
-        assert integer_to_bitstring(11, 3) == '011'
-
-
-class TestBitstringToArray(object):
-    def test_one_bit_bitstring(self):
-        assert list(bitstring_to_array('1')) == [1]
-
-    def test_three_bit_bitstring(self):
-        assert list(bitstring_to_array('100')) == [1, 0, 0]
-
-    def test_six_bit_bitstring(self):
-        assert list(bitstring_to_array('001101')) == [0, 0, 1, 1, 0, 1]
-
-
-class TestBitstringToInteger(object):
-    def test_three_bit_bitstring_all_ones(self):
-        assert bitstring_to_integer('111') == 7
-
-    def test_one_bit_bitstring(self):
-        assert bitstring_to_integer('1') == 1
-
-    def test_five_bit_bitstring_ones_and_zeros(self):
-        assert bitstring_to_integer('10010') == 18
-
-    def test_leading_zeros_bitstring(self):
-        assert bitstring_to_integer('001101') == 13
 
 
 class TestIsUnitary(object):
@@ -71,22 +27,6 @@ class TestIsUnitary(object):
         matrix[2, 2] = 1
         matrix[3, 2] = 1
         assert not is_unitary(matrix)
-
-
-class TestGetNBits(object):
-    def test_get_one_bit(self):
-        p = pq.Program()
-        bits = get_n_bits(p, 1)
-        assert len(bits) == 1
-        assert type(bits[0]) == Qubit
-
-    def test_get_three_bits(self):
-        p = pq.Program()
-        bits = get_n_bits(p, 3)
-        assert len(bits) == 3
-        assert type(bits[0]) == Qubit
-        assert type(bits[1]) == Qubit
-        assert type(bits[2]) == Qubit
 
 
 class TestMostSignificantBits(object):

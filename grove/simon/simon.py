@@ -79,7 +79,7 @@ def unitary_function(mappings):
 
     # Fill in what is known so far
     for j in range(2 ** n):
-        i = bitstring_to_integer(mappings[j])
+        i = mappings[j]
         output_counts[i] += 1
         if output_counts[i] == 2:
             del output_counts[i]
@@ -102,35 +102,6 @@ def unitary_function(mappings):
     return unitary_funct
 
 
-def integer_to_bitstring(x, n):
-    """
-    :param x: a positive base 10 integer
-    :param n: the number of bits that the bitstring should be
-    :return: the lowest n significant digits of the binary representation of x
-             with 0s padded if needed. Significance decreases from left to right.
-    :rtype: str
-    """
-    return ''.join([str((x >> i) & 1) for i in range(n-1, -1, -1)])
-
-
-def bitstring_to_array(bitstring):
-    """
-    :param bitstring: bitstring to convert into an array
-    :return: the array corresponding to the bitstring
-    :rtype: numpy array
-    """
-    return np.array(map(int, bitstring))
-
-
-def bitstring_to_integer(bitstring):
-    """
-    :param bitstring: The binary string to convert
-    :return: the base 10 number corresponding bitstring, presumed to be in binary.
-    :rtype: int
-    """
-    return reduce(lambda prev, next: prev*2 + next, map(int, bitstring), 0)
-
-
 def is_unitary(matrix):
     """
     :param matrix: a matrix to test unitarity of
@@ -141,17 +112,6 @@ def is_unitary(matrix):
     if rows != cols:
         return False
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
-
-
-def get_n_bits(prog, n):
-    """
-    Produces n new qubits for a program and returns them in a list
-    :param prog: the program from which to allocate qubits
-    :param n: the number of qubits to allocate
-    :return: a list of the n allocated qubits
-    :rtype: list
-    """
-    return [prog.alloc() for _ in range(n)]
 
 
 def most_significant_bit(lst):
@@ -176,20 +136,19 @@ if __name__ == "__main__":
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
     for i in range(2 ** n):
-        val = raw_input(integer_to_bitstring(i, n) + ': ')
+        val = raw_input(np.binary_repr(i, n) + ': ')
         assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
-        mappings.append(val)
+        mappings.append(int(val, 2))
 
     simon_program = pq.Program()
-    qubits = [simon_program.alloc() for _ in range(n)]
-    ancillas = [simon_program.alloc() for _ in range(n)]
-    scratch_bit = simon_program.alloc()
+    qubits = range(n)
+    ancillas = range(n, 2*n)
+    scratch_bit = 2*n
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
     simon_program += simon(oracle, qubits)
 
-    print simon_program
     qvm = api.SyncConnection()
 
     # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
@@ -200,7 +159,7 @@ if __name__ == "__main__":
     while True:
         if W is not None and len(W) == n-1:
             break
-        z = np.array(qvm.run_and_measure(simon_program, [q.index() for q in qubits])[0])
+        z = np.array(qvm.run_and_measure(simon_program, [q for q in qubits])[0])
         iterations += 1
         # attempt to insert into W so that W remains in row-echelon form and all rows are linearly independent
         while np.any(z):  # while it's not all zeros
@@ -250,3 +209,7 @@ if __name__ == "__main__":
 
     print "The mask s is ", ''.join([str(int(bit)) for bit in s])
     print "Iterations of the algorithm: ", iterations
+
+    if (raw_input("Show Program? (y/n): ") == 'y'):
+        print "----------Quantum Program Used----------"
+        print simon_program
