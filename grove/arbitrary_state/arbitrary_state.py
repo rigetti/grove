@@ -1,7 +1,8 @@
 """Class for generating a program that can generate an arbitrary quantum state
 """
-
-from grove.unitary_circuit.utils import *
+import pyquil.quil as pq
+import numpy as np
+from pyquil.gates import *
 from pyquil.api import SyncConnection
 
 def create_arbitrary_state(vector):
