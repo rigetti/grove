@@ -31,7 +31,7 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
 
 def simon(oracle, qubits):
     """
-    Implementation of Simon's Algorithm.
+    Implementation of the quantum portion of Simon's Algorithm.
     For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
     f(x) = f(y) if and only if (x xor y) = s.
     :param oracle: Program representing unitary application of function.
@@ -63,7 +63,7 @@ def unitary_function(mappings):
                           01 -> 10
                           10 -> 10
                           11 -> 00
-                          Would be represented as ['00', '10', '10', '00'].
+                          Would be represented as [0, 2, 2, 0].
             Requires mappings to be two-to-one with unique mask s.
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
