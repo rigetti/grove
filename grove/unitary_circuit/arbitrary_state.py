@@ -53,7 +53,10 @@ def create_arbitrary_state(vector):
             a = magnitudes[i]
             b = magnitudes[i+1]
             if i%2**(step+1) == 0:
-                y_thetas.append(2*np.arcsin((a-b)/(np.sqrt(2*(a**2+b**2)))))
+                if a == 0 and b == 0:
+                    y_thetas.append(0)
+                else:
+                    y_thetas.append(2*np.arcsin((a-b)/(np.sqrt(2*(a**2+b**2)))))
             c = np.sqrt((a**2+b**2)/2.)
             magnitudes[i], magnitudes[i+1] = c, c
 
@@ -62,13 +65,15 @@ def create_arbitrary_state(vector):
 
         # phase
         for j in range(len(converted_z_thetas)):
-            reversed_gates.append(RZ(-converted_z_thetas[-1-j], 0))
+            if -converted_z_thetas[-1-j] != 0:
+                reversed_gates.append(RZ(-converted_z_thetas[-1-j], 0))
             if step < n-1:
                 reversed_gates.append(CNOT(step + rotation_cnots[-1-j], 0))
 
         # magnitude
         for j in range(len(converted_y_thetas)):
-            reversed_gates.append(RY(-converted_y_thetas[-1-j], 0))
+            if -converted_y_thetas[-1-j] != 0:
+                reversed_gates.append(RY(-converted_y_thetas[-1-j], 0))
             if step < n-1:
                 reversed_gates.append(CNOT(step + rotation_cnots[-1-j], 0))
 
