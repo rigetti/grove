@@ -71,21 +71,25 @@ if __name__ == "__main__":
     print "-----------------------------------"
     # First, create the program to find a
     bv_program = pq.Program()
-    qubits = [bv_program.alloc() for _ in range(len(vec_a))]
-    ancilla = bv_program.alloc()
+    qubits = range(len(vec_a))
+    ancilla = len(vec_a)
 
     oracle = oracle_function(vec_a, b, qubits, ancilla)
     bv_program += bernstein_vazirani(oracle, qubits, ancilla)
     bv_program.out()
 
     qvm = api.SyncConnection()
-    results = qvm.run_and_measure(bv_program, [q.index() for q in qubits])
+    results = qvm.run_and_measure(bv_program, qubits)
     print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
 
     # Feed through all zeros to get b
-    results = qvm.run_and_measure(oracle, [ancilla.index()])
+    results = qvm.run_and_measure(oracle, [ancilla])
 
     print "b is given by: ", results[0][0]
     print "-----------------------------------"
-    print "Full program given by: "
-    print bv_program
+    if (raw_input("Show Program? (y/n): ") == 'y'):
+        print "----------Quantum Programs Used----------"
+        print "Program to find a given by: "
+        print bv_program
+        print "Program to find b given by: "
+        print oracle
