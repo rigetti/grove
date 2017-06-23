@@ -1,7 +1,6 @@
 """Utils for generating circuits from unitaries."""
 from pyquil.gates import *
 import numpy as np
-from scipy.linalg import sqrtm
 import pyquil.quil as pq
 
 ############### Circuits from single bit unitaries and controlled unitaries ######################
@@ -18,7 +17,7 @@ def get_one_qubit_gate_params(U):
     """
     Decompose U into e^i*d_phase * RZ(alpha)*RY(theta)*RZ(beta).
     :param U: a 2x2 unitary matrix
-    :return: d_phase, alpha, theta, beta
+    :return: d_phase, alpha, beta, theta
     :rtype: tuple
     """
     d = np.sqrt(np.linalg.det(U)+0j)  # +0j to ensure the complex square root is taken
@@ -42,7 +41,7 @@ def get_one_qubit_gate_from_unitary_params(params, qubit):
     """
     Creates a circuit that simulates acting the unitary on the qubit, given angle parameters as above.
     Uses a combination of PHASE, RY and RZ gates to achieve this.
-    :param params: tuple in the form (d_phase, alpha, theta, beta)
+    :param params: tuple in the form (d_phase, alpha, beta, theta)
     :param qubit: the qubit on which to act on
     :return: the program that represents acting the unitary on the qubit
     :rtype: Program
@@ -75,7 +74,7 @@ def get_one_qubit_controlled_from_unitary_params(params, control, target):
     Get the controlled version of the unitary, given angular parameters.
     Uses PHASE, RZ, RY and CNOT gates.
 
-    :param params: tuple in the form (d_phase, alpha, theta, beta)
+    :param params: tuple in the form (d_phase, alpha, beta, theta)
     :param control: the control qubit
     :param target: the target qubit
     :return: the program that simulates acting a controlled unitary on the target, given the control.
@@ -101,32 +100,25 @@ def get_one_qubit_controlled_from_unitary_params(params, control, target):
     return p
 
 
+# X = e^i*pi/2*RZ(-pi/2)*RY(pi)*RZ(pi/2)
+#   = PHASE(pi/2)*RZ(-pi/2)*RZ(-pi/2)*RY(pi)*RZ(pi/2)
+# PHASE(alpha) = e^(-i*pi/2) * RZ(alpha)
 def n_qubit_controlled_RZ(controls, target, theta):
     """
-    :param controls: The list of control qubits
-    :param target: The target qubit
-    :param theta: The angle of rotation
-    :return: the program that applies a RZ(theta) gate to target, given controls
-    :rtype: Program
+        :param controls: The list of control qubits
+        :param target: The target qubit
+        :param theta: The angle of rotation
+        :return: the program that applies a RZ(theta) gate to target, given controls
+        :rtype: Program
     """
     if len(controls) == 0:
         return pq.Program().inst(RZ(theta, target))
-    u = np.array([[np.exp(-1j*theta/2), 0], [0, np.exp(1j*theta/2)]])
-    return n_qubit_control(controls, target, u)
-
-
-def n_qubit_controlled_PHASE(controls, target, theta):
-    """
-    :param controls: The list of control qubits
-    :param target: The target qubit
-    :param theta: The angle of rotation
-    :return: the program that applies a PHASE(theta) gate to target, given controls
-    :rtype: Program
-    """
-    if len(controls) == 0:
-        return pq.Program().inst(PHASE(theta, target))
-    u = np.array([[1, 0], [0, np.exp(1j*theta)]])
-    p = n_qubit_control(controls, target, u)
+    p = pq.Program()
+    p += get_one_qubit_controlled_from_unitary_params((0, theta/4, theta/4, 0), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += get_one_qubit_controlled_from_unitary_params((0, -theta/4, -theta/4, 0), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += n_qubit_controlled_RZ(controls[:-1], target, theta/2)
     return p
 
 
@@ -140,57 +132,102 @@ def n_qubit_controlled_RY(controls, target, theta):
     """
     if len(controls) == 0:
         return pq.Program().inst(RY(theta, target))
-    u = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
-    return n_qubit_control(controls, target, u)
+    p = pq.Program()
+    p += get_one_qubit_controlled_from_unitary_params((0, 0, 0, theta/2), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += get_one_qubit_controlled_from_unitary_params((0, 0, 0, -theta/2), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += n_qubit_controlled_RY(controls[:-1], target, theta/2)
+    return p
 
 
-def n_qubit_control(controls, target, u):
+def n_qubit_controlled_PHASE(controls, target, theta):
     """
-    Returns a controlled u gate with n-1 controls.
-
-    Does not define new gates. Follows arXiv:quant-ph/9503016. Uses the same format as in grove.grover.grover.
-
-    :param controls: The indices of the qubits to condition the gate on.
-    :param target: The index of the target of the gate.
-    :param u: The unitary gate to be controlled, given as a numpy array.
-    :return: The controlled gate.
+    :param controls: The list of control qubits
+    :param target: The target qubit
+    :param theta: The angle of rotation
+    :return: the program that applies a PHASE(theta) gate to target, given controls
     :rtype: Program
     """
-    def controlled_program_builder(controls, target, target_gate):
-
-        p = pq.Program()
-
-        params = get_one_qubit_gate_params(target_gate)
-
-        sqrt_gate = sqrtm(target_gate)
-        sqrt_params = get_one_qubit_gate_params(sqrt_gate)
-
-        adj_sqrt_params = get_one_qubit_gate_params(np.conj(sqrt_gate).T)
-
-        if len(controls) == 0:
-            p += get_one_qubit_gate_from_unitary_params(params, target)
-
-        elif len(controls) == 1:
-            # controlled U
-            p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
-
-        else:
-            # controlled V
-            many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
-
-            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
-
-            p += many_toff
-
-            # controlled V_adj
-            p += get_one_qubit_controlled_from_unitary_params(adj_sqrt_params, controls[-1], target)
-
-            p += many_toff
-
-            # n-2 controlled V
-            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
-
-        return p
-
-    p = controlled_program_builder(controls, target, u)
+    if len(controls) == 0:
+        return pq.Program().inst(PHASE(theta, target))
+    p = pq.Program()
+    p += get_one_qubit_controlled_from_unitary_params((theta/4, theta/4, theta/4, 0), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += get_one_qubit_controlled_from_unitary_params((-theta/4, -theta/4, -theta/4, 0), controls[-1], target)
+    p += n_qubit_controlled_X(controls[:-1], controls[-1])
+    p += n_qubit_controlled_PHASE(controls[:-1], target, theta/2)
     return p
+
+def n_qubit_controlled_X(controls, target):
+    """
+    :param controls: The list of control qubits
+    :param target: The target qubit
+    :return: the program that applies a X gate to target, given controls (i.e. n-1 Toffoli)
+    :rtype: Program
+    """
+    if len(controls) == 0:
+        return pq.Program().inst(X(target))
+    if len(controls) == 1:
+        return pq.Program().inst(CNOT(controls[0], target))
+    if len(controls) == 2:
+        return pq.Program().inst(CCNOT(controls[0], controls[1], target))
+
+    p = pq.Program()
+    p += n_qubit_controlled_PHASE(controls, target, np.pi)
+    p += n_qubit_controlled_RZ(controls, target, -np.pi)
+    p += n_qubit_controlled_RY(controls, target, np.pi)
+    p += n_qubit_controlled_RZ(controls, target, np.pi/2)
+
+    return p
+
+# def n_qubit_control(controls, target, u):
+#     """
+#     Returns a controlled u gate with n-1 controls.
+#
+#     Does not define new gates. Follows arXiv:quant-ph/9503016. Uses the same format as in grove.grover.grover.
+#
+#     :param controls: The indices of the qubits to condition the gate on.
+#     :param target: The index of the target of the gate.
+#     :param u: The unitary gate to be controlled, given as a numpy array.
+#     :return: The controlled gate.
+#     :rtype: Program
+#     """
+#     def controlled_program_builder(controls, target, target_gate):
+#
+#         p = pq.Program()
+#
+#         params = get_one_qubit_gate_params(target_gate)
+#
+#         sqrt_gate = sqrtm(target_gate)
+#         sqrt_params = get_one_qubit_gate_params(sqrt_gate)
+#
+#         adj_sqrt_params = get_one_qubit_gate_params(np.conj(sqrt_gate).T)
+#
+#         if len(controls) == 0:
+#             p += get_one_qubit_gate_from_unitary_params(params, target)
+#
+#         elif len(controls) == 1:
+#             # controlled U
+#             p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
+#
+#         else:
+#             # controlled V
+#             many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
+#
+#             p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
+#
+#             p += many_toff
+#
+#             # controlled V_adj
+#             p += get_one_qubit_controlled_from_unitary_params(adj_sqrt_params, controls[-1], target)
+#
+#             p += many_toff
+#
+#             # n-2 controlled V
+#             p += controlled_program_builder(controls[:-1], target, sqrt_gate)
+#
+#         return p
+#
+#     p = controlled_program_builder(controls, target, u)
+#     return p
