@@ -1,9 +1,9 @@
 """Tests for utils"""
 
-from grove.unitary_circuit.arbitrary_state import create_arbitrary_state
 import numpy as np
-from pyquil.api import SyncConnection
 import pytest
+from grove.arbitrary_state.arbitrary_state import create_arbitrary_state
+from pyquil.api import SyncConnection
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
