@@ -1,6 +1,7 @@
 """Utils for generating circuits from unitaries."""
 from pyquil.gates import *
 import numpy as np
+from scipy.linalg import sqrtm
 import pyquil.quil as pq
 
 ############### Circuits from single bit unitaries and controlled unitaries ######################
@@ -181,53 +182,54 @@ def n_qubit_controlled_X(controls, target):
 
     return p
 
-# def n_qubit_control(controls, target, u):
-#     """
-#     Returns a controlled u gate with n-1 controls.
-#
-#     Does not define new gates. Follows arXiv:quant-ph/9503016. Uses the same format as in grove.grover.grover.
-#
-#     :param controls: The indices of the qubits to condition the gate on.
-#     :param target: The index of the target of the gate.
-#     :param u: The unitary gate to be controlled, given as a numpy array.
-#     :return: The controlled gate.
-#     :rtype: Program
-#     """
-#     def controlled_program_builder(controls, target, target_gate):
-#
-#         p = pq.Program()
-#
-#         params = get_one_qubit_gate_params(target_gate)
-#
-#         sqrt_gate = sqrtm(target_gate)
-#         sqrt_params = get_one_qubit_gate_params(sqrt_gate)
-#
-#         adj_sqrt_params = get_one_qubit_gate_params(np.conj(sqrt_gate).T)
-#
-#         if len(controls) == 0:
-#             p += get_one_qubit_gate_from_unitary_params(params, target)
-#
-#         elif len(controls) == 1:
-#             # controlled U
-#             p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
-#
-#         else:
-#             # controlled V
-#             many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
-#
-#             p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
-#
-#             p += many_toff
-#
-#             # controlled V_adj
-#             p += get_one_qubit_controlled_from_unitary_params(adj_sqrt_params, controls[-1], target)
-#
-#             p += many_toff
-#
-#             # n-2 controlled V
-#             p += controlled_program_builder(controls[:-1], target, sqrt_gate)
-#
-#         return p
-#
-#     p = controlled_program_builder(controls, target, u)
-#     return p
+
+def n_qubit_control(controls, target, u):
+    """
+    Returns a controlled u gate with n-1 controls.
+
+    Does not define new gates. Follows arXiv:quant-ph/9503016. Uses the same format as in grove.grover.grover.
+
+    :param controls: The indices of the qubits to condition the gate on.
+    :param target: The index of the target of the gate.
+    :param u: The unitary gate to be controlled, given as a numpy array.
+    :return: The controlled gate.
+    :rtype: Program
+    """
+    def controlled_program_builder(controls, target, target_gate):
+
+        p = pq.Program()
+
+        params = get_one_qubit_gate_params(target_gate)
+
+        sqrt_gate = sqrtm(target_gate)
+        sqrt_params = get_one_qubit_gate_params(sqrt_gate)
+
+        adj_sqrt_params = get_one_qubit_gate_params(np.conj(sqrt_gate).T)
+
+        if len(controls) == 0:
+            p += get_one_qubit_gate_from_unitary_params(params, target)
+
+        elif len(controls) == 1:
+            # controlled U
+            p += get_one_qubit_controlled_from_unitary_params(params, controls[0], target)
+
+        else:
+            # controlled V
+            many_toff = controlled_program_builder(controls[:-1], controls[-1], np.array([[0, 1], [1, 0]]))
+
+            p += get_one_qubit_controlled_from_unitary_params(sqrt_params, controls[-1], target)
+
+            p += many_toff
+
+            # controlled V_adj
+            p += get_one_qubit_controlled_from_unitary_params(adj_sqrt_params, controls[-1], target)
+
+            p += many_toff
+
+            # n-2 controlled V
+            p += controlled_program_builder(controls[:-1], target, sqrt_gate)
+
+        return p
+
+    p = controlled_program_builder(controls, target, u)
+    return p
