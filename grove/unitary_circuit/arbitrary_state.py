@@ -30,7 +30,7 @@ def create_arbitrary_state(vector):
 
     M = np.full((N/2, N/2), 2**-(n-1))
     rotation_cnots = [1, 1]
-    for i in range(2, n+1):
+    for i in range(2, n):
         rotation_cnots[-1] = i
         rotation_cnots = rotation_cnots + rotation_cnots
 
@@ -40,20 +40,19 @@ def create_arbitrary_state(vector):
             M[i, j] *= (-1)**(bin(j & g_i).count("1"))
 
     for step in range(n):
-        # print magnitudes, phases
         z_thetas = []
         y_thetas = []
         for i in range(0, N, 2):
             phi = phases[i]
             psi = phases[i+1]
-            if i%2**(step+1) == 0:
+            if i % 2**(step+1) == 0:
                 z_thetas.append(phi - psi)
             kappa = (phi+psi)/2.
             phases[i], phases[i+1] = kappa, kappa
 
             a = magnitudes[i]
             b = magnitudes[i+1]
-            if i%2**(step+1) == 0:
+            if i % 2**(step+1) == 0:
                 if a == 0 and b == 0:
                     y_thetas.append(0)
                 else:
@@ -66,27 +65,23 @@ def create_arbitrary_state(vector):
 
         # phase
         for j in range(len(converted_z_thetas)):
-            if -converted_z_thetas[-1-j] != 0:
-                reversed_gates.append(RZ(-converted_z_thetas[-1-j], 0))
+            if converted_z_thetas[j] != 0:
+                reversed_gates.append(RZ(-converted_z_thetas[j], 0))
             if step < n-1:
-                reversed_gates.append(CNOT(step + rotation_cnots[-1-j], 0))
+                reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
 
         # magnitude
         for j in range(len(converted_y_thetas)):
-            if -converted_y_thetas[-1-j] != 0:
-                reversed_gates.append(RY(-converted_y_thetas[-1-j], 0))
+            if converted_y_thetas[j] != 0:
+                reversed_gates.append(RY(-converted_y_thetas[j], 0))
             if step < n-1:
-                reversed_gates.append(CNOT(step + rotation_cnots[-1-j], 0))
+                reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
 
         # just retain upper left square
         M = M[0:len(M)/2, 0:len(M)/2]*2
 
-        rotation_cnots = rotation_cnots[:len(rotation_cnots)/2+1]
-        rotation_cnots[-1] -= 1
-        # print magnitudes, phases
-
-        # swap
         if step < n-1:
+            # swap
             reversed_gates.append(SWAP(0, step+1))
 
             mask = 1 + (1 << (step + 1))
@@ -95,9 +90,16 @@ def create_arbitrary_state(vector):
                     phases[i], phases[i ^ mask] = phases[i ^ mask], phases[i]
                     magnitudes[i], magnitudes[i ^ mask] = magnitudes[i ^ mask], magnitudes[i]
 
+            # update next rotation_cnots
+            rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
+            rotation_cnots[-1] -= 1
+
     # Hadamards
-    # print magnitudes, phases
     reversed_gates += map(H, range(n))
+
+    # overall phase
+    reversed_gates.append(PHASE(2*phases[0], 0))
+    reversed_gates.append(RZ(-2*phases[0], 0))
     p = pq.Program().inst([reversed_gates[::-1]])
     return p
 
