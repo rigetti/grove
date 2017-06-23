@@ -5,76 +5,87 @@ import numpy as np
 from pyquil.gates import *
 from pyquil.api import SyncConnection
 
+
 def create_arbitrary_state(vector):
     """
     This function makes a program that can generate an arbitrary state.
 
-    Uses:
+    Applies the methods described in:
         - http://140.78.161.123/digital/2016_ismvl_logic_synthesis_quantum_state_generation.pdf
         - https://arxiv.org/pdf/quant-ph/0407010.pdf
 
-    Given a complex vector a with components a_i (i from 0 to N-1), produce a function
-    that takes in |0> and gives sum_i=1^N a_i/|a| |i>
+    Given a complex vector :math:`a` with components :math:`a_i` (:math:`i` ranging from :math:`0` to :math:`N-1`),
+    produce a program that takes in the state :math:`|0\ldots 0>`
+    and outputs the state :math:`\sum_{i=0}^{N-1}\frac{a_i}{|a|} |i>`
+    where :math:`i` is given in its binary expansion.
+
     :param vector: the vector to put into qubit form.
-    :return: a program that takes in |0> and produces a state that represents this vector.
+    :return: a program that takes in :math:`|0>` and produces a state that represents this vector.
     :rtype: Program
     """
-    vector = vector/np.linalg.norm(vector)
-    n = int(np.ceil(np.log2(len(vector))))
-    N = 2 ** n
-    while len(vector) < N:
-        vector = np.append(vector, 0)
-    magnitudes = map(np.abs, vector)
-    phases = map(np.angle, vector)
+    vec_norm = vector/np.linalg.norm(vector)
+    n = int(np.ceil(np.log2(len(vec_norm))))  # number of qubits needed
+    N = 2 ** n  # number of coefficients
+    while len(vec_norm) < N:
+        vec_norm = np.append(vec_norm, 0)  # pad with zeros
 
+    magnitudes = map(np.abs, vec_norm)
+    phases = map(np.angle, vec_norm)
+
+    # because this algorithm starts with a state and makes it into the |0> state,
+    # the gates will be constructed in reverse order
     reversed_gates = []
 
+    # generate the matrix that will take the angles of k-fold uniformly controlled rotations
+    # and convert them to angles for the equivalent circuit of alternating uncontrolled rotations and CNOTs
     M = np.full((N/2, N/2), 2**-(n-1))
+    for i in range(N/2):
+        g_i = i ^ (i >> 1)  # Gray code for i
+        for j in range(N/2):
+            M[i, j] *= (-1)**(bin(j & g_i).count("1"))
+
+    # generate the positions of the controls for the CNOTs
     rotation_cnots = [1, 1]
     for i in range(2, n):
         rotation_cnots[-1] = i
         rotation_cnots = rotation_cnots + rotation_cnots
 
-    for i in range(N/2):
-        g_i = i ^ (i >> 1) # Gray code
-        for j in range(N/2):
-            M[i, j] *= (-1)**(bin(j & g_i).count("1"))
-
     for step in range(n):
-        z_thetas = []
-        y_thetas = []
+        z_thetas = []  # will hold the angles for controlled rotations in the phase unification step
+        y_thetas = []  # will hold the angles for controlled rotations in the probabilities unification step
         for i in range(0, N, 2):
             phi = phases[i]
             psi = phases[i+1]
-            if i % 2**(step+1) == 0:
+            if i % 2**(step+1) == 0:  # due to repetition, only select angles are needed
                 z_thetas.append(phi - psi)
-            kappa = (phi+psi)/2.
+            kappa = (phi + psi)/2.
             phases[i], phases[i+1] = kappa, kappa
 
             a = magnitudes[i]
             b = magnitudes[i+1]
-            if i % 2**(step+1) == 0:
+            if i % 2**(step+1) == 0:  # due to repetition, only select angles are needed
                 if a == 0 and b == 0:
                     y_thetas.append(0)
                 else:
-                    y_thetas.append(2*np.arcsin((a-b)/(np.sqrt(2*(a**2+b**2)))))
+                    y_thetas.append(2*np.arcsin((a-b)/(np.sqrt(2*(a**2 + b**2)))))
             c = np.sqrt((a**2+b**2)/2.)
             magnitudes[i], magnitudes[i+1] = c, c
 
+        # convert these rotation angles to those for uncontrolled rotations + CNOTs
         converted_z_thetas = np.dot(M, z_thetas)
         converted_y_thetas = np.dot(M, y_thetas)
 
-        # phase
+        # phase unification
         for j in range(len(converted_z_thetas)):
             if converted_z_thetas[j] != 0:
-                reversed_gates.append(RZ(-converted_z_thetas[j], 0))
+                reversed_gates.append(RZ(-converted_z_thetas[j], 0))  # negative angle in conjugated/reversed circuit
             if step < n-1:
                 reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
 
-        # magnitude
+        # probability unification
         for j in range(len(converted_y_thetas)):
             if converted_y_thetas[j] != 0:
-                reversed_gates.append(RY(-converted_y_thetas[j], 0))
+                reversed_gates.append(RY(-converted_y_thetas[j], 0))  # negative angle in conjugated/reversed circuit
             if step < n-1:
                 reversed_gates.append(CNOT(step + rotation_cnots[j], 0))
 
@@ -87,6 +98,8 @@ def create_arbitrary_state(vector):
 
             mask = 1 + (1 << (step + 1))
             for i in range(N):
+                # only swap the numbers for which the 0th bit and step+1-th bit are different
+                # only check for i having 0th bit 1 and step+1-th bit 0 to prevent duplication
                 if (i & mask) ^ 1 == 0:
                     phases[i], phases[i ^ mask] = phases[i ^ mask], phases[i]
                     magnitudes[i], magnitudes[i ^ mask] = magnitudes[i ^ mask], magnitudes[i]
@@ -95,12 +108,14 @@ def create_arbitrary_state(vector):
             rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
             rotation_cnots[-1] -= 1
 
-    # Hadamards
+    # Add Hadamard gates to unentangle to the 0 state
     reversed_gates += map(H, range(n))
 
-    # overall phase
+    # Correct the overall phase
     reversed_gates.append(PHASE(2*phases[0], 0))
     reversed_gates.append(RZ(-2*phases[0], 0))
+
+    # Apply all gates in reverse
     p = pq.Program().inst([reversed_gates[::-1]])
     return p
 
