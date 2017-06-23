@@ -40,6 +40,7 @@ def create_arbitrary_state(vector):
             M[i, j] *= (-1)**(bin(j & g_i).count("1"))
 
     for step in range(n):
+        # print magnitudes, phases
         z_thetas = []
         y_thetas = []
         for i in range(0, N, 2):
@@ -82,21 +83,20 @@ def create_arbitrary_state(vector):
 
         rotation_cnots = rotation_cnots[:len(rotation_cnots)/2+1]
         rotation_cnots[-1] -= 1
+        # print magnitudes, phases
 
         # swap
         if step < n-1:
             reversed_gates.append(SWAP(0, step+1))
 
-            xor_1 = 1
-            xor_2 = 1 << (step+1)
-
-            mask = xor_1 + xor_2
-            for i in range(N/2):
-                if ((i&mask)^xor_1 == 0) or ((i&mask)^xor_1 == 0):
-                    phases[i], phases[i^mask] = phases[i^mask], phases[i]
-                    magnitudes[i], magnitudes[i^mask] = magnitudes[i^mask], magnitudes[i]
+            mask = 1 + (1 << (step + 1))
+            for i in range(N):
+                if (i & mask) ^ 1 == 0:
+                    phases[i], phases[i ^ mask] = phases[i ^ mask], phases[i]
+                    magnitudes[i], magnitudes[i ^ mask] = magnitudes[i ^ mask], magnitudes[i]
 
     # Hadamards
+    # print magnitudes, phases
     reversed_gates += map(H, range(n))
     p = pq.Program().inst([reversed_gates[::-1]])
     return p
