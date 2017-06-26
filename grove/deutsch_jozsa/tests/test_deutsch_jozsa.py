@@ -2,6 +2,7 @@ from grove.deutsch_jozsa.deutsch_jozsa import *
 import pyquil.api as forest
 import pytest
 
+@pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def run(n, mappings):
     deutsch_program = pq.Program()
     qubits = [deutsch_program.alloc() for _ in range(n)]
