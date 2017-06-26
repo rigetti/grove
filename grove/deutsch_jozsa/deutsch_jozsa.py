@@ -14,6 +14,8 @@ def oracle_function(unitary_funct, qubits, ancilla):
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
 
+    Allocates one scratch bit.
+
     :param 2d array unitary_funct: Matrix representation of the function f, i.e. the
                                    unitary transformation that must be applied to a
                                    state |x> to put f(x) in qubit 0.
@@ -32,6 +34,7 @@ def oracle_function(unitary_funct, qubits, ancilla):
     p.inst(tuple(['FUNCT'] + bits_for_funct))
     p.inst(CNOT(qubits[0], ancilla))
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
+    p.free(scratch_bit)
     return p
 
 
@@ -118,7 +121,7 @@ def integer_to_bitstring(x, n):
     :return: x as an n-bit string
     :rtype: str
     """
-    return ''.join([str((x >> i) & 1) for i in xrange(0, n)])
+    return ''.join([str((x >> i) & 1) for i in range(0, n)])
 
 def is_unitary(mat):
     """
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
-    for i in xrange(2 ** n):
+    for i in range(2 ** n):
         val = int(input(integer_to_bitstring(i, n) + ': '))
         assert val in [0,1], "f(x) must return only 0 and 1"
         mappings.append(val)
