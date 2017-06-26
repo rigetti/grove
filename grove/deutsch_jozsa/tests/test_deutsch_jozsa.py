@@ -1,8 +1,7 @@
 from grove.deutsch_jozsa.deutsch_jozsa import *
-import pyquil.api as forest
+from pyquil.api import SyncConnection
 import pytest
 
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def run(n, mappings):
     deutsch_program = pq.Program()
     qubits = [deutsch_program.alloc() for _ in range(n)]
@@ -11,7 +10,7 @@ def run(n, mappings):
     oracle = oracle_function(unitary_funct, qubits, ancilla)
     deutsch_program += deutsch_jozsa(oracle, qubits, ancilla)
     deutsch_program.out()
-    qvm = forest.SyncConnection()
+    qvm = SyncConnection()
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
     return "balanced" if 1 in results[0] else "constant"
 

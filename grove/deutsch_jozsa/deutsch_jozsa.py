@@ -14,10 +14,10 @@ def oracle_function(unitary_funct, qubits, ancilla):
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
 
-    :param matrix unitary_funct: Matrix representation of the function f, i.e. the
-                          unitary transformation that must be applied to a
-                          state |x> to put f(x) in qubit 0.
-    :param list qubits: List of qubits that enter as input |x>.
+    :param 2d array unitary_funct: Matrix representation of the function f, i.e. the
+                                   unitary transformation that must be applied to a
+                                   state |x> to put f(x) in qubit 0.
+    :param 1d array qubits: List of qubits that enter as input |x>.
     :param Qubit ancilla: Qubit to serve as input |y>.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
@@ -80,12 +80,18 @@ def unitary_function(mappings):
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
+    assert len(mappings) >= 2, "Mappings must be over at least one bit"
+    assert 2 ** int(np.ceil(np.log2(len(mappings)))) == len(mappings), \
+        "Mappings' length must be a power of 2"
+    assert len([i for i in mappings if i not in [0, 1]]) == 0, \
+        "Mappings can only contain binary values"
+
     n = int(np.log2(len(mappings)))
-    SWAP_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
+    swap_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
                             [0, 1, 0, 0], [0, 0, 0, 1]])
 
     if sum(mappings) == 0: # Only zeros were entered
-        return np.kron(SWAP_matrix, np.identity(2 ** (n - 1)))
+        return np.kron(swap_matrix, np.identity(2 ** (n - 1)))
 
     elif sum(mappings) == 2 ** (n - 1): # Half of the entries were 0, half 1
         unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
@@ -97,10 +103,10 @@ def unitary_function(mappings):
 
     elif sum(mappings) == 2 ** n: # Only ones were entered
         X_gate = np.array([[0, 1], [1, 0]])
-        return  np.kron(SWAP_matrix, np.identity(2 ** (n - 1))).dot(
+        return  np.kron(swap_matrix, np.identity(2 ** (n - 1))).dot(
             np.kron(X_gate, np.identity(2 ** n)))
     else:
-        assert False, "f(x) must be constant or balanced"
+        raise ValueError("f(x) must be constant or balanced")
 
 
 def integer_to_bitstring(x, n):
@@ -118,7 +124,7 @@ def is_unitary(mat):
     """
     Checks if a matrix is unitary.
 
-    :param matrix mat:
+    :param 2d array mat:
     :return: Whether or not mat is unitary
     :rtype: bool
     """
@@ -128,7 +134,7 @@ def is_unitary(mat):
     return np.allclose(np.eye(rows), mat.dot(mat.T.conj()))
 
 if __name__ == "__main__":
-    import pyquil.api as forest
+    from pyquil.api import SyncConnection
 
     # Read function mappings from user
     n = int(raw_input("How many bits? "))
@@ -143,7 +149,6 @@ if __name__ == "__main__":
     deutsch_program = pq.Program()
     qubits = [deutsch_program.alloc() for _ in range(n)]
     ancilla = deutsch_program.alloc()
-    scratch_bit = deutsch_program.alloc()
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancilla)
@@ -151,7 +156,7 @@ if __name__ == "__main__":
     deutsch_program.out()
 
     print deutsch_program
-    qvm = forest.SyncConnection()
+    qvm = SyncConnection()
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
     print "Results:", results
     print "f(x) is", "balanced" if 1 in results[0] else "constant"
