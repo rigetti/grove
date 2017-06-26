@@ -71,6 +71,13 @@ def n_qubit_control(controls, target, u, gate_name):
     :param gate_name: The name of the gate u.
     :return: The controlled gate.
     """
+    
+    # Make assertions about the input
+    assert isinstance(u, np.ndarray), "The unitary 'u' must be a numpy array"
+    assert len(controls) > 0, "The control qubits list must not be empty"
+    assert isinstance(target, int) and target > 0, "The target index must be an integer greater than 0"
+    assert len(gate_name) > 0, "Gate name must have length greater than one"
+    
     def controlled_program_builder(controls, target, target_gate_name, target_gate,
                                    defined_gates=set(STANDARD_GATE_NAMES)):
         zero_projection = np.array([[1, 0], [0, 0]])
@@ -130,6 +137,9 @@ def diffusion_operator(qubits):
     :param qubits: A list of ints corresponding to the qubits to operate on. The operator
                    operates on bistrings of the form |qubits[0], ..., qubits[-1]>.
     """
+    
+    assert len(qubits) > 0, "The diffusion operator must take in a non-empty list of qubits"
+    
     p = pq.Program()
 
     if len(qubits) == 1:
