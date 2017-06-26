@@ -42,6 +42,13 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
     :param init: a boolean flag that is set to True if and only if A is to be applied initially on the input qubits. By default, it is set to True.
     :return:
     """
+    
+    # Assertions to check input
+    assert isinstance(A, pq.Program), "A must be a valid Program instance"
+    assert isinstance(A_inv, pq.Program), "A_inv must be a valid Program instance"
+    assert isinstance(U_w, pq.Program), "U_w must be a valid Program instance"
+    assert num_iter > 0, "The number of iterations must be greater than 0"
+    assert len(qubits) > 0, "The list of qubits to apply the diffusion operator to must be non-empty"
 
     p = A if init else pq.Program()
 
