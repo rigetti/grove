@@ -2,9 +2,10 @@
 Additional information for this algorithm can be found at: http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
 """
 
+import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
-import numpy as np
+
 
 def oracle_function(vec_a, b, qubits, ancilla):
     """
@@ -12,7 +13,8 @@ def oracle_function(vec_a, b, qubits, ancilla):
     |x>|y> -> |x>|f(x) xor y>
 
     f(x) is given by a*x+b, where * is a bitwise dot product and everything is taken mod 2.
-    :param vec_a: a vector of length n containing only ones and zeros.
+    :param vec_a: a vector of length n containing only ones and zeros. The order is taken to be
+                  most to least significant bit.
     :param b: a 0 or 1
     :param qubits: List of qubits that enter as input |x>. Must be the same length (n) as vec_a
     :param ancilla: Qubit to serve as input |y>, where the answer will be written to.
@@ -52,6 +54,37 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     p.inst(map(H, qubits))
     return p
 
+
+def run(cxn, vec_a, b):
+    """
+    Runs the Bernstein-Vazirani algorithm.
+    :param cxn: the QVM connection to use to run the programs
+    :param vec_a: a vector of 0s and 1s, to represent the a vector.
+    :param b: a bit, 0 or 1, to represent the b constant
+    :return: a tuple that includes:
+                - the program's determination of a
+                - the program's determination of b
+                - the main program used to determine a
+                - the oracle used
+    """
+    # First, create the program to find a
+    bv_program = pq.Program()
+    qubits = range(len(vec_a))
+    ancilla = len(vec_a)
+
+    oracle = oracle_function(vec_a, b, qubits, ancilla)
+    bv_program += bernstein_vazirani(oracle, qubits, ancilla)
+
+    results = cxn.run_and_measure(bv_program, qubits)
+    bv_a = results[0][::-1]
+
+    # Feed through all zeros to get b
+    results = cxn.run_and_measure(oracle, [ancilla])
+    bv_b = results[0][0]
+
+    return bv_a, bv_b, bv_program, oracle
+
+
 if __name__ == "__main__":
     import pyquil.api as api
 
@@ -68,26 +101,14 @@ if __name__ == "__main__":
         print "b must be either 0 or 1"
         b = int(raw_input("Give a single bit for b: "))
 
-    print "-----------------------------------"
-    # First, create the program to find a
-    bv_program = pq.Program()
-    qubits = range(len(vec_a))
-    ancilla = len(vec_a)
-
-    oracle = oracle_function(vec_a, b, qubits, ancilla)
-    bv_program += bernstein_vazirani(oracle, qubits, ancilla)
-    bv_program.out()
-
     qvm = api.SyncConnection()
-    results = qvm.run_and_measure(bv_program, qubits)
-    print "The bitstring a is given by: ", "".join(map(str, results[0][::-1]))
-
-    # Feed through all zeros to get b
-    results = qvm.run_and_measure(oracle, [ancilla])
-
-    print "b is given by: ", results[0][0]
+    a, b, bv_program, oracle = run(qvm, vec_a, b)
+    bitstring_a = "".join(map(str, a))
     print "-----------------------------------"
-    if (raw_input("Show Program? (y/n): ") == 'y'):
+    print "The bitstring a is given by: ", bitstring
+    print "b is given by: ", b
+    print "-----------------------------------"
+    if raw_input("Show Program? (y/n): ") == 'y':
         print "----------Quantum Programs Used----------"
         print "Program to find a given by: "
         print bv_program
