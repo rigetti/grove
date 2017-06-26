@@ -13,3 +13,36 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
+
+import pytest
+from grove.order_finding.order_finding import calculate_order, calculate_order_classical, multiplication_operator
+import numpy as np
+
+
+@pytest.mark.skip(reason="Must add support for Forest connections in testing")
+def test_order_finding():
+    a_values = [2, 3, 7]
+    N_values = [3, 5, 15]
+    for a, N in zip(a_values, N_values):
+        assert calculate_order(a, N) == calculate_order_classical(a, N)
+
+@pytest.mark.skip(reason="Must add support for Forest connections in testing")
+def test_order_finding_edge_case():
+    a_values = [5, 11]
+    N_values = [9, 21]
+    for a, N in zip(a_values, N_values):
+        assert calculate_order(a, N) == calculate_order_classical(a, N)
+
+def test_multiplication_operator():
+    a = 3
+    N = 7
+    U = multiplication_operator(a, N)
+    one = np.array([0, 1, 0, 0, 0, 0, 0, 0])
+    two = np.array([0, 0, 1, 0, 0, 0, 0, 0])
+    three = np.array([0, 0, 0, 1, 0, 0, 0, 0])
+    five = np.array([0, 0, 0, 0, 0, 1, 0, 0])
+
+    assert np.allclose(U.dot(one), three) # 3 * 1 (mod 7) = 3
+    assert np.allclose(U.dot(three), two) # 3 * 3 (mod 7) = 2
+    assert np.allclose(U.dot(five), one) # 5 * 3 (mod 7) = 1
+
