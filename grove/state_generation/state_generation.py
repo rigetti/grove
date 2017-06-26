@@ -12,35 +12,75 @@ def generate_state(vector, offset=0):
     Encodes an arbitrary vector into a quantum state.
     The input vector is normalized and padded with zeros, if necessary.
 
-    :param list vector: A list of complex numbers
+    :param 1d array vector: A list of complex numbers
     :param offset: Which qubit to begin encoding the state into
     :return: A program that produces the desired state
     :rtype: Program
     """
 
+    num_bits = int(np.ceil(np.log2(len(vector))))
+
     # normalize
     norm_vector = vector / np.linalg.norm(vector)
 
     # pad with zeros
-    num_bits = int(np.ceil(np.log2(len(vector))))
-    length = int(2 ** num_bits)
+    length = next_power_of_two(len(vector))
     state_vector = np.zeros(length, dtype=complex)
-    for i in xrange(len(vector)):
+    for i in range(len(vector)):
         state_vector[reverse(i, num_bits)] = norm_vector[i]
 
     # use QR factorization to create unitary
-    U = np.identity(length, dtype=complex)
-    for i in xrange(length):
-        U[i, 0] = state_vector[i]
-    Q, R = np.linalg.qr(U)
+    U = unitary_operator(state_vector)
 
     # store quantum state as program
     p = pq.Program()
     state_prep_name = "PREP-STATE-{0}".format(hash(p))
-    p.defgate(state_prep_name, -1 * Q)
-    qubits = [offset + i for i in xrange(num_bits)]
+    p.defgate(state_prep_name, U)
+    qubits = [offset + i for i in range(num_bits)]
     p.inst(tuple([state_prep_name] + qubits))
     return p
+
+def unitary_operator(state_vector):
+    """
+    Uses QR factorization to create a unitary operator that encodes an arbitrary normalized
+    vector into the wavefunction of a quantum state.
+
+    :param 1d array state_vector: Normalized vector whose length is power of two
+    :return: Unitary operator that encodes state_vector
+    :rtype: 2d array
+    """
+
+    assert np.allclose([np.linalg.norm(state_vector)], [1]), \
+        "Vector must be normalized"
+    assert next_power_of_two(len(state_vector)) == len(state_vector), \
+        "Vector length must be a power of two"
+
+    mat = np.identity(len(state_vector), dtype=complex)
+    for i in range(len(state_vector)):
+        mat[i, 0] = state_vector[i]
+    U = np.linalg.qr(mat)[0]
+
+    # make sure U|0> = |v>
+    zero_state = np.zeros(len(U))
+    zero_state[0] = 1
+    if np.allclose(U.dot(zero_state), state_vector):
+        return U
+    else:
+        # adjust phase if needed
+        return -1*U
+
+def next_power_of_two(n):
+    """
+    Calculates the first power of two >= n.
+
+    :param int n: A positive integer
+    :return: The power of two that n rounds up to
+    :rtype: int
+    """
+
+    assert n > 0, "Inout should be positive"
+    num_bits = int(np.ceil(np.log2(n)))
+    return int(2 ** num_bits)
 
 def reverse(x, n):
     """
@@ -52,6 +92,7 @@ def reverse(x, n):
              of the bits reversed
     :rtype: int
     """
+
     result = 0
     for i in xrange(n):
         if (x >> i) & 1: result |= 1 << (n - 1 - i)
