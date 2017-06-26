@@ -163,6 +163,15 @@ def calculate_order_classical(a, N):
 
 
 def binary_to_integer(x):
+    """
+    Converts a list of binary digits
+    to the corresponding integer.
+
+    :param list x: List of bits
+    :return: x in base 10
+    :rtype: int
+    """
+
     x = x[::-1]
     retval = 0
     for i in range(len(x)):
@@ -173,6 +182,16 @@ def binary_to_integer(x):
 
 
 def gcd(a, b):
+    """
+    Computes the greatest common denominator
+    of two numbers a and b.
+
+    :param int a: A positive integer
+    :param int b: A positive integer
+    :return: Their gcd
+    :rtype: int
+    """
+
     if b > a:
         return gcd(b, a)
     if b == 0:
@@ -182,7 +201,6 @@ def gcd(a, b):
 
 
 if __name__ == "__main__":
-
 
     print "Let's calculate the order of f(x) = a^x (mod N)"
     a = int(input("Pick the base a: "))
