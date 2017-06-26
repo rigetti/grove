@@ -68,12 +68,11 @@ def run(cxn, vec_a, b):
                 - the oracle used
     """
     # First, create the program to find a
-    bv_program = pq.Program()
     qubits = range(len(vec_a))
     ancilla = len(vec_a)
 
     oracle = oracle_function(vec_a, b, qubits, ancilla)
-    bv_program += bernstein_vazirani(oracle, qubits, ancilla)
+    bv_program = bernstein_vazirani(oracle, qubits, ancilla)
 
     results = cxn.run_and_measure(bv_program, qubits)
     bv_a = results[0][::-1]
