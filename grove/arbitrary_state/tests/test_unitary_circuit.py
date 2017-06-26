@@ -65,8 +65,6 @@ class TestUniformlyControlledRotationMatrix(object):
                                   [1, -1, -1, 1],
                                   [1, 1, -1, -1]])
         actual = uniformly_controlled_rotation_matrix(2)
-        print expected
-        print actual
 
         assert np.allclose(expected, actual)
 
@@ -81,10 +79,33 @@ class TestUniformlyControlledRotationMatrix(object):
                                       [1, -1, 1, -1, -1, 1, -1, 1],
                                       [1, 1, 1, 1, -1, -1, -1, -1]])
         actual = uniformly_controlled_rotation_matrix(3)
-        print expected
-        print actual
 
         assert np.allclose(expected, actual)
+
+
+class TestUniformlyControlledCNOTPositions(object):
+    def test_one_control(self):
+        expected = [1, 1]
+        actual = uniformly_controlled_cnot_control_positions(1)
+        assert expected == actual
+
+
+    def test_two_controls(self):
+        expected = [1, 2, 1, 2]
+        actual = uniformly_controlled_cnot_control_positions(2)
+        assert expected == actual
+
+
+    def test_three_controls(self):
+        expected = [1, 2, 1, 3, 1, 2, 1, 3]
+        actual = uniformly_controlled_cnot_control_positions(3)
+        assert expected == actual
+
+
+    def test_four_controls(self):
+        expected = [1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 4]
+        actual = uniformly_controlled_cnot_control_positions(4)
+        assert expected == actual
 
 
 def _state_generation_test_helper(v, offset=0):
