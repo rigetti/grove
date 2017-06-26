@@ -39,6 +39,9 @@ class SDServer:
                        qubits to use for the protocol on the server size.
         '''
         
+        assert classical_reg >= 0 and int(classical_reg) == classical_reg, "Classical register must be a positive integer"
+        assert bell_count > 0, "Number of Bell pairs must be greater than 0"
+        
         self.qubit_count = 2 * bell_count
         if qubits:
             assert self.qubit_count == len(qubits), "Number of requested qubits does not match number of given registers."
@@ -119,6 +122,10 @@ class SDClient:
         :param qubits: Optional. Allows the user to define the indices of the
                        qubits to use for the protocol on the server size.
         '''
+        
+        assert classical_reg >= 0 and int(classical_reg) == classical_reg, "Classical register must be a positive integer"
+        assert bell_count > 0, "Number of Bell pairs must be greater than 0"
+        assert 2*bell_count <= len(message_regs), "Must have enough registers to store information in"
         
         self.qubit_count = 2 * bell_count
         if qubits:
