@@ -128,7 +128,7 @@ def is_unitary(mat):
     return np.allclose(np.eye(rows), mat.dot(mat.T.conj()))
 
 if __name__ == "__main__":
-    import pyquil.forest as forest
+    import pyquil.api as forest
 
     # Read function mappings from user
     n = int(raw_input("How many bits? "))
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     deutsch_program.out()
 
     print deutsch_program
-    qvm = forest.Connection()
+    qvm = forest.SyncConnection()
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
     print "Results:", results
     print "f(x) is", "balanced" if 1 in results[0] else "constant"
