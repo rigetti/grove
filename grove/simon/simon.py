@@ -9,7 +9,7 @@ from pyquil.gates import *
 import numpy as np
 
 
-def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
+def oracle_function(unitary_funct, qubits, ancillas):
     """
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
@@ -23,14 +23,18 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     :rtype: Program
     """
     assert _is_unitary(unitary_funct), "Function must be unitary."
-    bits_for_funct = [scratch_bit] + qubits
     p = pq.Program()
+
+    scratch_bit = p.alloc()
+    bits_for_funct = [scratch_bit] + qubits
 
     p.defgate("FUNCT", unitary_funct)
     p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
     p.inst(tuple(['FUNCT'] + bits_for_funct))
     p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
+
+    p.free(scratch_bit)
     return p
 
 
@@ -53,6 +57,7 @@ def unitary_function(mappings):
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
+    # TODO see if mappings is a valid thing
     n = int(np.log2(len(mappings)))
     distinct_outputs = len(set(mappings))
     assert distinct_outputs in {2**(n-1)}, "Function must be two-to-one"
@@ -225,10 +230,9 @@ if __name__ == "__main__":
 
     qubits = range(n)
     ancillas = range(n, 2*n)
-    scratch_bit = 2*n
 
     unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
+    oracle = oracle_function(unitary_funct, qubits, ancillas)
 
     s, iterations, simon_program = find_mask(qvm, oracle, qubits)
 

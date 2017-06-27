@@ -28,10 +28,9 @@ def _find_mask_test_helper(mappings, mask):
 
     qubits = range(n)
     ancillas = range(n, 2*n)
-    scratch_bit = 2*n
 
     unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
+    oracle = oracle_function(unitary_funct, qubits, ancillas)
     
     s = find_mask(qvm, oracle, qubits)[0]
 
