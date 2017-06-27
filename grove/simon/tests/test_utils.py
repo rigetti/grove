@@ -1,6 +1,33 @@
 """Test class for helper methods found simon"""
 
-from grove.simon.simon import *
+import numpy as np
+import pyquil.api as api
+import pytest
+
+from grove.simon.simon import is_unitary, most_significant_bit, find_mask
+
+
+@pytest.mark.skip(reason="Must add support for Forest connections in testing")
+class TestFindMask(object):
+    def test_two_qubits(self):
+        _find_mask_test_helper([0, 2, 0, 2], 2)
+
+    def test_three_qubits_one_mask(self):
+        _find_mask_test_helper([0, 0, 7, 7, 4, 4, 2, 2], 1)
+
+    def test_three_qubits_five_mask(self):
+        _find_mask_test_helper([3, 0, 1, 7, 0, 3, 7, 1], 5)
+
+    def test_four_qubits(self):
+        _find_mask_test_helper([0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0], 15)
+
+
+def _find_mask_test_helper(mappings, mask):
+    n = int(np.log2(len(mappings)))
+    qvm = api.SyncConnection()
+    s = find_mask(qvm, mappings, n)[0]
+
+    assert int(s, 2) == mask
 
 
 class TestIsUnitary(object):

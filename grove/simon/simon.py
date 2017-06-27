@@ -1,8 +1,13 @@
-"""Module for the Simon's Algorithm."""
+"""Module for the Simon's Algorithm.
+For more information, see
+    - http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+    - http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
+"""
 
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
+
 
 def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     """
@@ -127,29 +132,26 @@ def most_significant_bit(lst):
     return msb
 
 
-if __name__ == "__main__":
-    import pyquil.api as api
-
-    # Read function mappings from user
-    n = int(input("How many bits? "))
-    assert n > 0, "The number of bits must be positive."
-    print "Enter f(x) for the following n-bit inputs:"
-    mappings = []
-    for i in range(2 ** n):
-        val = raw_input(np.binary_repr(i, n) + ': ')
-        assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
-        mappings.append(int(val, 2))
-
-    simon_program = pq.Program()
+def find_mask(cxn, mappings, n):
+    """
+    Runs Simon's algorithm to find the mask.
+    :param cxn: the connection used to run programs
+    :param mappings: the function, defined by f(x) = mappings[x], where x and f(x) are integers between 0 and 2^n-1
+                     for n = len(qubits)
+    :param n: number of bits in the domain/range of the function. Must be greater than 1.
+    :return: a tuple t, where t[0] is the bitstring of the mask, t[1] is the number of iterations
+             that the quantum program was run, and t[2] is said program.
+    :rtype: tuple
+    """
     qubits = range(n)
     ancillas = range(n, 2*n)
     scratch_bit = 2*n
 
+    simon_program = pq.Program()
+
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
     simon_program += simon(oracle, qubits)
-
-    qvm = api.SyncConnection()
 
     # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
     # Done so by running the Simon program repeatedly and building up a row-echelon matrix W
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     while True:
         if W is not None and len(W) == n-1:
             break
-        z = np.array(qvm.run_and_measure(simon_program, [q for q in qubits])[0])
+        z = np.array(cxn.run_and_measure(simon_program, qubits)[0])
         iterations += 1
         # attempt to insert into W so that W remains in row-echelon form and all rows are linearly independent
         while np.any(z):  # while it's not all zeros
@@ -207,7 +209,28 @@ if __name__ == "__main__":
             if row[col_num] == 1:
                 s[row_num] = int(s[row_num]) ^ int(s[col_num])
 
-    print "The mask s is ", ''.join([str(int(bit)) for bit in s])
+    s_str = ''.join(map(str, map(int, s)))
+
+    return s_str, iterations, simon_program
+
+if __name__ == "__main__":
+    import pyquil.api as api
+
+    # Read function mappings from user
+    n = int(input("How many bits? "))
+    assert n > 0, "The number of bits must be positive."
+    print "Enter f(x) for the following n-bit inputs:"
+    mappings = []
+    for i in range(2 ** n):
+        val = raw_input(np.binary_repr(i, n) + ': ')
+        assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
+        mappings.append(int(val, 2))
+
+    qvm = api.SyncConnection()
+
+    s, iterations, simon_program = find_mask(qvm, mappings, n)
+
+    print "The mask s is", s
     print "Iterations of the algorithm: ", iterations
 
     if (raw_input("Show Program? (y/n): ") == 'y'):
