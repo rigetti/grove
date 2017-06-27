@@ -1,5 +1,6 @@
 """Module for the Bernstein-Vazirani Algorithm.
-Additional information for this algorithm can be found at: http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
+Additional information for this algorithm can be found at:
+http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
 """
 
 import numpy as np
@@ -26,7 +27,8 @@ def oracle_function(vec_a, b, qubits, ancilla):
 
     .. math::
 
-        \\vert \\mathbf{x}\\rangle\\vert y\\rangle \\rightarrow \\vert \\mathbf{x}\\rangle \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
+        \\vert \\mathbf{x}\\rangle\\vert y\\rangle \\rightarrow
+        \\vert \\mathbf{x}\\rangle \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
 
     where :math:`\\text{xor}` is taken bitwise.
 
@@ -85,7 +87,8 @@ def run(cxn, oracle, qubits, ancilla):
     :math:`b` corresponding to the function represented by the oracle.
 
     :param SyncConnection cxn: the QVM connection to use to run the programs
-    :param Program oracle: the oracle to query that represents a function of the form :math:`f(x) = \\mathbf{a}\\cdot \\mathbf{x} + b \\pmod{2}`.
+    :param Program oracle: the oracle to query that represents a function of the form
+                           :math:`f(x) = \\mathbf{a}\\cdot \\mathbf{x} + b \\pmod{2}`.
     :param list qubits: the input qubits
     :param Qubit ancilla: the ancilla qubit
     :return: a tuple that includes:
