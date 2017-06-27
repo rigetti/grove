@@ -37,7 +37,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
 
     Allocates one scratch bit.
 
-    :param numpy.ndarray vec_a: a vector of length :math:`n`
+    :param list(int) vec_a: a vector of length :math:`n`
                                 containing only ones and zeros.
                                 The order is taken to be
                                 most to least significant bit.
@@ -52,6 +52,12 @@ def oracle_function(vec_a, b, qubits, ancilla):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
+    assert len(vec_a) == len(qubits), \
+        "vec_a must be the same length as the number of input qubits"
+    assert all(map(lambda x: x in {0, 1}, vec_a)), \
+        "vec_a must be a list of 0s and 1s"
+    assert b in {0, 1}, "b must be a 0 or 1"
+
     n = len(qubits)
     p = pq.Program()
     if b == 1:
