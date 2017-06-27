@@ -10,7 +10,8 @@ from pyquil.gates import *
 
 def oracle_function(vec_a, b, qubits, ancilla):
     """
-    Creates a black box oracle for a function to be used in the Bernstein-Vazirani algorithm.
+    Creates a black box oracle for a function
+    to be used in the Bernstein-Vazirani algorithm.
 
     For a function :math:`f` such that
 
@@ -23,23 +24,31 @@ def oracle_function(vec_a, b, qubits, ancilla):
        (\\mathbf{x}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
 
     where :math:`(\\cdot)` is the bitwise dot product,
-    this function defines a program that performs the following unitary transformation:
+    this function defines a program that performs
+    the following unitary transformation:
 
     .. math::
 
         \\vert \\mathbf{x}\\rangle\\vert y\\rangle \\rightarrow
-        \\vert \\mathbf{x}\\rangle \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
+        \\vert \\mathbf{x}\\rangle
+        \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
 
     where :math:`\\text{xor}` is taken bitwise.
 
     Allocates one scratch bit.
 
-    :param numpy.ndarray vec_a: a vector of length n containing only ones and zeros. The order is taken to be
-                  most to least significant bit.
+    :param numpy.ndarray vec_a: a vector of length :math:`n`
+                                containing only ones and zeros.
+                                The order is taken to be
+                                most to least significant bit.
     :param int b: a 0 or 1
-    :param list(int) qubits: List of qubits that enter as input :math:`\\vert x\\rangle`.
-                             Must be the same length (:math:`n`) as :math:`\\mathbf{a}`
-    :param int ancilla: Ancillary qubit to serve as input :math:`\\vert y\\rangle`, where the answer will be written to.
+    :param list(int) qubits: List of qubits that enter as input
+                             :math:`\\vert x\\rangle`.
+                             Must be the same length (:math:`n`)
+                             as :math:`\\mathbf{a}`
+    :param int ancilla: Ancillary qubit to serve as input
+                        :math:`\\vert y\\rangle`,
+                        where the answer will be written to.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
@@ -49,7 +58,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
         p.inst(X(ancilla))
     for i in xrange(n):
         if vec_a[i] == 1:
-            p.inst(CNOT(qubits[n-1-i], ancilla))
+            p.inst(CNOT(qubits[n - 1 - i], ancilla))
     return p
 
 
@@ -57,12 +66,17 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     """
     Implementation of the Bernstein-Vazirani Algorithm.
 
-    Given a list of input qubits and an ancilla bit, all initially in the :math:`\\vert 0\\rangle` state,
-    create a program that can find :math:`\\vec{a}` with one query to the given oracle.
+    Given a list of input qubits and an ancilla bit,
+    all initially in the :math:`\\vert 0\\rangle` state,
+    create a program that can find :math:`\\vec{a}`
+    with one query to the given oracle.
 
-    :param Program oracle: Program representing unitary application of function.
-    :param list(int) qubits: List of qubits that enter as state :math:`\\vert x\\rangle`.
-    :param int ancilla: Ancillary qubit to serve as input :math:`\\vert y\\rangle`, where the answer will be written to.
+    :param Program oracle: Program representing unitary application of function
+    :param list(int) qubits: List of qubits that enter as state
+                             :math:`\\vert x\\rangle`.
+    :param int ancilla: Ancillary qubit to serve as input
+                        :math:`\\vert y\\rangle`,
+                        where the answer will be written to.
     :return: A program corresponding to the desired instance of the
              Bernstein-Vazirani Algorithm.
     :rtype: Program
@@ -83,12 +97,14 @@ def run(cxn, oracle, qubits, ancilla):
     """
     Runs the Bernstein-Vazirani algorithm.
 
-    Given a QVM connection, an oracle, the input bits, and ancilla, find the :math:`\\mathbf{a}` and
-    :math:`b` corresponding to the function represented by the oracle.
+    Given a QVM connection, an oracle, the input bits, and ancilla,
+    find the :math:`\\mathbf{a}` and :math:`b` corresponding to the function
+    represented by the oracle.
 
     :param SyncConnection cxn: the QVM connection to use to run the programs
-    :param Program oracle: the oracle to query that represents a function of the form
-                           :math:`f(x) = \\mathbf{a}\\cdot \\mathbf{x} + b \\pmod{2}`.
+    :param Program oracle: the oracle to query that represents
+                           a function of the form
+                           :math:`f(x)=\\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}`
     :param list qubits: the input qubits
     :param Qubit ancilla: the ancilla qubit
     :return: a tuple that includes:
@@ -117,7 +133,8 @@ if __name__ == "__main__":
     bitstring = raw_input("Give a bitstring representation for the vector a: ")
     while not (all([num in ('0', '1') for num in bitstring])):
         print "The bitstring must be a string of ones and zeros."
-        bitstring = raw_input("Give a bitstring representation for the vector a: ")
+        bitstring = raw_input(
+            "Give a bitstring representation for the vector a: ")
     vec_a = np.array(map(int, bitstring))
 
     # ask user to input the value for b
