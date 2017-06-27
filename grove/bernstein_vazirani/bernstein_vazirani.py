@@ -9,15 +9,35 @@ from pyquil.gates import *
 
 def oracle_function(vec_a, b, qubits, ancilla):
     """
-    Defines an oracle that performs the following unitary transformation:
-    |x>|y> -> |x>|f(x) xor y>
+    Creates a black box oracle for a function to be used in the Bernstein-Vazirani algorithm.
 
-    f(x) is given by a*x+b, where * is a bitwise dot product and everything is taken mod 2.
-    :param vec_a: a vector of length n containing only ones and zeros. The order is taken to be
+    For a function :math:`f` such that
+
+    .. math::
+
+       f:\\{0,1\\}^n\\rightarrow \\{0,1\\}
+
+       \\mathbf{x}\\rightarrow \\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}
+
+       (\\mathbf{x}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
+
+    where :math:`(\\cdot)` is the bitwise dot product,
+    this function defines a program that performs the following unitary transformation:
+
+    .. math::
+
+        \\vert \\mathbf{x}\\rangle\\vert y\\rangle \\rightarrow \\vert \\mathbf{x}\\rangle \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
+
+    where :math:`\\text{xor}` is taken bitwise.
+
+    Allocates one scratch bit.
+
+    :param numpy.ndarray vec_a: a vector of length n containing only ones and zeros. The order is taken to be
                   most to least significant bit.
-    :param b: a 0 or 1
-    :param qubits: List of qubits that enter as input |x>. Must be the same length (n) as vec_a
-    :param ancilla: Qubit to serve as input |y>, where the answer will be written to.
+    :param int b: a 0 or 1
+    :param list(int) qubits: List of qubits that enter as input :math:`\\vert x\\rangle`.
+                             Must be the same length (:math:`n`) as :math:`\\mathbf{a}`
+    :param int ancilla: Ancillary qubit to serve as input :math:`\\vert y\\rangle`, where the answer will be written to.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
@@ -34,11 +54,13 @@ def oracle_function(vec_a, b, qubits, ancilla):
 def bernstein_vazirani(oracle, qubits, ancilla):
     """
     Implementation of the Bernstein-Vazirani Algorithm.
-    For given a in {0,1}^n and b in {0,1}, can determine a with one query to an oracle
-    that provides f(x) = a*x+b (mod 2) for x in {0,1}^n.
-    :param oracle: Program representing unitary application of function.
-    :param qubits: List of qubits that enter as state |x>.
-    :param ancilla: Qubit to serve as input |y>.
+
+    Given a list of input qubits and an ancilla bit, all initially in the :math:`\\vert 0\\rangle` state,
+    create a program that can find :math:`\\vec{a}` with one query to the given oracle.
+
+    :param Program oracle: Program representing unitary application of function.
+    :param list(int) qubits: List of qubits that enter as state :math:`\\vert x\\rangle`.
+    :param int ancilla: Ancillary qubit to serve as input :math:`\\vert y\\rangle`, where the answer will be written to.
     :return: A program corresponding to the desired instance of the
              Bernstein-Vazirani Algorithm.
     :rtype: Program
@@ -58,14 +80,18 @@ def bernstein_vazirani(oracle, qubits, ancilla):
 def run(cxn, oracle, qubits, ancilla):
     """
     Runs the Bernstein-Vazirani algorithm.
-    :param cxn: the QVM connection to use to run the programs
-    :param oracle: the oracle to query that represents a function of the form f(x) = a*x+b (mod 2).
-    :param qubits: the input qubits
-    :param ancilla: the ancilla qubit
+
+    Given a QVM connection, an oracle, the input bits, and ancilla, find the :math:`\\mathbf{a}` and
+    :math:`b` corresponding to the function represented by the oracle.
+
+    :param SyncConnection cxn: the QVM connection to use to run the programs
+    :param Program oracle: the oracle to query that represents a function of the form :math:`f(x) = \\mathbf{a}\\cdot \\mathbf{x} + b \\pmod{2}`.
+    :param list qubits: the input qubits
+    :param Qubit ancilla: the ancilla qubit
     :return: a tuple that includes:
-                - the program's determination of a
+                - the program's determination of :math:`\\mathbf{a}`
                 - the program's determination of b
-                - the main program used to determine a
+                - the main program used to determine :math:`\\mathbf{a}`
     :rtype: tuple
     """
     # First, create the program to find a

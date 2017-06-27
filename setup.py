@@ -26,7 +26,8 @@ setup(
     url="https://github.com/rigetticomputing/grove.git",
     download_url="https://github.com/rigetticomputing/grove/tarball/1.0.0",
     packages=["grove", "grove.pyqaoa", "grove.pyvqe", "grove.qft",
-              "grove.phaseestimation", "grove.teleport", "grove.grover"],
+              "grove.phaseestimation", "grove.teleport", "grove.grover",
+              "grove.bernstein_vazirani"],
     install_requires=[
         'numpy',
         'scipy',
