@@ -16,7 +16,7 @@ def oracle_function(unitary_funct, qubits, ancilla):
 
     Allocates one scratch bit.
 
-    :param 2d array unitary_funct: Matrix representation of the function f, i.e. the
+    :param 2darray unitary_funct: Matrix representation of the function f, i.e. the
                                    unitary transformation that must be applied to a
                                    state |x> to put f(x) in qubit 0.
     :param 1d array qubits: List of qubits that enter as input |x>.
@@ -75,10 +75,12 @@ def unitary_function(mappings):
 
     :param list mappings: List of the mappings of f(x) on all length n bitstrings.
                           For example, the following mapping:
-                          00 -> 0
-                          01 -> 1
-                          10 -> 1
+                          {
+                          00 -> 0,
+                          01 -> 1,
+                          10 -> 1,
                           11 -> 0
+                          }
                           Would be represented as [0, 1, 1, 0].
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
@@ -127,7 +129,7 @@ def is_unitary(mat):
     """
     Checks if a matrix is unitary.
 
-    :param 2d array mat:
+    :param 2darray mat: The matrix
     :return: Whether or not mat is unitary
     :rtype: bool
     """

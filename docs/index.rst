@@ -27,6 +27,7 @@ of which has its own self-contained documentation.
    qft
    phaseestimation
    grover
+   deutsch_jozsa
 
 Indices and Tables
 __________________
