@@ -6,7 +6,7 @@ from pyquil.gates import X, I
 from grove.bernstein_vazirani.bernstein_vazirani import bernstein_vazirani, oracle_function
 import pytest
 
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
+#@pytest.mark.skip(reason="Must add support for Forest connections in testing")
 class TestOracleFunction(object):
     def test_one_qubit(self):
         vec_a = np.array([1])
@@ -32,7 +32,7 @@ class TestOracleFunction(object):
         for x in range(2**len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
+#@pytest.mark.skip(reason="Must add support for Forest connections in testing")
 class TestBernsteinVazirani(object):
     def test_one_qubit_all_zeros(self):
         _bv_test_helper(np.array([0]), 0)

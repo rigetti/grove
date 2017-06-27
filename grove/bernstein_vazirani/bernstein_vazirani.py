@@ -55,23 +55,20 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     return p
 
 
-def run(cxn, vec_a, b):
+def run(cxn, oracle, qubits, ancilla):
     """
     Runs the Bernstein-Vazirani algorithm.
     :param cxn: the QVM connection to use to run the programs
-    :param vec_a: a vector of 0s and 1s, to represent the a vector.
-    :param b: a bit, 0 or 1, to represent the b constant
+    :param oracle: the oracle to query that represents a function of the form f(x) = a*x+b (mod 2).
+    :param qubits: the input qubits
+    :param ancilla: the ancilla qubit
     :return: a tuple that includes:
                 - the program's determination of a
                 - the program's determination of b
                 - the main program used to determine a
-                - the oracle used
+    :rtype: tuple
     """
     # First, create the program to find a
-    qubits = range(len(vec_a))
-    ancilla = len(vec_a)
-
-    oracle = oracle_function(vec_a, b, qubits, ancilla)
     bv_program = bernstein_vazirani(oracle, qubits, ancilla)
 
     results = cxn.run_and_measure(bv_program, qubits)
@@ -81,7 +78,7 @@ def run(cxn, vec_a, b):
     results = cxn.run_and_measure(oracle, [ancilla])
     bv_b = results[0][0]
 
-    return bv_a, bv_b, bv_program, oracle
+    return bv_a, bv_b, bv_program
 
 
 if __name__ == "__main__":
@@ -101,7 +98,12 @@ if __name__ == "__main__":
         b = int(raw_input("Give a single bit for b: "))
 
     qvm = api.SyncConnection()
-    a, b, bv_program, oracle = run(qvm, vec_a, b)
+    qubits = range(len(vec_a))
+    ancilla = len(vec_a)
+
+    oracle = oracle_function(vec_a, b, qubits, ancilla)
+
+    a, b, bv_program = run(qvm, oracle, qubits, ancilla)
     bitstring_a = "".join(map(str, a))
     print "-----------------------------------"
     print "The bitstring a is given by: ", bitstring
