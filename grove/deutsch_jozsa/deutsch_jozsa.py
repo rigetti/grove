@@ -101,7 +101,7 @@ def unitary_function(mappings):
     elif sum(mappings) == 2 ** (n - 1): # Half of the entries were 0, half 1
         unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
         index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
-        for j in range(2 ** n):
+        for j in xrange(2 ** n):
             i = index_lists[mappings[j]].pop()
             unitary_funct[i, j] = 1
         return np.kron(np.identity(2), unitary_funct)
@@ -146,13 +146,13 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
-    for i in range(2 ** n):
+    for i in xrange(2 ** n):
         val = int(input(integer_to_bitstring(i, n) + ': '))
         assert val in [0,1], "f(x) must return only 0 and 1"
         mappings.append(val)
 
     deutsch_program = pq.Program()
-    qubits = [deutsch_program.alloc() for _ in range(n)]
+    qubits = [deutsch_program.alloc() for _ in xrange(n)]
     ancilla = deutsch_program.alloc()
 
     unitary_funct = unitary_function(mappings)
