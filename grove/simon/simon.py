@@ -22,7 +22,7 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
-    assert is_unitary(unitary_funct), "Function must be unitary."
+    assert _is_unitary(unitary_funct), "Function must be unitary."
     bits_for_funct = [scratch_bit] + qubits
     p = pq.Program()
 
@@ -31,26 +31,6 @@ def oracle_function(unitary_funct, qubits, ancillas, scratch_bit):
     p.inst(tuple(['FUNCT'] + bits_for_funct))
     p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
-    return p
-
-
-def simon(oracle, qubits):
-    """
-    Implementation of the quantum portion of Simon's Algorithm.
-    For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
-    f(x) = f(y) if and only if (x xor y) = s.
-    :param oracle: Program representing unitary application of function.
-    :param qubits: List of qubits that enter as state |x>.
-    :return: A program corresponding to the desired instance of
-             Simon's Algorithm.
-    :rtype: Program
-    """
-    p = pq.Program()
-
-    # Apply Hadamard, Unitary function, and Hadamard again
-    p.inst(map(H, qubits))
-    p += oracle
-    p.inst(map(H, qubits))
     return p
 
 
@@ -107,7 +87,27 @@ def unitary_function(mappings):
     return unitary_funct
 
 
-def is_unitary(matrix):
+def simon(oracle, qubits):
+    """
+    Implementation of the quantum portion of Simon's Algorithm.
+    For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
+    f(x) = f(y) if and only if (x xor y) = s.
+    :param oracle: Program representing unitary application of function.
+    :param qubits: List of qubits that enter as state |x>.
+    :return: A program corresponding to the desired instance of
+             Simon's Algorithm.
+    :rtype: Program
+    """
+    p = pq.Program()
+
+    # Apply Hadamard, Unitary function, and Hadamard again
+    p.inst(map(H, qubits))
+    p += oracle
+    p.inst(map(H, qubits))
+    return p
+
+
+def _is_unitary(matrix):
     """
     :param matrix: a matrix to test unitarity of
     :return: true if and only if matrix is unitary
@@ -119,7 +119,7 @@ def is_unitary(matrix):
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
 
 
-def most_significant_bit(lst):
+def _most_significant_bit(lst):
     """
     Finds the position of the most significant bit in a list of 1s and 0s, i.e. the first position where a 1 appears, reading left to right.
     :param lst: a list of 0s and 1s with at least one 1
@@ -132,26 +132,21 @@ def most_significant_bit(lst):
     return msb
 
 
-def find_mask(cxn, mappings, n):
+def find_mask(cxn, oracle, qubits):
     """
     Runs Simon's algorithm to find the mask.
     :param cxn: the connection used to run programs
-    :param mappings: the function, defined by f(x) = mappings[x], where x and f(x) are integers between 0 and 2^n-1
-                     for n = len(qubits)
-    :param n: number of bits in the domain/range of the function. Must be greater than 1.
+    :param oracle: the oracle to query; emulates a classical f(x) function as a blackbox.
+    :param qubits: the input qubits
     :return: a tuple t, where t[0] is the bitstring of the mask, t[1] is the number of iterations
              that the quantum program was run, and t[2] is said program.
     :rtype: tuple
     """
-    qubits = range(n)
-    ancillas = range(n, 2*n)
-    scratch_bit = 2*n
 
+    # wrap the given oracle in the program to be used
     simon_program = pq.Program()
-
-    unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
     simon_program += simon(oracle, qubits)
+    n = len(qubits)
 
     # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
     # Done so by running the Simon program repeatedly and building up a row-echelon matrix W
@@ -169,14 +164,14 @@ def find_mask(cxn, mappings, n):
                 W = z
                 W = W.reshape(1, n)
                 break
-            msb_z = most_significant_bit(z)
+            msb_z = _most_significant_bit(z)
 
             # Search for a row to insert z into, so that it has an early significant bit than the row below
             # and a later one than the row above (when reading left-to-right)
             got_to_end = True
             for row_num in range(len((W))):
                 row = W[row_num]
-                msb_row = most_significant_bit(row)
+                msb_row = _most_significant_bit(row)
                 if msb_row == msb_z:
                     z = np.array([z[i] ^ row[i] for i in range(n)])
                     got_to_end = False
@@ -228,7 +223,14 @@ if __name__ == "__main__":
 
     qvm = api.SyncConnection()
 
-    s, iterations, simon_program = find_mask(qvm, mappings, n)
+    qubits = range(n)
+    ancillas = range(n, 2*n)
+    scratch_bit = 2*n
+
+    unitary_funct = unitary_function(mappings)
+    oracle = oracle_function(unitary_funct, qubits, ancillas, scratch_bit)
+
+    s, iterations, simon_program = find_mask(qvm, oracle, qubits)
 
     print "The mask s is", s
     print "Iterations of the algorithm: ", iterations
