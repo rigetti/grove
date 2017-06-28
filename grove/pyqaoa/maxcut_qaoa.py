@@ -77,7 +77,7 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     if connection is None:
         connection = CXN
 
-    if minimizer_kwargs is None: #Change this to default to the new optimizers
+    if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',
                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
                                         'disp': False}}
@@ -102,7 +102,6 @@ if __name__ == "__main__":
     # Sample Run:
     # Cutting 0 - 1 - 2 graph!
     angle_graph = [(0,1), (1,2)]
-    #square_ring = [(0,1), (1,2), (2,3), (3,0)]
     inst = maxcut_qaoa(angle_graph,
                        steps=2, rand_seed=42, samples=None)
     betas, gammas = inst.get_angles()
