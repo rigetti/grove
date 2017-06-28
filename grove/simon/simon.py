@@ -96,10 +96,10 @@ def oracle_function(unitary_funct, qubits, ancillas):
     .. math::
 
         \\vert x \\rangle \\vert y \\rangle
-        \\rightarrow \\vert x \\rangle \\vert f(x) \\text{ xor } y\\rangle
+        \\rightarrow \\vert x \\rangle \\vert f(x) \\oplus y\\rangle
 
     where :math:`\\vert x\\rangle` and :math:`\\vert y\\rangle`
-    are :math:`n` qubit states and :math:`\\text{xor}` is taken bitwise.
+    are :math:`n` qubit states and :math:`\\oplus` is bitwise xor.
 
     Allocates one scratch bit.
 
@@ -251,10 +251,10 @@ def make_square_row_echelon(W):
     Make :math:`\\mathbf{\\mathit{W}}`
     into a square matrix for Simon's algorithm, satisfying a few criteria.
 
-    :param 2darray W: a :math:`(n-1)\times n` array of 0s and 1s in row-echelon
+    :param 2darray W: a :math:`(n-1)\\times n` array of 0s and 1s in row-echelon
                       form such that all rows are orthogonal to some
                       length :math:`n` vector :math:`\\mathbf{s}` of 0s and 1s.
-    :return: an :math:`n\times n` square array identical
+    :return: an :math:`n\\times n` square array identical
              to :math:`\\mathbf{\\mathit{W}}` except with one row added.
              That row is chosen to keep :math:`\\mathbf{\\mathit{W}}`
              in row-echelon form.
