@@ -22,6 +22,7 @@ from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
 
+
 class OptResults(dict):
     """
     Object for holding optimization results from VQE.
@@ -126,6 +127,7 @@ class VQE(object):
         iteration_params = []
         expectation_vals = []
         self._current_expectation = None
+        self.repetition_cost = 0
         if samples is None:
             print """WARNING: Fast method for expectation will be used. Noise
                      models will be ineffective"""
@@ -148,6 +150,7 @@ class VQE(object):
             pyquil_prog = variational_state_evolve(params)
             mean_value = self.expectation(pyquil_prog, hamiltonian, samples, qvm)
             self._current_expectation = mean_value  # store for printing
+            self.repetition_cost += 1
             return mean_value
 
         def print_current_iter(iter_vars):
@@ -158,7 +161,7 @@ class VQE(object):
                 self._disp_fun("\tGrad-L1-Norm: {}".format(np.max(np.abs(grad))))
                 self._disp_fun("\tGrad-L2-Norm: {} ".format(np.linalg.norm(grad)))
 
-            self._disp_fun("\tE => {}".format(self._current_expectation))
+            self._disp_fun("\tExpectation => {}".format(self._current_expectation))
             if return_all:
                 iteration_params.append(iter_vars)
                 expectation_vals.append(self._current_expectation)

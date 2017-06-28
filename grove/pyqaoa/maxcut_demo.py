@@ -30,8 +30,8 @@ betas, gammas = inst.get_angles()
 probs = inst.probabilities(np.hstack((betas, gammas)))
 for state, prob in zip(inst.states, probs):
     print state, prob
-print "Num Steps: "
-print len(inst.states)
+print "Repetition Cost: "
+print inst.repetition_cost
 
 print "Most frequent bitstring from sampling:"
 most_freq_string, sampling_results = inst.get_string(

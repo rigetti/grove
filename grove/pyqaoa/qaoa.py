@@ -59,8 +59,6 @@ class QAOA(object):
                                  the minimizer.  Default={}.
         :param minimizer_args: (Optional) (list) of additional arguments to pass to the
                                minimizer. Default=[].
-        :param minimizer_args: (Optional) (list) of additional arguments to pass to the
-                               minimizer. Default=[].
         :param vqe_options: (optinal) arguents for VQE run.
         :param store_basis: (optional) boolean flag for storing basis states.
                             Default=False.
@@ -194,6 +192,7 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         result = vqe.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
                              **self.vqe_options)
+        self.repetition_cost = vqe.repetition_cost
         self.result = result
         betas = result.x[:self.steps]
         gammas = result.x[self.steps:]
