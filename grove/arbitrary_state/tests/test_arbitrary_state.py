@@ -26,10 +26,10 @@ class TestCreateArbitraryState(object):
         _state_generation_test_helper([1, 0, 0])
     
     def test_single_one(self):
-        _state_generation_test_helper([1], 4)
+        _state_generation_test_helper([1], [4])
     
     def test_long_padded_zeros(self):
-        _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0], 3)
+        _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0], range(3, 7))
     
     def test_forward_padded_zeros(self):
         _state_generation_test_helper([0, 0, 1])
@@ -87,9 +87,9 @@ class TestUniformlyControlledCNOTPositions(object):
         assert expected == actual
 
 
-def _state_generation_test_helper(v, offset=0):
+def _state_generation_test_helper(v, qubits=None):
     # encode vector in quantum state
-    p = create_arbitrary_state(v, offset)
+    p = create_arbitrary_state(v, qubits)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
 

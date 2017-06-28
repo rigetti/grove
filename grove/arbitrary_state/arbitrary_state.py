@@ -42,7 +42,7 @@ def uniformly_controlled_cnot_control_positions(k):
     return rotation_cnots
 
 
-def create_arbitrary_state(vector, offset=0):
+def create_arbitrary_state(vector, qubits=None):
     """
     This function makes a program that can generate an arbitrary state.
 
@@ -67,7 +67,8 @@ def create_arbitrary_state(vector, offset=0):
     if n == 0:  # if vec_norm is of length 1
         n += 1
 
-    qubits = range(offset, offset+n)
+    if qubits is None:
+        qubits = range(n)
 
     N = 2 ** n  # number of coefficients
     while len(vec_norm) < N:
