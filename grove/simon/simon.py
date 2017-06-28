@@ -10,56 +10,6 @@ import pyquil.quil as pq
 from pyquil.gates import *
 
 
-def oracle_function(unitary_funct, qubits, ancillas):
-    """
-    Given a unitary :math:`U` that acts as a function
-    :math:`f:\\{0,1\\}^n\\rightarrow \\{0,1\\}^n`, such that
-
-    .. math::
-
-        U\\vert x\\rangle = \\vert f(x)\\rangle
-
-    create an oracle program that performs the following transformation:
-
-    .. math::
-
-        \\vert x \\rangle \\vert y \\rangle
-        \\rightarrow \\vert x \\rangle \\vert f(x) \\text{ xor } y\\rangle
-
-    where :math:`\\vert x\\rangle` and :math:`\\vert y\\rangle`
-    are :math:`n` qubit states and :math:`\\text{xor}` is taken bitwise.
-
-    Allocates one scratch bit.
-
-    :param 2darray unitary_funct: Matrix representation :math:`U` of the
-                                  function :math:`f`,
-                                  i.e. the unitary transformation
-                                  that must be applied to a state
-                                  :math:`\\vert x \\rangle`
-                                  to get :math:`\\vert f(x) \\rangle`
-    :param list(int) qubits: List of qubits that enter as the input
-                        :math:`\\vert x \\rangle`.
-    :param list(int) ancillas: List of qubits to serve as the ancillary input
-                     :math:`\\vert y \\rangle`.
-    :return: A program that performs the above unitary transformation.
-    :rtype: Program
-    """
-    assert is_unitary(unitary_funct), "Function must be unitary."
-    p = pq.Program()
-
-    scratch_bit = p.alloc()
-    bits_for_funct = [scratch_bit] + qubits
-
-    p.defgate("FUNCT", unitary_funct)
-    p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
-    p.inst(tuple(['FUNCT'] + bits_for_funct))
-    p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
-    p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
-
-    p.free(scratch_bit)
-    return p
-
-
 def unitary_function(mappings):
     """
     Creates a unitary transformation that maps each state
@@ -70,7 +20,8 @@ def unitary_function(mappings):
     qubits, the calculated transformation will be on :math:`n + 1` qubits,
     where the zeroth qubit is the scratch bit and the return value
     of the function is left in the qubits that follow.
-    :param list mappings: List of the mappings of f(x) on all length
+
+    :param list mappings: List of the mappings of :math:`f(x)` on all length
                           :math:`n` in their decimal representation.
                           For example, the following mapping:
 
@@ -131,6 +82,56 @@ def unitary_function(mappings):
     return unitary_funct
 
 
+def oracle_function(unitary_funct, qubits, ancillas):
+    """
+    Given a unitary :math:`U` that acts as a function
+    :math:`f:\\{0,1\\}^n\\rightarrow \\{0,1\\}^n`, such that
+
+    .. math::
+
+        U\\vert x\\rangle = \\vert f(x)\\rangle
+
+    create an oracle program that performs the following transformation:
+
+    .. math::
+
+        \\vert x \\rangle \\vert y \\rangle
+        \\rightarrow \\vert x \\rangle \\vert f(x) \\text{ xor } y\\rangle
+
+    where :math:`\\vert x\\rangle` and :math:`\\vert y\\rangle`
+    are :math:`n` qubit states and :math:`\\text{xor}` is taken bitwise.
+
+    Allocates one scratch bit.
+
+    :param 2darray unitary_funct: Matrix representation :math:`U` of the
+                                  function :math:`f`,
+                                  i.e. the unitary transformation
+                                  that must be applied to a state
+                                  :math:`\\vert x \\rangle`
+                                  to get :math:`\\vert f(x) \\rangle`
+    :param list(int) qubits: List of qubits that enter as the input
+                        :math:`\\vert x \\rangle`.
+    :param list(int) ancillas: List of qubits to serve as the ancillary input
+                     :math:`\\vert y \\rangle`.
+    :return: A program that performs the above unitary transformation.
+    :rtype: Program
+    """
+    assert is_unitary(unitary_funct), "Function must be unitary."
+    p = pq.Program()
+
+    scratch_bit = p.alloc()
+    bits_for_funct = [scratch_bit] + qubits
+
+    p.defgate("FUNCT", unitary_funct)
+    p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
+    p.inst(tuple(['FUNCT'] + bits_for_funct))
+    p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
+    p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
+
+    p.free(scratch_bit)
+    return p
+
+
 def simon(oracle, qubits):
     """
     Implementation of the quantum portion of Simon's Algorithm.
@@ -140,7 +141,7 @@ def simon(oracle, qubits):
     create a program that applies the Hadamard-Walsh transform the qubits
     before and after going through the oracle.
 
-    :param Program oracle: Program representing unitary application of function.
+    :param Program oracle: Program representing unitary application of function
     :param list(int) qubits: List of qubits that enter as the input
                         :math:`\\vert x \\rangle`.
     :return: A program corresponding to the desired instance of
@@ -186,6 +187,121 @@ def most_significant_bit(lst):
     return msb
 
 
+def insert_into_binary_matrix(W, z):
+    """
+    Given a matrix :math:`\\mathbf{\\mathit{W}}` of 0s and 1s
+    in row-echelon form, such that each row is orthogonal to some (unknown)
+    vector :math:`\\mathbf{s}` of 0s and 1s, attempt to insert a new row
+    into :math:`\\mathbf{\\mathit{W}}` that maintains the above property.
+
+    Besides the above property, a vector :math:`\\mathbf{z}` is given
+    that is known to also be orthogonal to :math:`\\mathbf{s}`.
+
+    If (and only if) no such row can be inserted with certainty,
+    :math:`\\mathbf{\\mathit{W}}` is return unchanged.
+
+    :param W: a matrix of 0s and 1s in row-echelon form, with rows all
+              orthogonal to some vector of 0s and 1s.
+
+    :param z: a vector of 0s and 1s known
+              to be orthogonal to :math:`\\mathbf{s}`
+    :return: either the same matrix :math:`\\mathbf{\\mathit{W}}`, unchanged,
+             or :math:`\\mathbf{\\mathit{W}}` with one additional
+             row added that maintains the property described above.
+    :rtype: 2darray
+    """
+    n = len(z)
+    while np.any(z):  # while z is not all zeros
+        if len(W) == 0:
+            W = z
+            W = W.reshape(1, n)
+            break
+        msb_z = most_significant_bit(z)
+
+        # Search for a row to insert z into,
+        # so that it has an earlier significant bit than the row below
+        # and a later one than the row above (when reading left-to-right)
+        got_to_end = True
+        for row_num in xrange(len(W)):
+            row = W[row_num]
+            msb_row = most_significant_bit(row)
+            # if the row as the same msb as z,
+            # set z to the bitwise xor of z and the current row
+            # as it will be guaranteed to still be orthogonal to s
+            if msb_row == msb_z:
+                z = np.array([z[i] ^ row[i] for i in xrange(n)])
+                got_to_end = False
+                break
+            # if the row has a greater msb than z,
+            # then this is the row to z insert above
+            elif msb_row > msb_z:
+                W = np.insert(W, row_num, z, 0)
+                got_to_end = False
+                break
+        # if z has a greater msb than all rows,
+        # insert it to the bottom of the array
+        if got_to_end:
+            W = np.insert(W, len(W), z, 0)
+
+    return W
+
+
+def make_square_row_echelon(W):
+    """
+    Make :math:`\\mathbf{\\mathit{W}}`
+    into a square matrix for Simon's algorithm, satisfying a few criteria.
+
+    :param 2darray W: a :math:`(n-1)\times n` array of 0s and 1s in row-echelon
+                      form such that all rows are orthogonal to some
+                      length :math:`n` vector :math:`\\mathbf{s}` of 0s and 1s.
+    :return: an :math:`n\times n` square array identical
+             to :math:`\\mathbf{\\mathit{W}}` except with one row added.
+             That row is chosen to keep :math:`\\mathbf{\\mathit{W}}`
+             in row-echelon form.
+    :rtype: 2darray
+    """
+    n = len(W) + 1
+
+    # Generate one final vector that is not orthonormal to the mask s
+    # can do by adding a vector with a single 1
+    # that can be inserted so that diag(W) is all ones
+    insert_row_num = 0
+    while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
+        insert_row_num += 1
+
+    new_row = np.zeros(shape=(n,))
+    new_row[insert_row_num] = 1
+    W = np.insert(W, insert_row_num, new_row, 0)
+
+    return W, insert_row_num
+
+
+def binary_back_substitute(W, s):
+    """
+    Perform in place back substitution on a binary system of equations.
+
+    Finds the :math:`\\mathbf{x}` such that
+    :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
+    where all arithmetic is taken bitwise and modulo 2.
+
+    :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
+              in row-echelon form
+    :param list(int) s: An :math:`n\\times 1` vector of 0s and 1s
+    :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
+             system of equations.
+    :rtype: list(int)
+    """
+    # iterate backwards, starting from second to last row for back-substitution
+    n = len(s)
+    for row_num in xrange(n - 2, -1, -1):
+        row = W[row_num]
+        for col_num in xrange(row_num + 1, n):
+            if row[col_num] == 1:
+                s[row_num] = int(s[row_num]) ^ int(s[col_num])
+
+    return s
+
+
 def find_mask(cxn, oracle, qubits):
     """
     Runs Simon's algorithm to find the mask.
@@ -201,8 +317,7 @@ def find_mask(cxn, oracle, qubits):
     """
 
     # wrap the given oracle in the program to be used
-    simon_program = pq.Program()
-    simon_program += simon(oracle, qubits)
+    simon_program = simon(oracle, qubits)
     n = len(qubits)
 
     # Generate n-1 linearly independent vectors
@@ -215,55 +330,21 @@ def find_mask(cxn, oracle, qubits):
         if len(W) == n - 1:
             break
         z = np.array(cxn.run_and_measure(simon_program, qubits)[0])
+        # attempt to insert z in such a way that
+        # W remains row-echelon
+        # and all rows are orthogonal to s
+        W = insert_into_binary_matrix(W, z)
         iterations += 1
 
-        # attempt to insert into W so that W remains in row-echelon form
-        # and all rows are linearly independent
-        while np.any(z):  # while it's not all zeros
-            if len(W) == 0:
-                W = z
-                W = W.reshape(1, n)
-                break
-            msb_z = most_significant_bit(z)
-
-            # Search for a row to insert z into,
-            # so that it has an earlier significant bit than the row below
-            # and a later one than the row above (when reading left-to-right)
-            got_to_end = True
-            for row_num in xrange(len(W)):
-                row = W[row_num]
-                msb_row = most_significant_bit(row)
-                if msb_row == msb_z:
-                    z = np.array([z[i] ^ row[i] for i in xrange(n)])
-                    got_to_end = False
-                    break
-                elif msb_row > msb_z:
-                    W = np.insert(W, row_num, z, 0)
-                    got_to_end = False
-                    break
-            if got_to_end:
-                W = np.insert(W, len(W), z, 0)
-
-    # Generate one final vector that is not orthonormal to the mask s
-    # can do by adding a vector with a single 1
-    # that can be inserted so that diag(W) is all ones
-    insert_row_num = 0
-    while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
-        insert_row_num += 1
-
-    new_row = np.zeros(shape=(n,))
-    new_row[insert_row_num] = 1
-    W = np.insert(W, insert_row_num, new_row, 0)
+    # make the matrix square by inserting a row
+    # that maintain W in row-echelon form
+    W, insert_row_num = make_square_row_echelon(W)
 
     s = np.zeros(shape=(n,))
+    # inserted row is chosen not be orthogonal to s
     s[insert_row_num] = 1
 
-    # iterate backwards, starting from second to last row for back-substitution
-    for row_num in xrange(n - 2, -1, -1):
-        row = W[row_num]
-        for col_num in xrange(row_num + 1, n):
-            if row[col_num] == 1:
-                s[row_num] = int(s[row_num]) ^ int(s[col_num])
+    s = binary_back_substitute(W, s)
 
     s_str = ''.join(map(str, map(int, s)))
 
@@ -271,6 +352,23 @@ def find_mask(cxn, oracle, qubits):
 
 
 def check_two_to_one(cxn, oracle, ancillas, s):
+    """
+    Check if the oracle is one-to-one or two-to-one. The oracle is known
+    to represent either a one-to-one function, or a two-to-one function
+    with mask :math:`s`.
+
+    :param SyncConnection cxn: the connection used to run programs
+    :param Program oracle: the oracle to query;
+                           emulates a classical :math:`f(x)`
+                           function as a blackbox.
+    :param list(int) qubits: the input qubits
+    :param list(int) ancillas: the ancillary qubits, where :math:`f(x)`
+                                is written to by the oracle
+    :param str s: the proposed mask of the function, found by Simon's algorithm
+    :return: true if and only if the oracle represents a function
+             that is two to one with mask :math:`s`
+    :rtype: bool
+    """
     zero_program = oracle
     mask_program = pq.Program()
     for i in xrange(len(s)):
