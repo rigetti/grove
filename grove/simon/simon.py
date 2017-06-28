@@ -1,7 +1,7 @@
 """Module for the Simon's Algorithm.
 For more information, see
-    - http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
-    - http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
+ - lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+ - pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
 """
 
 import pyquil.quil as pq
@@ -13,12 +13,14 @@ def oracle_function(unitary_funct, qubits, ancillas):
     """
     Defines an oracle that performs the following unitary transformation:
     |x>|y> -> |x>|f(x) xor y>
-    :param unitary_funct: Matrix representation of the function f, i.e. the
+
+    Allocates one scratch bit.
+
+    :param 2darray unitary_funct: Matrix representation of the function f, i.e. the
                           unitary transformation that must be applied to a
                           state |x> to get |f(x)>
-    :param qubits: List of qubits that enter as input |x>.
-    :param ancillas: List of qubits to serve as the ancilliary input |y>.
-    :param scratch_bit: Empty qubit to be used as scratch space.
+    :param list qubits: List of qubits that enter as input |x>.
+    :param ancillas: List of qubits to serve as the ancillary input |y>.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
@@ -62,7 +64,8 @@ def unitary_function(mappings):
     distinct_outputs = len(set(mappings))
     assert distinct_outputs in {2**(n-1)}, "Function must be two-to-one"
 
-    # Strategy: add an extra qubit by default and force the function to be one-to-one
+    # Strategy: add an extra qubit by default
+    # and force the function to be one-to-one
     output_counts = {x: 0 for x in range(2**n)}
 
     unitary_funct = np.zeros(shape=(2 ** (n+1), 2 ** (n+1)))
@@ -126,7 +129,8 @@ def _is_unitary(matrix):
 
 def _most_significant_bit(lst):
     """
-    Finds the position of the most significant bit in a list of 1s and 0s, i.e. the first position where a 1 appears, reading left to right.
+    Finds the position of the most significant bit in a list of 1s and 0s,
+    i.e. the first position where a 1 appears, reading left to right.
     :param lst: a list of 0s and 1s with at least one 1
     :return: the first position in lst that a 1 appears
     :rtype: int
@@ -141,10 +145,12 @@ def find_mask(cxn, oracle, qubits):
     """
     Runs Simon's algorithm to find the mask.
     :param cxn: the connection used to run programs
-    :param oracle: the oracle to query; emulates a classical f(x) function as a blackbox.
+    :param oracle: the oracle to query;
+                   emulates a classical f(x) function as a blackbox.
     :param qubits: the input qubits
-    :return: a tuple t, where t[0] is the bitstring of the mask, t[1] is the number of iterations
-             that the quantum program was run, and t[2] is said program.
+    :return: a tuple t, where t[0] is the bitstring of the mask,
+             t[1] is the number of iterations that the quantum program was run,
+             and t[2] is said program.
     :rtype: tuple
     """
 
@@ -157,15 +163,15 @@ def find_mask(cxn, oracle, qubits):
     # Done so by running the Simon program repeatedly and building up a row-echelon matrix W
     # See http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
     iterations = 0
-    W = None
+    W = np.array([])
     while True:
-        if W is not None and len(W) == n-1:
+        if len(W) == n-1:
             break
         z = np.array(cxn.run_and_measure(simon_program, qubits)[0])
         iterations += 1
         # attempt to insert into W so that W remains in row-echelon form and all rows are linearly independent
         while np.any(z):  # while it's not all zeros
-            if W is None:
+            if len(W) == 0:
                 W = z
                 W = W.reshape(1, n)
                 break

@@ -27,6 +27,7 @@ of which has its own self-contained documentation.
    qft
    phaseestimation
    grover
+   simon
 
 Indices and Tables
 __________________

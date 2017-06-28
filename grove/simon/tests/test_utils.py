@@ -9,6 +9,9 @@ from grove.simon.simon import find_mask, unitary_function, oracle_function, _is_
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 class TestFindMask(object):
+    def test_one_qubit(self):
+        _find_mask_test_helper([1, 1], 1)
+
     def test_two_qubits(self):
         _find_mask_test_helper([0, 2, 0, 2], 2)
 
