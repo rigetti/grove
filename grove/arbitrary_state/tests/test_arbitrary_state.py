@@ -39,7 +39,7 @@ class TestUniformlyControlledRotationMatrix(object):
     def test_one_control(self):
         expected = 1/2.*np.array([[1, 1],
                                   [1, -1]])
-        actual = uniformly_controlled_rotation_matrix(1)
+        actual = get_uniformly_controlled_rotation_matrix(1)
         assert np.allclose(expected, actual)
 
     def test_two_controls(self):
@@ -47,7 +47,7 @@ class TestUniformlyControlledRotationMatrix(object):
                                   [1, -1, 1, -1],
                                   [1, -1, -1, 1],
                                   [1, 1, -1, -1]])
-        actual = uniformly_controlled_rotation_matrix(2)
+        actual = get_uniformly_controlled_rotation_matrix(2)
 
         assert np.allclose(expected, actual)
 
@@ -60,7 +60,7 @@ class TestUniformlyControlledRotationMatrix(object):
                                       [1, -1, -1, 1, -1, 1, 1, -1],
                                       [1, -1, 1, -1, -1, 1, -1, 1],
                                       [1, 1, 1, 1, -1, -1, -1, -1]])
-        actual = uniformly_controlled_rotation_matrix(3)
+        actual = get_uniformly_controlled_rotation_matrix(3)
 
         assert np.allclose(expected, actual)
 
@@ -68,22 +68,22 @@ class TestUniformlyControlledRotationMatrix(object):
 class TestUniformlyControlledCNOTPositions(object):
     def test_one_control(self):
         expected = [1, 1]
-        actual = uniformly_controlled_cnot_control_positions(1)
+        actual = get_cnot_control_positions(1)
         assert expected == actual
 
     def test_two_controls(self):
         expected = [1, 2, 1, 2]
-        actual = uniformly_controlled_cnot_control_positions(2)
+        actual = get_cnot_control_positions(2)
         assert expected == actual
 
     def test_three_controls(self):
         expected = [1, 2, 1, 3, 1, 2, 1, 3]
-        actual = uniformly_controlled_cnot_control_positions(3)
+        actual = get_cnot_control_positions(3)
         assert expected == actual
 
     def test_four_controls(self):
         expected = [1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 4]
-        actual = uniformly_controlled_cnot_control_positions(4)
+        actual = get_cnot_control_positions(4)
         assert expected == actual
 
 

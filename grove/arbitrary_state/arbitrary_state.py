@@ -1,4 +1,8 @@
 """Class for generating a program that can generate an arbitrary quantum state
+
+- http://140.78.161.123/digital/2016_ismvl_logic_synthesis_quantum_state_generation.pdf
+- https://arxiv.org/pdf/quant-ph/0407010.pdf
+
 """
 import numpy as np
 import pyquil.quil as pq
@@ -6,36 +10,43 @@ from pyquil.api import SyncConnection
 from pyquil.gates import *
 
 
-def uniformly_controlled_rotation_matrix(k):
+def get_uniformly_controlled_rotation_matrix(k):
     """
-    Returns the matrix represented by M_ij in the paper arXiv:quant-ph/0407010
-    Is the matrix that converts the angles of k-fold uniformly controlled rotations
-    to the angles of the efficient gate decomposition.
-    :param k: number of control qubits
-    :return: the matrix M_ij
-    :rtype: numpy array
+    Returns the matrix represented by :math:`M_{ij}` in arXiv:quant-ph/0407010.
+
+    This matrix converts the angles of :math:`k`-fold uniformly
+    controlled rotations to the angles of the efficient gate decomposition.
+
+    :param int k: number of control qubits
+    :return: the matrix :math:`M_{ij}`
+    :rtype: 2darray
     """
     M = np.full((2**k, 2**k), 2**-k)
-    for i in range(2**k):
+    for i in xrange(2**k):
         g_i = i ^ (i >> 1)  # Gray code for i
-        for j in range(2**k):
+        for j in xrange(2**k):
             M[i, j] *= (-1)**(bin(j & g_i).count("1"))
     return M
 
 
-def uniformly_controlled_cnot_control_positions(k):
+def get_cnot_control_positions(k):
     """
-    Returns the list of positions of the controls of the CNOTs,
-    given that the target is the 0 qubit and higher order bits are in
-    consecutive integer order. The list gives the positions going
-    from left to right.
-    :param k: the number of control qubits
+    Returns a list of positions for the controls of the CNOTs used when
+    decomposing uniformly controlled rotations, as outlined in
+    arXiv:quant-ph/0407010.
+
+    It is assumed that the target is the zeroth qubit
+    and higher order bits are in consecutive integer order.
+    The list gives the positions going from left to right.
+
+    :param int k: the number of control qubits
     :return: the list of positions of the controls
     :rtype: list
     """
     rotation_cnots = [1, 1]
-    for i in range(2, k+1):
-        # algorithm described is to replace the last control with a control to the new qubit
+    for i in xrange(2, k+1):
+        # algorithm described is to replace the last control
+        # with a control to the new qubit
         # and then repeat the sequence twice
         rotation_cnots[-1] = i
         rotation_cnots = rotation_cnots + rotation_cnots
@@ -46,20 +57,31 @@ def create_arbitrary_state(vector, qubits=None):
     """
     This function makes a program that can generate an arbitrary state.
 
-    Applies the methods described in:
-        - http://140.78.161.123/digital/2016_ismvl_logic_synthesis_quantum_state_generation.pdf
-        - https://arxiv.org/pdf/quant-ph/0407010.pdf
+    Applies the methods described in references above.
 
-    Given a complex vector :math:`a` with components :math:`a_i` (:math:`i` ranging from :math:`0` to :math:`N-1`),
-    produce a program that takes in the state :math:`|0\ldots 0>`
-    and outputs the state :math:`\sum_{i=0}^{N-1}\frac{a_i}{|a|} |i>`
+    Given a complex vector :math:`a` with components :math:`a_i`
+    (:math:`i` ranging from :math:`0` to :math:`N-1`),
+    produce a program that takes in the state :math:`\\vert 0\\ldots 0\\rangle`
+    and outputs the state
+
+    .. math::
+
+        \\sum_{i=0}^{N-1}\\frac{a_i}{\\vert a\\vert} \\vert i\\rangle
+
     where :math:`i` is given in its binary expansion.
 
-    :param vector: the vector to put into qubit form.
-    :param offset: Which qubit to begin encoding the state into. The gates of the program will be applied on
-                   qubits offset, offset+1, ..., offset+n-1, where n is the number of qubits needed
-                   to represent the vector.
-    :return: a program that takes in :math:`|0>` and produces a state that represents this vector.
+    :param 1darray vector: the vector to put into qubit form.
+    :param list(int) qubits: Which qubits to encode the vector into.
+                             Must contain at least the minimum
+                             number of qubits :math:`n` needed for all elements
+                             of vector to be present as a coefficient in the
+                             final state. If more than :math:`n` are provided,
+                             only the first :math:`n` will be used.
+                             If no list is provided, the default will be
+                             qubits :math:`0, 1, \ldots, n-1`.
+    :return: a program that takes in :math:`\\vert 0\\rangle^{\otimes n}`
+             and produces a state that represents this vector, as
+             described above.
     :rtype: Program
     """
     vec_norm = vector/np.linalg.norm(vector)
@@ -83,16 +105,16 @@ def create_arbitrary_state(vector, qubits=None):
 
     # matrix that converts angles of uniformly controlled rotation to angles of uncontrolled rotations
     # at first, all qubits except for the 0 qubit act as controls
-    M = uniformly_controlled_rotation_matrix(n-1)
+    M = get_uniformly_controlled_rotation_matrix(n - 1)
 
     # generate the positions of the controls for the CNOTs
     # at first, all qubits except for the 0 qubit act as controls
-    rotation_cnots = uniformly_controlled_cnot_control_positions(n-1)
+    rotation_cnots = get_cnot_control_positions(n - 1)
 
-    for step in range(n):
+    for step in xrange(n):
         z_thetas = []  # will hold the angles for controlled rotations in the phase unification step
         y_thetas = []  # will hold the angles for controlled rotations in the probabilities unification step
-        for i in range(0, N, 2):
+        for i in xrange(0, N, 2):
             # find z rotation angles
             phi = phases[i]
             psi = phases[i+1]
@@ -122,7 +144,7 @@ def create_arbitrary_state(vector, qubits=None):
         M = M[0:len(M)/2, 0:len(M)/2]*2
 
         # phase unification
-        for j in range(len(converted_z_thetas)):
+        for j in xrange(len(converted_z_thetas)):
             if converted_z_thetas[j] != 0:
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RZ(-converted_z_thetas[j], qubits[0]))
@@ -130,7 +152,7 @@ def create_arbitrary_state(vector, qubits=None):
                 reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]], qubits[0]))
 
         # probability unification
-        for j in range(len(converted_y_thetas)):
+        for j in xrange(len(converted_y_thetas)):
             if converted_y_thetas[j] != 0:
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RY(-converted_y_thetas[j], qubits[0]))
@@ -142,7 +164,7 @@ def create_arbitrary_state(vector, qubits=None):
             reversed_gates.append(SWAP(qubits[0], qubits[step+1]))
 
             mask = 1 + (1 << (step + 1))
-            for i in range(N):
+            for i in xrange(N):
                 # only swap the numbers for which the 0th bit and step+1-th bit are different
                 # only check for i having 0th bit 1 and step+1-th bit 0 to prevent duplication
                 if (i & mask) ^ 1 == 0:

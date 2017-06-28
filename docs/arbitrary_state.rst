@@ -4,7 +4,7 @@ Arbitrary State Generation
 Overview
 --------
 
-More details can be found in references [1]_.
+More details can be found in references [1]_ and [2]_.
 
 Source Code Docs
 ----------------
@@ -29,4 +29,5 @@ grove.arbitrary_state.unitary_operator
 
 .. rubric:: References
 
-.. [1] arXiv:quant-ph/0407010
+.. [1] https://arxiv.org/pdf/quant-ph/0407010.pdf
+.. [2] http://140.78.161.123/digital/2016_ismvl_logic_synthesis_quantum_state_generation.pdf
