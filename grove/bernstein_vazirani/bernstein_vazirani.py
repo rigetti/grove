@@ -21,7 +21,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
 
        \\mathbf{x}\\rightarrow \\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}
 
-       (\\mathbf{x}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
+       (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
 
     where :math:`(\\cdot)` is the bitwise dot product,
     this function defines a program that performs
@@ -113,10 +113,11 @@ def run(cxn, oracle, qubits, ancilla):
                            :math:`f(x)=\\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}`
     :param list qubits: the input qubits
     :param Qubit ancilla: the ancilla qubit
-    :return: a tuple that includes:
-                - the program's determination of :math:`\\mathbf{a}`
-                - the program's determination of b
-                - the main program used to determine :math:`\\mathbf{a}`
+    :return: a tuple that includes, in order,
+
+                * the program's determination of :math:`\\mathbf{a}`
+                * the program's determination of :math:`b`
+                * the main program used to determine :math:`\\mathbf{a}`
     :rtype: tuple
     """
     # First, create the program to find a
