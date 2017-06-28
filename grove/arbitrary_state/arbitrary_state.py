@@ -1,6 +1,7 @@
 """Class for generating a program that can generate an arbitrary quantum state
 
-- http://140.78.161.123/digital/2016_ismvl_logic_synthesis_quantum_state_generation.pdf
+- http://140.78.161.123/digital/\
+2016_ismvl_logic_synthesis_quantum_state_generation.pdf
 - https://arxiv.org/pdf/quant-ph/0407010.pdf
 
 """
@@ -85,9 +86,7 @@ def create_arbitrary_state(vector, qubits=None):
     :rtype: Program
     """
     vec_norm = vector/np.linalg.norm(vector)
-    n = int(np.ceil(np.log2(len(vec_norm))))  # number of qubits needed
-    if n == 0:  # if vec_norm is of length 1
-        n += 1
+    n = max(1, int(np.ceil(np.log2(len(vec_norm)))))  # number of qubits needed
 
     if qubits is None:
         qubits = range(n)
@@ -99,11 +98,13 @@ def create_arbitrary_state(vector, qubits=None):
     magnitudes = map(np.abs, vec_norm)
     phases = map(np.angle, vec_norm)
 
-    # because this algorithm starts with a state and makes it into the |0> state,
+    # because conceptually this algorithm starts with the end state
+    # and makes it into the |0> state,
     # the gates will be constructed in reverse order
     reversed_gates = []
 
-    # matrix that converts angles of uniformly controlled rotation to angles of uncontrolled rotations
+    # matrix that converts angles of uniformly controlled rotation
+    # to angles of uncontrolled rotations
     # at first, all qubits except for the 0 qubit act as controls
     M = get_uniformly_controlled_rotation_matrix(n - 1)
 
@@ -112,36 +113,43 @@ def create_arbitrary_state(vector, qubits=None):
     rotation_cnots = get_cnot_control_positions(n - 1)
 
     for step in xrange(n):
-        z_thetas = []  # will hold the angles for controlled rotations in the phase unification step
-        y_thetas = []  # will hold the angles for controlled rotations in the probabilities unification step
-        for i in xrange(0, N, 2):
+        # will hold the angles for controlled rotations
+        # in the phase unification and probability unification steps,
+        # respectively
+        z_thetas = []
+        y_thetas = []
+
+        # will hold updated phases and magnitudes after rotations
+        new_phases = []
+        new_magnitudes = []
+
+        for i in xrange(0, len(phases), 2):
             # find z rotation angles
             phi = phases[i]
             psi = phases[i+1]
-            if i % 2**(step+1) == 0:  # due to repetition, only select angles are needed
-                z_thetas.append(phi - psi)
+            z_thetas.append(phi - psi)
+
             # update phases after applying such rotations
             kappa = (phi + psi)/2.
-            phases[i], phases[i+1] = kappa, kappa
+            new_phases.append(kappa)
 
             # find y rotation angles
             a = magnitudes[i]
             b = magnitudes[i+1]
-            if i % 2**(step+1) == 0:  # due to repetition, only select angles are needed
-                if a == 0 and b == 0:
-                    y_thetas.append(0)
-                else:
-                    y_thetas.append(2*np.arcsin((a-b)/(np.sqrt(2*(a**2 + b**2)))))
+            if a == 0 and b == 0:
+                y_thetas.append(0)
+            else:
+                y_thetas.append(
+                    2 * np.arcsin((a - b) / (np.sqrt(2 * (a ** 2 + b ** 2)))))
+
             # update magnitudes after applying such rotations
             c = np.sqrt((a**2+b**2)/2.)
-            magnitudes[i], magnitudes[i+1] = c, c
+            new_magnitudes.append(c)
 
-        # convert these rotation angles to those for uncontrolled rotations + CNOTs
+        # convert these rotation angles
+        # to those for uncontrolled rotations + CNOTs
         converted_z_thetas = np.dot(M, z_thetas)
         converted_y_thetas = np.dot(M, y_thetas)
-
-        # just retain upper left square for the next iteration (one less control)
-        M = M[0:len(M)/2, 0:len(M)/2]*2
 
         # phase unification
         for j in xrange(len(converted_z_thetas)):
@@ -149,7 +157,10 @@ def create_arbitrary_state(vector, qubits=None):
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RZ(-converted_z_thetas[j], qubits[0]))
             if step < n-1:
-                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]], qubits[0]))
+                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
+                                           qubits[0]))
+
+        phases = new_phases
 
         # probability unification
         for j in xrange(len(converted_y_thetas)):
@@ -157,21 +168,21 @@ def create_arbitrary_state(vector, qubits=None):
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RY(-converted_y_thetas[j], qubits[0]))
             if step < n-1:
-                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]], qubits[0]))
+                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
+                                           qubits[0]))
 
-        # swaps are applied after all rotation steps except the last
+        magnitudes = new_magnitudes
+
+
         if step < n-1:
+            # swaps are applied after all rotation steps except the last
             reversed_gates.append(SWAP(qubits[0], qubits[step+1]))
 
-            mask = 1 + (1 << (step + 1))
-            for i in xrange(N):
-                # only swap the numbers for which the 0th bit and step+1-th bit are different
-                # only check for i having 0th bit 1 and step+1-th bit 0 to prevent duplication
-                if (i & mask) ^ 1 == 0:
-                    phases[i], phases[i ^ mask] = phases[i ^ mask], phases[i]
-                    magnitudes[i], magnitudes[i ^ mask] = magnitudes[i ^ mask], magnitudes[i]
+            # just retain upper left square
+            # for the next iteration (one less control)
+            M = M[0:len(M) / 2, 0:len(M) / 2] * 2
 
-            # update next rotation_cnots
+            # update next set of controls (one less control)
             rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
             rotation_cnots[-1] -= 1
 
@@ -194,11 +205,11 @@ if __name__ == "__main__":
         v = [v]
     else:
         v = list(v)
-    offset = input("Input a positive integer offset:\n")
-    p = create_arbitrary_state(v, offset)
+    p = create_arbitrary_state(v)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
     print "Normalized Vector: ", list(v / np.linalg.norm(v))
     print "Generated Wavefunction: ",  wf
-    print "----------Quil Code Used----------"
-    print p.out()
+    if raw_input("Show Program? (y/n): ") == 'y':
+        print "----------Quil Code Used----------"
+        print p.out()
