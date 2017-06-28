@@ -84,12 +84,12 @@ def unitary_function(mappings):
 
 def oracle_function(unitary_funct, qubits, ancillas):
     """
-    Given a unitary :math:`U` that acts as a function
+    Given a unitary :math:`U_f` that acts as a function
     :math:`f:\\{0,1\\}^n\\rightarrow \\{0,1\\}^n`, such that
 
     .. math::
 
-        U\\vert x\\rangle = \\vert f(x)\\rangle
+        U_f\\vert x\\rangle = \\vert f(x)\\rangle
 
     create an oracle program that performs the following transformation:
 
@@ -103,7 +103,7 @@ def oracle_function(unitary_funct, qubits, ancillas):
 
     Allocates one scratch bit.
 
-    :param 2darray unitary_funct: Matrix representation :math:`U` of the
+    :param 2darray unitary_funct: Matrix representation :math:`U_f` of the
                                   function :math:`f`,
                                   i.e. the unitary transformation
                                   that must be applied to a state
