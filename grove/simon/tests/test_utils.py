@@ -4,28 +4,45 @@ import numpy as np
 import pyquil.api as api
 import pytest
 
-from grove.simon.simon import find_mask, unitary_function, oracle_function, _is_unitary, _most_significant_bit
+from grove.simon.simon import find_mask, unitary_function, \
+    oracle_function, _is_unitary, _most_significant_bit, check_two_to_one
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 class TestFindMask(object):
-    def test_one_qubit(self):
+    def test_one_qubit_two_to_one(self):
         _find_mask_test_helper([1, 1], 1)
 
-    def test_two_qubits(self):
+    def test_two_qubits_two_to_one(self):
         _find_mask_test_helper([0, 2, 0, 2], 2)
 
-    def test_three_qubits_one_mask(self):
+    def test_three_qubits_two_to_one_mask_one(self):
         _find_mask_test_helper([0, 0, 7, 7, 4, 4, 2, 2], 1)
 
-    def test_three_qubits_five_mask(self):
+    def test_three_qubits_two_to_one_mask_five(self):
         _find_mask_test_helper([3, 0, 1, 7, 0, 3, 7, 1], 5)
 
-    def test_four_qubits(self):
-        _find_mask_test_helper([0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0], 15)
+    def test_four_qubits_two_to_one(self):
+        _find_mask_test_helper([0, 1, 2, 3, 4, 5, 6, 7,
+                                7, 6, 5, 4, 3, 2, 1, 0], 15)
 
+    def test_one_qubit_one_to_one(self):
+        _find_mask_test_helper([1, 0])
 
-def _find_mask_test_helper(mappings, mask):
+    def test_two_qubits_one_to_one(self):
+        _find_mask_test_helper([0, 1, 2, 3])
+
+    def test_three_qubits_one_to_one_odds_even(self):
+        _find_mask_test_helper([1, 3, 5, 7, 0, 2, 4, 6])
+
+    def test_three_qubits_one_to_one_random(self):
+        _find_mask_test_helper([3, 0, 2, 7, 1, 6, 5, 4])
+
+    def test_four_qubits_one_to_one(self):
+        _find_mask_test_helper([9, 10, 5, 6, 12, 1, 2, 8, 14,
+                                0, 13, 3, 11, 4, 7, 15])
+
+def _find_mask_test_helper(mappings, mask=None):
     n = int(np.log2(len(mappings)))
     qvm = api.SyncConnection()
 
@@ -34,11 +51,15 @@ def _find_mask_test_helper(mappings, mask):
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas)
-    
-    s = find_mask(qvm, oracle, qubits)[0]
 
-    assert int(s, 2) == mask
+    s, iterations, simon_program = find_mask(qvm, oracle, qubits)
+    two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
 
+    found_mask = int(s, 2)
+    assert (mappings[0] == mappings[found_mask]) == two_to_one
+
+    if two_to_one:
+        assert found_mask == mask
 
 class TestIsUnitary(object):
     def test_unitary_two_by_two(self):

@@ -1,12 +1,13 @@
 """Module for the Simon's Algorithm.
 For more information, see
- - lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
- - pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
+
+- http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+- http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
 """
 
+import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
-import numpy as np
 
 
 def oracle_function(unitary_funct, qubits, ancillas):
@@ -62,7 +63,8 @@ def unitary_function(mappings):
     # TODO see if mappings is a valid thing
     n = int(np.log2(len(mappings)))
     distinct_outputs = len(set(mappings))
-    assert distinct_outputs in {2**(n-1)}, "Function must be two-to-one"
+    assert distinct_outputs in {2**(n-1), 2**n}, \
+        "Function must be one-to-one or two-to-one"
 
     # Strategy: add an extra qubit by default
     # and force the function to be one-to-one
@@ -98,6 +100,10 @@ def unitary_function(mappings):
 def simon(oracle, qubits):
     """
     Implementation of the quantum portion of Simon's Algorithm.
+
+    Given a list of input qubits,
+    all initially in the :math:`\\vert 0\\rangle` state,
+    create a program that
     For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
     f(x) = f(y) if and only if (x xor y) = s.
     :param oracle: Program representing unitary application of function.
@@ -219,6 +225,21 @@ def find_mask(cxn, oracle, qubits):
 
     return s_str, iterations, simon_program
 
+
+def check_two_to_one(cxn, oracle, ancillas, s):
+    zero_program = oracle
+    mask_program = pq.Program()
+    for i in xrange(len(s)):
+        if s[i] == '1':
+            mask_program.inst(X(i))
+    mask_program += oracle
+
+    zero_value = cxn.run_and_measure(zero_program, ancillas)[0]
+    mask_value = cxn.run_and_measure(mask_program, ancillas)[0]
+
+    return zero_value == mask_value
+
+
 if __name__ == "__main__":
     import pyquil.api as api
 
@@ -241,8 +262,12 @@ if __name__ == "__main__":
     oracle = oracle_function(unitary_funct, qubits, ancillas)
 
     s, iterations, simon_program = find_mask(qvm, oracle, qubits)
+    two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
 
-    print "The mask s is", s
+    if two_to_one:
+        print "The function is two-to-one with mask s = ", s
+    else:
+        print "The function is one-to-one"
     print "Iterations of the algorithm: ", iterations
 
     if (raw_input("Show Program? (y/n): ") == 'y'):
