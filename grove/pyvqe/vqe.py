@@ -49,7 +49,7 @@ class VQE(object):
     Using this object:
 
         1) initialize with `inst = VQE(minimizer)` where `minimizer` is a
-        function that performs a gradient free minization--i.e
+        function that performs a gradient free minimization--i.e
         scipy.optimize.minimize(. , ., method='Nelder-Mead')
 
         2) call `inst.vqe_run(variational_state_evolve, hamiltonian,
@@ -117,7 +117,12 @@ class VQE(object):
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.
         """
-        self._disp_fun = disp if disp is not None else lambda x: None
+        if disp:
+            def print_fun(x):
+                print(x)
+            self._disp_fun = print_fun
+        else:
+            self._disp_fun = lambda x: None
         iteration_params = []
         expectation_vals = []
         self._current_expectation = None
@@ -146,6 +151,7 @@ class VQE(object):
             return mean_value
 
         def print_current_iter(iter_vars):
+
             self._disp_fun("\tParameters: {} ".format(iter_vars))
             if jacobian is not None:
                 grad = jacobian(iter_vars)
@@ -172,7 +178,8 @@ class VQE(object):
 
         if hasattr(result, 'status'):
             if result.status != 0:
-                self._disp_fun("Classical optimization exited with an error index: %i" % result.status)
+                self._disp_fun("Classical optimization exited \
+                    with an error index: %i" % result.status)
 
         results = OptResults()
         if hasattr(result, 'x'):
@@ -244,7 +251,11 @@ class VQE(object):
                     raise ValueError("samples variable must be a postive integer")
 
                 # normal execution via fake sampling
-                expectation = 0.0  # stores the sum of contributions to the energy from each operator term
+
+                # stores the sum of contributions to
+                # the energy from each operator term
+                expectation = 0.0
+
                 for j, term in enumerate(pauli_sum.terms):
                     meas_basis_change = pq.Program()
                     qubits_to_measure = []
@@ -254,13 +265,13 @@ class VQE(object):
                         for index, gate in term:
                             qubits_to_measure.append(index)
                             if gate == 'X':
-                                meas_basis_change.inst(RY(-np.pi / 2, index))
+                                meas_basis_change.inst(RY(-np.pi/ 2, index))
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                                     qubits_to_measure,
-                                                                     qvm, samples)
+                            meas_outcome = expectation_from_sampling(
+                                pyquil_prog + meas_basis_change,
+                                qubits_to_measure, qvm, samples)
 
                     expectation += term.coefficient * meas_outcome
 
@@ -290,7 +301,7 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     """
     Calculation of Z_{i} at marked_qubits
 
-    Given a wavefunctions, this calculates the expectation value of the Zi
+    Given a wavefunction, this calculates the expectation value of the Z_i
     operator where i ranges over all the qubits given in marked_qubits.
 
     :param pyquil_program: pyQuil program generating some state

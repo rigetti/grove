@@ -12,7 +12,7 @@ collecting bitstrings after a state preparation.
 `maxcut_qaoa.py` takes a graph defined with either NetworkX or a list of node
 pairs and implements the cost function for MAX-CUT problems.
 
-`numberpartiition_qaoa.py` takes a list of numbers and set sup a QAOA instance
+`numberpartiition_qaoa.py` takes a list of numbers and sets up a QAOA instance
 for determining the equal biparitioning of the list.
 
 ## Run
@@ -26,39 +26,43 @@ start the variational-quantum-eigensolver loop in order to find  the beta, gamma
 ```
 import numpy as np
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-import pyquil.forest as qvm
-qvm_connection = qvm.Connection()
 ```
 
 ```
+#The square_ring is a list of the edges in the graph
+#Where each edge is given as a tuple: (node1_index, node2_index)
 square_ring = [(0,1),(1,2),(2,3),(3,0)]
-steps = 2; n_qubits = 4
-betas = np.random.uniform(0, np.pi, p); gammas = np.random.uniform(0, 2*np.pi, p)
-inst = maxcut_qaoa(square_ring, steps=steps)
-inst.get_angles()
+#The number of trotterization steps is also referred to as "p".
+trotterization_steps = 2
+#maxcut_qaoa constructs the sequence of parametric gates
+inst = maxcut_qaoa(square_ring, steps=trotterization_steps)
+#get_angles() finds the optimal beta and gamma angles
+betas, gammas = inst.get_angles()
 ```
-
-to see the final |beta,gamma> state we can rebuild the quil program that gives
-us |beta,gamma> and evaluate the wave function using the **qvm**
-
-```
-t = np.hstack((inst.betas, inst.gammas))
-param_prog = inst.get_parameterized_program()
-prog = param_prog(t)
-wf, _ = qvm_connection.wavefunction(prog)
-wf = wf.amplitudes
-```
-
-`wf` is now a numpy array of complex-valued amplitudes for each computational
-basis state.  To visualize the distribution iterate over the states and
-calculate the probability.
+Using the sequence of gates which produced the optimal |beta, gamma> state,
+the algorithm constructs the wave function via connecting to the qvm.
+From the amplitudes of this wave function, the algorithm produces the
+probabilities of any particular cut of the given graph. The cuts with the 
+maximum probabilities are the solutions.
 
 ```
-for state_index in range(2**inst.n_qubits):
-    print inst.states[state_index], np.conj(wf[state_index])*wf[state_index]
+probs = inst.probabilities(np.hstack((betas, gammas)))
 ```
 
-You should then see that the algorithm converges on the expected solutions of 0101 and 1010!
+Each cut is represented as a tuple of 0s and 1s where the nodes at the
+0 indices are in one partition and the nodes at the 1 indices are in the
+other partition.
+
+To visualize the distribution of probabilities for all the various graph cuts
+we iterate over the cuts and display the corresponding probabilities.
+
+```
+for state, prob in zip(inst.states, probs):
+     print state, prob
+```
+
+In particular, for our square graph example you should then see that the 
+algorithm converges on the expected solutions of 0101 and 1010!
 
 ```
     0000 (4.38395094039e-26+0j)

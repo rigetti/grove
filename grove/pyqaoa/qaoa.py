@@ -85,7 +85,7 @@ class QAOA(object):
         else:
             ref_prog = pq.Program()
             for i in xrange(self.n_qubits):
-                ref_prog.inst(H(i))
+                ref_prog.inst(H(i)) #Creates the standard reference state "s"
             self.ref_state_prep = ref_prog
 
         if not isinstance(cost_ham, (list, tuple)):
@@ -234,7 +234,7 @@ class QAOA(object):
         :returns: tuple representing the bitstring, Counter object from
                   collections holding all output bitstrings and their frequency.
         """
-        if samples <= 0 and not isinstance(samples, int):
+        if samples <= 0 or not isinstance(samples, int):
             raise ValueError("samples variable must be positive integer")
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
@@ -242,8 +242,10 @@ class QAOA(object):
         for i in xrange(self.n_qubits):
             sampling_prog.measure(i, [i])
 
-        bitstring_samples = self.qvm.run_and_measure(sampling_prog, range(self.n_qubits), trials=samples)
+        bitstring_samples = self.qvm.run_and_measure(sampling_prog,
+            range(self.n_qubits), trials=samples)
         bitstring_tuples = map(tuple, bitstring_samples)
         freq = Counter(bitstring_tuples)
         most_frequent_bit_string = max(freq, key=lambda x: freq[x])
         return most_frequent_bit_string, freq
+

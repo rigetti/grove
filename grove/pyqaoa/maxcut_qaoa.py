@@ -69,14 +69,15 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     cost_operators = []
     driver_operators = []
     for i, j in graph.edges():
-        cost_operators.append(PauliTerm("Z", i, 0.5)*PauliTerm("Z", j) + PauliTerm("I", 0, -0.5))
+        cost_operators.append(PauliTerm("Z", i, 0.5)*PauliTerm("Z", j) +
+                              PauliTerm("I", 0, -0.5))
     for i in graph.nodes():
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
         connection = CXN
 
-    if minimizer_kwargs is None:
+    if minimizer_kwargs is None: #Change this to default to the new optimizers
         minimizer_kwargs = {'method': 'Nelder-Mead',
                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
                                         'disp': False}}
@@ -84,7 +85,8 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
         vqe_option = {'disp': print_fun, 'return_all': True,
                       'samples': samples}
 
-    qaoa_inst = QAOA(connection, len(graph.nodes()), steps=steps, cost_ham=cost_operators,
+    qaoa_inst = QAOA(connection, len(graph.nodes()), steps=steps,
+                     cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
                      init_betas=initial_beta,
@@ -99,7 +101,9 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
 if __name__ == "__main__":
     # Sample Run:
     # Cutting 0 - 1 - 2 graph!
-    inst = maxcut_qaoa([(0, 1), (1, 2)],
+    angle_graph = [(0,1), (1,2)]
+    #square_ring = [(0,1), (1,2), (2,3), (3,0)]
+    inst = maxcut_qaoa(angle_graph,
                        steps=2, rand_seed=42, samples=None)
     betas, gammas = inst.get_angles()
     probs = inst.probabilities(np.hstack((betas, gammas)))
