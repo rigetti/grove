@@ -8,45 +8,47 @@ from grove.arbitrary_state.arbitrary_state import *
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 class TestCreateArbitraryState(object):
     def test_state_generation_simple_length_two(self):
-        _state_generation_test_helper([1+1j, 2])
-    
+        _state_generation_test_helper([1 + 1j, 2])
+
     def test_state_generation_simple_length_four(self):
         _state_generation_test_helper([1, 2, 3, 4])
 
     def test_state_generation_complex_length_five(self):
-        _state_generation_test_helper([1+2j, 3+4j, -1-5j, 6-8j, 7])
-    
+        _state_generation_test_helper([1 + 2j, 3 + 4j, -1 - 5j, 6 - 8j, 7])
+
     def test_state_generation_complex_length_eight(self):
-        _state_generation_test_helper([1+2j, 3+4j, -1-5j, 6-8j, 7, 2, 0.5j, 2])
-    
+        _state_generation_test_helper(
+            [1 + 2j, 3 + 4j, -1 - 5j, 6 - 8j, 7, 2, 0.5j, 2])
+
     def test_state_generation_complex_length_huge(self):
-        _state_generation_test_helper(np.array(range(50))*1j)
-    
+        _state_generation_test_helper(np.array(range(50)) * 1j)
+
     def test_padded_zeros(self):
         _state_generation_test_helper([1, 0, 0])
-    
+
     def test_single_one(self):
         _state_generation_test_helper([1], [4])
-    
+
     def test_long_padded_zeros(self):
-        _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0], range(3, 7))
-    
+        _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0],
+                                      range(3, 7))
+
     def test_forward_padded_zeros(self):
         _state_generation_test_helper([0, 0, 1])
 
 
 class TestUniformlyControlledRotationMatrix(object):
     def test_one_control(self):
-        expected = 1/2.*np.array([[1, 1],
-                                  [1, -1]])
+        expected = 1 / 2. * np.array([[1, 1],
+                                      [1, -1]])
         actual = get_uniformly_controlled_rotation_matrix(1)
         assert np.allclose(expected, actual)
 
     def test_two_controls(self):
-        expected = 1/4.*np.array([[1, 1, 1, 1],
-                                  [1, -1, 1, -1],
-                                  [1, -1, -1, 1],
-                                  [1, 1, -1, -1]])
+        expected = 1 / 4. * np.array([[1, 1, 1, 1],
+                                      [1, -1, 1, -1],
+                                      [1, -1, -1, 1],
+                                      [1, 1, -1, -1]])
         actual = get_uniformly_controlled_rotation_matrix(2)
 
         assert np.allclose(expected, actual)

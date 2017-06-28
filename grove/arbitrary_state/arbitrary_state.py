@@ -22,11 +22,11 @@ def get_uniformly_controlled_rotation_matrix(k):
     :return: the matrix :math:`M_{ij}`
     :rtype: 2darray
     """
-    M = np.full((2**k, 2**k), 2**-k)
-    for i in xrange(2**k):
+    M = np.full((2 ** k, 2 ** k), 2 ** -k)
+    for i in xrange(2 ** k):
         g_i = i ^ (i >> 1)  # Gray code for i
-        for j in xrange(2**k):
-            M[i, j] *= (-1)**(bin(j & g_i).count("1"))
+        for j in xrange(2 ** k):
+            M[i, j] *= (-1) ** (bin(j & g_i).count("1"))
     return M
 
 
@@ -45,7 +45,7 @@ def get_cnot_control_positions(k):
     :rtype: list
     """
     rotation_cnots = [1, 1]
-    for i in xrange(2, k+1):
+    for i in xrange(2, k + 1):
         # algorithm described is to replace the last control
         # with a control to the new qubit
         # and then repeat the sequence twice
@@ -85,7 +85,7 @@ def create_arbitrary_state(vector, qubits=None):
              described above.
     :rtype: Program
     """
-    vec_norm = vector/np.linalg.norm(vector)
+    vec_norm = vector / np.linalg.norm(vector)
     n = max(1, int(np.ceil(np.log2(len(vec_norm)))))  # number of qubits needed
 
     if qubits is None:
@@ -126,16 +126,16 @@ def create_arbitrary_state(vector, qubits=None):
         for i in xrange(0, len(phases), 2):
             # find z rotation angles
             phi = phases[i]
-            psi = phases[i+1]
+            psi = phases[i + 1]
             z_thetas.append(phi - psi)
 
             # update phases after applying such rotations
-            kappa = (phi + psi)/2.
+            kappa = (phi + psi) / 2.
             new_phases.append(kappa)
 
             # find y rotation angles
             a = magnitudes[i]
-            b = magnitudes[i+1]
+            b = magnitudes[i + 1]
             if a == 0 and b == 0:
                 y_thetas.append(0)
             else:
@@ -143,7 +143,7 @@ def create_arbitrary_state(vector, qubits=None):
                     2 * np.arcsin((a - b) / (np.sqrt(2 * (a ** 2 + b ** 2)))))
 
             # update magnitudes after applying such rotations
-            c = np.sqrt((a**2+b**2)/2.)
+            c = np.sqrt((a ** 2 + b ** 2) / 2.)
             new_magnitudes.append(c)
 
         # convert these rotation angles
@@ -156,7 +156,7 @@ def create_arbitrary_state(vector, qubits=None):
             if converted_z_thetas[j] != 0:
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RZ(-converted_z_thetas[j], qubits[0]))
-            if step < n-1:
+            if step < n - 1:
                 reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
                                            qubits[0]))
 
@@ -167,16 +167,15 @@ def create_arbitrary_state(vector, qubits=None):
             if converted_y_thetas[j] != 0:
                 # angle is negated in conjugated/reversed circuit
                 reversed_gates.append(RY(-converted_y_thetas[j], qubits[0]))
-            if step < n-1:
+            if step < n - 1:
                 reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
                                            qubits[0]))
 
         magnitudes = new_magnitudes
 
-
-        if step < n-1:
+        if step < n - 1:
             # swaps are applied after all rotation steps except the last
-            reversed_gates.append(SWAP(qubits[0], qubits[step+1]))
+            reversed_gates.append(SWAP(qubits[0], qubits[step + 1]))
 
             # just retain upper left square
             # for the next iteration (one less control)
@@ -190,8 +189,8 @@ def create_arbitrary_state(vector, qubits=None):
     reversed_gates += map(H, qubits)
 
     # Correct the overall phase
-    reversed_gates.append(PHASE(2*phases[0], qubits[0]))
-    reversed_gates.append(RZ(-2*phases[0], qubits[0]))
+    reversed_gates.append(PHASE(2 * phases[0], qubits[0]))
+    reversed_gates.append(RZ(-2 * phases[0], qubits[0]))
 
     # Apply all gates in reverse
     p = pq.Program().inst([reversed_gates[::-1]])
@@ -209,7 +208,7 @@ if __name__ == "__main__":
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
     print "Normalized Vector: ", list(v / np.linalg.norm(v))
-    print "Generated Wavefunction: ",  wf
+    print "Generated Wavefunction: ", wf
     if raw_input("Show Program? (y/n): ") == 'y':
         print "----------Quil Code Used----------"
         print p.out()
