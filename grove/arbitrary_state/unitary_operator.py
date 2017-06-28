@@ -1,7 +1,13 @@
 """
 Module for creating a unitary operator for encoding any complex vector
 into the wavefunction of a quantum state. For example, the input vector
-[a, b, c, d] would result in the state a|00> + b|01> + c|10> + d|11>.
+:math:`[a, b, c, d]` would result in the state
+
+.. math::
+
+    a\\vert 00\\rangle + b\\vert01\\rangle
+    + c\\vert10\\rangle + d\\vert11\\rangle
+
 """
 import numpy as np
 
@@ -13,9 +19,10 @@ def unitary_operator(state_vector):
     the wavefunction of a quantum state.
 
     Assumes that the state of the input qubits is to be expressed as
+
     .. math::
 
-        (1, 0, \ldots, 0)^T
+        (1, 0, \\ldots, 0)^T
 
     :param 1d array state_vector: Normalized vector whose length is at least
                                   two and a power of two.
