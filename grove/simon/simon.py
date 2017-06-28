@@ -12,20 +12,39 @@ from pyquil.gates import *
 
 def oracle_function(unitary_funct, qubits, ancillas):
     """
-    Defines an oracle that performs the following unitary transformation:
-    |x>|y> -> |x>|f(x) xor y>
+    Given a unitary :math:`U` that acts as a function
+    :math:`f:\\{0,1\\}^n\\rightarrow \\{0,1\\}^n`, such that
+
+    .. math::
+
+        U\\vert x\\rangle = \\vert f(x)\\rangle
+
+    create an oracle program that performs the following transformation:
+
+    .. math::
+
+        \\vert x \\rangle \\vert y \\rangle
+        \\rightarrow \\vert x \\rangle \\vert f(x) \\text{ xor } y\\rangle
+
+    where :math:`\\vert x\\rangle` and :math:`\\vert y\\rangle`
+    are :math:`n` qubit states and :math:`\\text{xor}` is taken bitwise.
 
     Allocates one scratch bit.
 
-    :param 2darray unitary_funct: Matrix representation of the function f, i.e. the
-                          unitary transformation that must be applied to a
-                          state |x> to get |f(x)>
-    :param list qubits: List of qubits that enter as input |x>.
-    :param ancillas: List of qubits to serve as the ancillary input |y>.
+    :param 2darray unitary_funct: Matrix representation :math:`U` of the
+                                  function :math:`f`,
+                                  i.e. the unitary transformation
+                                  that must be applied to a state
+                                  :math:`\\vert x \\rangle`
+                                  to get :math:`\\vert f(x) \\rangle`
+    :param list(int) qubits: List of qubits that enter as the input
+                        :math:`\\vert x \\rangle`.
+    :param list(int) ancillas: List of qubits to serve as the ancillary input
+                     :math:`\\vert y \\rangle`.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
-    assert _is_unitary(unitary_funct), "Function must be unitary."
+    assert is_unitary(unitary_funct), "Function must be unitary."
     p = pq.Program()
 
     scratch_bit = p.alloc()
@@ -43,47 +62,62 @@ def oracle_function(unitary_funct, qubits, ancillas):
 
 def unitary_function(mappings):
     """
-    Creates a unitary transformation that maps each state to the values specified
-    in mappings.
-    Some (but not all) of these transformations involve a scratch qubit, so one is
-    always provided. That is, if given the mapping of n qubits, the calculated transformation
-    will be on n + 1 qubits, where the 0th is the scratch bit and the return value
+    Creates a unitary transformation that maps each state
+    to the values specified in mappings.
+
+    Some (but not all) of these transformations involve a scratch qubit,
+    so one is always provided. That is, if given the mapping of :math:`n`
+    qubits, the calculated transformation will be on :math:`n + 1` qubits,
+    where the zeroth qubit is the scratch bit and the return value
     of the function is left in the qubits that follow.
-    :param list mappings: List of the mappings of f(x) on all length n bitstrings.
+    :param list mappings: List of the mappings of f(x) on all length
+                          :math:`n` in their decimal representation.
                           For example, the following mapping:
-                          00 -> 00
-                          01 -> 10
-                          10 -> 10
-                          11 -> 00
-                          Would be represented as [0, 2, 2, 0].
-            Requires mappings to be two-to-one with unique mask s.
+
+                          - :math:`00 \\rightarrow 00`
+                          - :math:`01 \\rightarrow 10`
+                          - :math:`10 \\rightarrow 10`
+                          - :math:`11 \\rightarrow 00`
+
+                          Would be represented as :math:`[0, 2, 2, 0]`.
+                          Requires mappings to be either one-to-one,
+                          or two-to-one with unique mask :math:`s`,
+                          as specified in Simon's problem.
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
-    # TODO see if mappings is a valid thing
+    assert len(mappings) > 1, \
+        "function domain must be at least one bit (size 2)"
+
     n = int(np.log2(len(mappings)))
+    assert len(mappings) == 2 ** n, \
+        "mappings must have a length that is a power of two"
+
     distinct_outputs = len(set(mappings))
-    assert distinct_outputs in {2**(n-1), 2**n}, \
+    assert distinct_outputs in {2 ** (n - 1), 2 ** n}, \
         "Function must be one-to-one or two-to-one"
 
     # Strategy: add an extra qubit by default
     # and force the function to be one-to-one
-    output_counts = {x: 0 for x in range(2**n)}
+    output_counts = {x: 0 for x in xrange(2 ** n)}
 
-    unitary_funct = np.zeros(shape=(2 ** (n+1), 2 ** (n+1)))
+    unitary_funct = np.zeros(shape=(2 ** (n + 1), 2 ** (n + 1)))
 
     # Fill in what is known so far
-    for j in range(2 ** n):
+    for j in xrange(2 ** n):
         i = mappings[j]
         output_counts[i] += 1
         if output_counts[i] == 2:
+            # no more inputs will have output i
             del output_counts[i]
+            # to force it to be one-to-one, we promote the output
+            # to have scratch bit set to 1
             i += 2 ** n
         unitary_funct[i, j] = 1
 
     # if one to one, just ignore the scratch bit as it's already unitary
-    if distinct_outputs == 2**n:
-        return np.kron(np.identity(2), unitary_funct[0:2**n, 0:2**n])
+    if distinct_outputs == 2 ** n:
+        return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
 
     # otherwise, if two-to-one, fill the array to make it unitary
     # assuming scratch bit will properly be 0
@@ -91,7 +125,7 @@ def unitary_function(mappings):
 
     for i in output_counts:
         unitary_funct[i, lower_index] = 1
-        unitary_funct[i + 2**n, lower_index + 1] = 1
+        unitary_funct[i + 2 ** n, lower_index + 1] = 1
         lower_index += 2
 
     return unitary_funct
@@ -103,11 +137,12 @@ def simon(oracle, qubits):
 
     Given a list of input qubits,
     all initially in the :math:`\\vert 0\\rangle` state,
-    create a program that
-    For given two-to-one function f: {0,1}^n -> {0,1}^n, determine the non-zero mask s such that
-    f(x) = f(y) if and only if (x xor y) = s.
-    :param oracle: Program representing unitary application of function.
-    :param qubits: List of qubits that enter as state |x>.
+    create a program that applies the Hadamard-Walsh transform the qubits
+    before and after going through the oracle.
+
+    :param Program oracle: Program representing unitary application of function.
+    :param list(int) qubits: List of qubits that enter as the input
+                        :math:`\\vert x \\rangle`.
     :return: A program corresponding to the desired instance of
              Simon's Algorithm.
     :rtype: Program
@@ -121,9 +156,11 @@ def simon(oracle, qubits):
     return p
 
 
-def _is_unitary(matrix):
+def is_unitary(matrix):
     """
-    :param matrix: a matrix to test unitarity of
+    A helper function that checks if a matrix is unitary.
+
+    :param 2darray matrix: a matrix to test unitarity of
     :return: true if and only if matrix is unitary
     :rtype: bool
     """
@@ -133,11 +170,13 @@ def _is_unitary(matrix):
     return np.allclose(np.eye(rows), matrix.dot(matrix.T.conj()))
 
 
-def _most_significant_bit(lst):
+def most_significant_bit(lst):
     """
-    Finds the position of the most significant bit in a list of 1s and 0s,
+    A helper function that finds the position of
+    the most significant bit in a list of 1s and 0s,
     i.e. the first position where a 1 appears, reading left to right.
-    :param lst: a list of 0s and 1s with at least one 1
+
+    :param list(int) lst: a list of 0s and 1s with at least one 1
     :return: the first position in lst that a 1 appears
     :rtype: int
     """
@@ -150,13 +189,14 @@ def _most_significant_bit(lst):
 def find_mask(cxn, oracle, qubits):
     """
     Runs Simon's algorithm to find the mask.
-    :param cxn: the connection used to run programs
-    :param oracle: the oracle to query;
-                   emulates a classical f(x) function as a blackbox.
-    :param qubits: the input qubits
+
+    :param SyncConnection cxn: the connection used to run programs
+    :param Program oracle: the oracle to query;
+                   emulates a classical :math:`f(x)` function as a blackbox.
+    :param list(int) qubits: the input qubits
     :return: a tuple t, where t[0] is the bitstring of the mask,
              t[1] is the number of iterations that the quantum program was run,
-             and t[2] is said program.
+             and t[2] is said quantum program.
     :rtype: tuple
     """
 
@@ -165,32 +205,36 @@ def find_mask(cxn, oracle, qubits):
     simon_program += simon(oracle, qubits)
     n = len(qubits)
 
-    # Generate n-1 linearly independent vectors that will be orthonormal to the mask s
-    # Done so by running the Simon program repeatedly and building up a row-echelon matrix W
-    # See http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+    # Generate n-1 linearly independent vectors
+    # that will be orthonormal to the mask s
+    # Done so by running the quantum program repeatedly
+    # and building up a row-echelon matrix W
     iterations = 0
     W = np.array([])
     while True:
-        if len(W) == n-1:
+        if len(W) == n - 1:
             break
         z = np.array(cxn.run_and_measure(simon_program, qubits)[0])
         iterations += 1
-        # attempt to insert into W so that W remains in row-echelon form and all rows are linearly independent
+
+        # attempt to insert into W so that W remains in row-echelon form
+        # and all rows are linearly independent
         while np.any(z):  # while it's not all zeros
             if len(W) == 0:
                 W = z
                 W = W.reshape(1, n)
                 break
-            msb_z = _most_significant_bit(z)
+            msb_z = most_significant_bit(z)
 
-            # Search for a row to insert z into, so that it has an early significant bit than the row below
+            # Search for a row to insert z into,
+            # so that it has an earlier significant bit than the row below
             # and a later one than the row above (when reading left-to-right)
             got_to_end = True
-            for row_num in range(len((W))):
+            for row_num in xrange(len(W)):
                 row = W[row_num]
-                msb_row = _most_significant_bit(row)
+                msb_row = most_significant_bit(row)
                 if msb_row == msb_z:
-                    z = np.array([z[i] ^ row[i] for i in range(n)])
+                    z = np.array([z[i] ^ row[i] for i in xrange(n)])
                     got_to_end = False
                     break
                 elif msb_row > msb_z:
@@ -215,9 +259,9 @@ def find_mask(cxn, oracle, qubits):
     s[insert_row_num] = 1
 
     # iterate backwards, starting from second to last row for back-substitution
-    for row_num in range(n-2, -1, -1):
+    for row_num in xrange(n - 2, -1, -1):
         row = W[row_num]
-        for col_num in range(row_num+1, n):
+        for col_num in xrange(row_num + 1, n):
             if row[col_num] == 1:
                 s[row_num] = int(s[row_num]) ^ int(s[col_num])
 
@@ -248,15 +292,16 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
-    for i in range(2 ** n):
+    for i in xrange(2 ** n):
         val = raw_input(np.binary_repr(i, n) + ': ')
-        assert all(map(lambda x: x in {'0', '1'}, val)), "f(x) must return only 0 and 1"
+        assert all(map(lambda x: x in {'0', '1'}, val)), \
+            "f(x) must return only 0 and 1"
         mappings.append(int(val, 2))
 
     qvm = api.SyncConnection()
 
     qubits = range(n)
-    ancillas = range(n, 2*n)
+    ancillas = range(n, 2 * n)
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas)
@@ -270,6 +315,6 @@ if __name__ == "__main__":
         print "The function is one-to-one"
     print "Iterations of the algorithm: ", iterations
 
-    if (raw_input("Show Program? (y/n): ") == 'y'):
+    if raw_input("Show Program? (y/n): ") == 'y':
         print "----------Quantum Program Used----------"
         print simon_program
