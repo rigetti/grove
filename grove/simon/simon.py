@@ -1,7 +1,8 @@
 """Module for the Simon's Algorithm.
 For more information, see
 
-- http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+- http://lapastillaroja.net/wp-content/uploads/2016/09/\
+Intro_to_QC_Vol_1_Loceff.pdf
 - http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/05/lecture05.pdf
 """
 
@@ -251,9 +252,10 @@ def make_square_row_echelon(W):
     Make :math:`\\mathbf{\\mathit{W}}`
     into a square matrix for Simon's algorithm, satisfying a few criteria.
 
-    :param 2darray W: a :math:`(n-1)\\times n` array of 0s and 1s in row-echelon
-                      form such that all rows are orthogonal to some
-                      length :math:`n` vector :math:`\\mathbf{s}` of 0s and 1s.
+    :param 2darray W: an :math:`(n-1)\\times n` array of 0s and 1s in
+                      row-echelon form such that all rows are orthogonal
+                      to some length :math:`n` vector
+                      of 0s and 1s :math:`\\mathbf{s}`.
     :return: an :math:`n\\times n` square array identical
              to :math:`\\mathbf{\\mathit{W}}` except with one row added.
              That row is chosen to keep :math:`\\mathbf{\\mathit{W}}`
@@ -366,7 +368,7 @@ def check_two_to_one(cxn, oracle, ancillas, s):
                                 is written to by the oracle
     :param str s: the proposed mask of the function, found by Simon's algorithm
     :return: true if and only if the oracle represents a function
-             that is two to one with mask :math:`s`
+             that is two-to-one with mask :math:`s`
     :rtype: bool
     """
     zero_program = oracle
