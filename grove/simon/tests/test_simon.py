@@ -6,7 +6,7 @@ import pytest
 
 from grove.simon.simon import find_mask, unitary_function, \
     oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
-    insert_into_binary_matrix, make_square_row_echelon
+    insert_into_binary_matrix, make_square_row_echelon, binary_back_substitute
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -192,3 +192,53 @@ class TestMakeSquareRowEchelon(object):
         assert insert_row_num == 1
 
         assert np.allclose(W, W_expected)
+
+
+class TestBinaryBackSubstitute(object):
+    def test_one_at_top(self):
+        W = np.array([[1, 1, 0, 0, 0],
+                      [0, 1, 0, 0, 0],
+                      [0, 0, 1, 0, 1],
+                      [0, 0, 0, 1, 0],
+                      [0, 0, 0, 0, 1]])
+
+        s = np.array([1, 0, 0, 0, 0])
+        x = binary_back_substitute(W, s)
+
+        prod = np.dot(W, x)
+        prod = np.vectorize(lambda x: x % 2)(prod)
+
+        assert np.allclose(s, prod)
+
+    def test_one_at_bottom(self):
+        W = np.array([[1, 0, 0, 0],
+                      [0, 1, 0, 1],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 1]])
+
+        s = np.array([0, 0, 0, 1])
+        x = binary_back_substitute(W, s)
+
+        prod = np.dot(W, x)
+        prod = np.vectorize(lambda x: x % 2)(prod)
+
+        print x, s, prod
+
+        assert np.allclose(s, prod)
+
+    def test_one_at_middle(self):
+        W = np.array([[1, 1, 0, 0, 0],
+                      [0, 1, 0, 0, 0],
+                      [0, 0, 1, 0, 1],
+                      [0, 0, 0, 1, 0],
+                      [0, 0, 0, 0, 1]])
+
+        s = np.array([0, 1, 0, 0, 0])
+        x = binary_back_substitute(W, s)
+
+        prod = np.dot(W, x)
+        prod = np.vectorize(lambda x: x % 2)(prod)
+
+        print x, s, prod
+
+        assert np.allclose(s, prod)

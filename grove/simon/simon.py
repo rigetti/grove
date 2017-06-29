@@ -283,7 +283,7 @@ def make_square_row_echelon(W):
 
 def binary_back_substitute(W, s):
     """
-    Perform in place back substitution on a binary system of equations.
+    Perform back substitution on a binary system of equations.
 
     Finds the :math:`\\mathbf{x}` such that
     :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
@@ -297,14 +297,15 @@ def binary_back_substitute(W, s):
     :rtype: list(int)
     """
     # iterate backwards, starting from second to last row for back-substitution
+    s_copy = np.array(s)
     n = len(s)
     for row_num in xrange(n - 2, -1, -1):
         row = W[row_num]
         for col_num in xrange(row_num + 1, n):
             if row[col_num] == 1:
-                s[row_num] = int(s[row_num]) ^ int(s[col_num])
+                s_copy[row_num] = int(s_copy[row_num]) ^ int(s_copy[col_num])
 
-    return s
+    return s_copy
 
 
 def find_mask(cxn, oracle, qubits):
