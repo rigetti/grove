@@ -33,8 +33,9 @@ def test_fix_norm_and_length():
 
     new_v = fix_norm_and_length(v)
     assert np.allclose([np.linalg.norm(new_v)], [1])
-    assert len(new_v) == 2**get_bits_needed(len(v))
+    assert len(new_v) == 2 ** get_bits_needed(len(v))
+
 
 def test_get_bits_needed():
-    for i, j in zip([1,2,5,8,9,14,27], [1,1,3,3,4,4,5]):
+    for i, j in zip([1, 2, 5, 8, 9, 14, 27], [1, 1, 3, 3, 4, 4, 5]):
         assert get_bits_needed(i) == j
