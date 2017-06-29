@@ -60,14 +60,14 @@ def create_arbitrary_state(vector, qubits=None):
 
     Applies the methods described in references above.
 
-    Given a complex vector :math:`a` with components :math:`a_i`
+    Given a complex vector :math:`\\mathbf{a}` with components :math:`a_i`
     (:math:`i` ranging from :math:`0` to :math:`N-1`),
-    produce a program that takes in the state :math:`\\vert 0\\ldots 0\\rangle`
+    produce a program that takes in the state :math:`\\vert 0 \\rangle`
     and outputs the state
 
     .. math::
 
-        \\sum_{i=0}^{N-1}\\frac{a_i}{\\vert a\\vert} \\vert i\\rangle
+        \\sum_{i=0}^{N-1}\\frac{a_i}{\\vert \\mathbf{a}\\vert} \\vert i\\rangle
 
     where :math:`i` is given in its binary expansion.
 
