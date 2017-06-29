@@ -1,21 +1,28 @@
-Grover's Search Algorithm
+Grover's Search Algorithm and Amplitude Amplification
 =========================
 
 Overview
 --------
 
-Quantum search algorithm via amplitude amplification.
+Quantum search algorithm and more via amplitude amplification.
 
 Source Code Docs
 ----------------
 
-Here you can find documentation for the different submodules in phaseestimation.
+Here you can find documentation for the different submodules in amplification.
 
-grove.grover.grover
-~~~~~~~~~~~~~~~~~~~
+grove.amplification.amplification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.grover.grover
+.. automodule:: grove.amplification.amplification
     :members:
     :undoc-members:
     :show-inheritance:
 
+grove.amplification.grover
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. automodule:: grove.amplification.grover
+        :members:
+        :undoc-members:
+        :show-inheritance:
