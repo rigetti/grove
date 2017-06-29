@@ -39,8 +39,8 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
 
     :param A: a program representing a measurement-less algorithm run on qubits
     :param A_inv: a program representing the inverse algorithm of A.
-            TODO: figure out a way to invert a program,
-            may or may not be feasible with current construct
+                  This can be done using the Program
+                  object's adjoint() method
     :param U_w: an oracle maps any basis vector to either |0> or |1>
     :param qubits: the qubits to operate on
     :param num_iter: number of iterations of amplifications to run
@@ -48,6 +48,19 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
     is to be applied initially on the input qubits. By default, it is set to True.
     :return:
     """
+
+    # Assertions to check input
+    assert isinstance(A, pq.Program), \
+        "A must be a valid Program instance"
+    assert isinstance(A_inv, pq.Program), \
+        "A_inv must be a valid Program instance"
+    assert isinstance(U_w, pq.Program), \
+        "U_w must be a valid Program instance"
+    assert num_iter > 0, \
+        "The number of iterations must be greater than 0"
+    assert len(qubits) > 0, \
+        "The list of qubits to apply the diffusion " \
+        "operator to must be non-empty"
 
     p = A if init else pq.Program()
 
@@ -61,6 +74,7 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
 def n_qubit_control(controls, target, u, gate_name):
     """
     Returns a controlled u gate with n-1 controls.
+    Useful for constructing oracles.
 
     Uses a number of gates quadratic in the number of qubits,
     and defines a linear number of new gates. (Roots and adjoints of u.)
@@ -71,6 +85,12 @@ def n_qubit_control(controls, target, u, gate_name):
     :param gate_name: The name of the gate u.
     :return: The controlled gate.
     """
+    # Make assertions about the input
+    assert isinstance(u, np.ndarray), "The unitary 'u' must be a numpy array"
+    assert len(controls) > 0, "The control qubits list must not be empty"
+    assert isinstance(target,
+                      int) and target > 0, "The target index must be an integer greater than 0"
+    assert len(gate_name) > 0, "Gate name must have length greater than one"
 
     def controlled_program_builder(controls, target, target_gate_name,
                                    target_gate,
@@ -131,14 +151,21 @@ def n_qubit_control(controls, target, u, gate_name):
 
 
 def diffusion_operator(qubits):
-    """Constructs the (Grover) diffusion operator on qubits, assuming they are ordered from most
-    significant qubit to least significant qubit.
+    """Constructs the (Grover) diffusion operator on qubits,
+    assuming they are ordered from
+    most significant qubit to least significant qubit.
 
-    The diffusion operator is the diagonal operator given by(1, -1, -1, ..., -1).
+    The diffusion operator is the diagonal operator given
+    by (1, -1, -1, ..., -1).
 
-    :param qubits: A list of ints corresponding to the qubits to operate on. The operator
-                   operates on bistrings of the form |qubits[0], ..., qubits[-1]>.
+    :param qubits: A list of ints corresponding to the qubits to operate on.
+                   The operator operates on bistrings of the form
+                   |qubits[0], ..., qubits[-1]>.
     """
+
+    assert len(qubits) > 0, \
+        "The diffusion operator must take in a non-empty list of qubits"
+
     p = pq.Program()
 
     if len(qubits) == 1:

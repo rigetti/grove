@@ -76,7 +76,6 @@ def basis_selector_oracle(bitstring, qubits):
             prog.inst(X(qubit))
     return prog
 
-
 if __name__ == "__main__":
     from pyquil.api import SyncConnection
     import sys

@@ -34,8 +34,8 @@ To test your installation and get going we can run QAOA to solve MAX-CUT on a sq
 
     import numpy as np
     from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-    import pyquil.forest as qvm
-    qvm_connection = qvm.Connection()
+    import pyquil.api as qvm
+    qvm_connection = qvm.SyncConnection()
 
 Next define the graph on which to run MAX-CUT
 

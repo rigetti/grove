@@ -23,7 +23,7 @@ from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import H, X, PHASE, CNOT, RZ
 import numpy as np
 from mock import Mock, patch
-import pyquil.forest as qvm_mod
+import pyquil.api as qvm_mod
 
 
 def test_pass_hamiltonians():
@@ -67,7 +67,7 @@ def test_hamiltonians():
 def test_param_prog_p1_barbell():
     test_graph = [(0, 1)]
     p = 1
-    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod):
+    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qvm_mod):
         inst = maxcut_qaoa(test_graph, steps=p)
 
         param_prog = inst.get_parameterized_program()
@@ -82,7 +82,7 @@ def test_param_prog_p1_barbell():
 def test_psiref_bar_p2():
     bar = [(0, 1)]
     p = 2
-    with patch('grove.pyqaoa.maxcut_qaoa.qvm_module', spec=qvm_mod):
+    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qvm_mod):
         inst = maxcut_qaoa(bar, steps=p)
 
     param_prog = inst.get_parameterized_program()
