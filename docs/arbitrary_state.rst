@@ -49,7 +49,10 @@ and is the subject of reference [2]_.
 
 Arbitrary State Generation via Unitary Matrix
 ---------------------------------------------
-TODO
+The method in this approach is to create a unitary operator mapping the ground state of a set
+of qubits to the desired outcome state. This requires constructing a unitary matrix whose leftmost
+column is \\(\\vert \\Psi \\rangle\\). By replacing the left column of the identity matrix with
+\\(\\vert \\Psi \\rangle\\) and then QR factorizing it, one can construct such a matrix.
 
 
 Source Code Docs
