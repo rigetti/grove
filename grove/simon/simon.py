@@ -257,11 +257,13 @@ def make_square_row_echelon(W):
                       row-echelon form such that all rows are orthogonal
                       to some length :math:`n` vector
                       of 0s and 1s :math:`\\mathbf{s}`.
-    :return: an :math:`n\\times n` square array identical
+    :return: a two-element tuple. The first element is
+             an :math:`n\\times n` square array identical
              to :math:`\\mathbf{\\mathit{W}}` except with one row added.
              That row is chosen to keep :math:`\\mathbf{\\mathit{W}}`
-             in row-echelon form.
-    :rtype: 2darray
+             in row-echelon form. The second element is the row that
+             the new row is in, where the top row is at index 0.
+    :rtype: tuple
     """
     n = len(W) + 1
 

@@ -6,7 +6,7 @@ import pytest
 
 from grove.simon.simon import find_mask, unitary_function, \
     oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
-    insert_into_binary_matrix
+    insert_into_binary_matrix, make_square_row_echelon
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -139,5 +139,56 @@ class TestInsertIntoBinaryMatrix(object):
         W_expected = np.array([[1, 0, 0, 0, 0, 0],
                                [0, 1, 1, 0, 0, 0],
                                [0, 0, 1, 0, 1, 1]])
+
+        assert np.allclose(W, W_expected)
+
+
+class TestMakeSquareRowEchelon(object):
+    def test_add_row_at_top(self):
+        W = np.array([[0, 1, 0, 1, 0],
+                      [0, 0, 1, 0, 0],
+                      [0, 0, 0, 1, 1],
+                      [0, 0, 0, 0, 1]])
+        W, insert_row_num = make_square_row_echelon(W)
+
+        W_expected = np.array([[1, 0, 0, 0, 0],
+                               [0, 1, 0, 1, 0],
+                               [0, 0, 1, 0, 0],
+                               [0, 0, 0, 1, 1],
+                               [0, 0, 0, 0, 1]])
+
+        assert insert_row_num == 0
+
+        assert np.allclose(W, W_expected)
+
+    def test_add_row_at_bottom(self):
+        W = np.array([[1, 0, 0, 0],
+                      [0, 1, 0, 1],
+                      [0, 0, 1, 0]])
+        W, insert_row_num = make_square_row_echelon(W)
+
+        W_expected = np.array([[1, 0, 0, 0],
+                               [0, 1, 0, 1],
+                               [0, 0, 1, 0],
+                               [0, 0, 0, 1]])
+
+        assert insert_row_num == 3
+
+        assert np.allclose(W, W_expected)
+
+    def test_add_row_in_middle(self):
+        W = np.array([[1, 1, 0, 0, 0],
+                      [0, 0, 1, 0, 1],
+                      [0, 0, 0, 1, 0],
+                      [0, 0, 0, 0, 1]])
+        W, insert_row_num = make_square_row_echelon(W)
+
+        W_expected = np.array([[1, 1, 0, 0, 0],
+                               [0, 1, 0, 0, 0],
+                               [0, 0, 1, 0, 1],
+                               [0, 0, 0, 1, 0],
+                               [0, 0, 0, 0, 1]])
+
+        assert insert_row_num == 1
 
         assert np.allclose(W, W_expected)
