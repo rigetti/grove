@@ -14,12 +14,12 @@
 #    limitations under the License.
 ##############################################################################
 
-'''
+"""
 Module for amplitude amplification, for use in algorithms such as Grover's
-algorithm. 
+algorithm.
 
 For more information, see arXiv:quant-ph/0005055.
-'''
+"""
 
 import numpy as np
 import pyquil.quil as pq
@@ -45,7 +45,8 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
     :param qubits: the qubits to operate on
     :param num_iter: number of iterations of amplifications to run
     :param init: a boolean flag that is set to True if and only if A
-    is to be applied initially on the input qubits. By default, it is set to True.
+                 is to be applied initially on the input qubits.
+                 By default, it is set to True.
     :return:
     """
 
@@ -88,8 +89,8 @@ def n_qubit_control(controls, target, u, gate_name):
     # Make assertions about the input
     assert isinstance(u, np.ndarray), "The unitary 'u' must be a numpy array"
     assert len(controls) > 0, "The control qubits list must not be empty"
-    assert isinstance(target,
-                      int) and target > 0, "The target index must be an integer greater than 0"
+    assert isinstance(target, int) and target > 0, \
+        "The target index must be an integer greater than 0"
     assert len(gate_name) > 0, "Gate name must have length greater than one"
 
     def controlled_program_builder(controls, target, target_gate_name,
