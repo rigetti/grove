@@ -2,34 +2,43 @@
 This module implements the analytical gradient as defined in the paper:
 'Practical Optimization for hybrid quantum-classical algorithms'
 Compute the gradient of a given product of parametric unitary operators.
-Each unitary operator can be expressed in terms of its Hermitian Generator.
-In turn each Hermitian Generator can be decomposed into a sum of pauli gates.
 """
 
-"""
-Types:
-Pauli < Pauli_Product < Hermitian
-Primitive_Unitary < Unitary < Operator
-gradient: Float -> Float
-product: List(Unitary) -> Unitary
-expectation: State, Unitary -> Float
-ground_state_expectation: Unitary -> Float
-dagger: Unitary -> Unitary
-list_primitive_unitaries: Unitary -> List(Primitive_Unitary)
-get_generator: Primitive_Unitary -> Hermitian
-get_unitary_deriative: Unitary -> Operator
-operator_gradient: Unitary -> Unitary
-get_pauli_products: Hermitian -> List(Pauli_Product)
-get_paulis: Pauli_Product -> List(Pauli)
-"""
-
+import networkx as nx
 import pyquil.quil as pq
 import pyquil.api as api
 from pyquil.gates import *
+from pyquil.paulis import PauliTerm, PauliSum
 
+def edges_to_graph(edges_list):
+    """Converts a list of edges into a networkx graph object
+    """
+    maxcut_graph = nx.Graph()
+    for edge in edges_list:
+        maxcut_graph.add_edge(*edge)
+    graph = maxcut_graph.copy()
+    return graph
+
+def get_cost_ham(graph):
+    """Constructs the cost Hamiltonian - "C"
+    """
+    cost_ham = []
+    for qubit_index_A, qubit_index_B in graph.edges():
+        cost_ham.append((PauliTerm("Z", qubit_index_A, 0.5)*
+                               PauliTerm("Z", qubit_index_B)) +
+                              PauliTerm("I", 0, -0.5))
+    return cost_ham
+
+def get_ref_ham(graph):
+    """Constructs the driving Hamiltonian - "B"
+    """
+    ref_ham = []
+    for qubit_index in graph.nodes():
+        ref_ham.append(PauliSum([PauliTerm("X", qubit_index, -1.0)]))
+    return ref_ham
 
 def construct_ref_state_prep(num_qubits):
-    """Constructs the standard reference state for QAOA "s"
+    """Constructs the standard reference state for QAOA - "s"
     """
     ref_prog = pq.Program()
     for i in xrange(num_qubits):
@@ -86,24 +95,34 @@ def get_parameterized_program(steps, cost_ham, ref_ham, ref_state_prep):
 
     return psi_ref
 
-
-def make_controlled(gate, control_index):
-    pass #Implement this
-
-
-def get_analytical_gradient_component(cost_ham, ref_ham, psi_ref,
+def get_analytical_gradient_component_qaoa(cost_ham, ref_ham, psi_ref,
         component_index):
-    """Returns a list of operators corresponding to the decomposition of a
-    component of the analytic gradient
+    """
+    Maps: Parameterized_Program -> Parameterized_Program
+
+    :returns: a function
     """
     prog = pq.Program()
-    #Get the first component_index-1 Unitaries from psi_ref
-    psi_ref_lower = psi_ref[:component_index-1]
-    psi_ref_upper = psi_ref[component_index:]
-    component_pauli_sum = hams[component_index] #define hams
+    psi_ref_lower = psi_ref[:component_index-1] #Need to get the underlying programs
+    psi_ref_upper = psi_ref[component_index:] #Need to get the underlying programs
     analytical_gradients_list = []
-    ancilla_qubit_index = len(prog.qubit_register)
-    for pauli_term in component_pauli_sum.terms:
-        prog += psi_ref_lower
-        prog.inst(H(ancilla_qubit_index))
-        controlled_pauli_term = make_controlled(pauli_term, ancilla_qubit_index)
+    ancilla_qubit_index = len(prog.qubit_register) #Check how to add a new qubit
+    prog += psi_ref_lower #Fix!
+    prog.inst(H(ancilla_qubit_index))
+    prog.inst(CNOT(component_index, ancilla_qubit_index)) #Check the order on this!
+    prog += psi_ref_upper #Fix!
+    i_one = np.array([[1.0, 0.0], [0.0, 1.0j]])
+    prog.defgate("I-ONE", i_one)
+    prog.inst("I-ONE", ancilla_qubit_index)
+    prog.inst(H(ancilla_qubit_index))
+    #Measurement?
+
+
+if __name__ == "__main__":
+    square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
+    graph = edges_to_graph(square_ring_edges)
+    cost_ham = get_cost_ham(graph)
+    ref_ham = get_ref_ham(graph)
+    trotterization_steps = 2 #Referred to as "p" in the paper
+
+
