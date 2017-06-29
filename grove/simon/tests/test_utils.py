@@ -5,7 +5,8 @@ import pyquil.api as api
 import pytest
 
 from grove.simon.simon import find_mask, unitary_function, \
-    oracle_function, is_unitary, most_significant_bit, check_two_to_one
+    oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
+    insert_into_binary_matrix
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -99,3 +100,44 @@ class TestMostSignificantBits(object):
 
     def test_multiple_ones_leading_zeroes(self):
         assert most_significant_bit([0, 0, 1, 1, 0, 1]) == 2
+
+
+class TestInsertIntoBinaryMatrix(object):
+    def test_no_substitution(self):
+        W = np.array([[1, 0, 1, 0, 0],
+                      [0, 1, 0, 0, 0],
+                      [0, 0, 0, 1, 0]])
+        z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows
+
+        W = insert_into_binary_matrix(W, z)
+
+        W_expected = np.array([[1, 0, 1, 0, 0],
+                               [0, 1, 0, 0, 0],
+                               [0, 0, 0, 1, 0]])
+
+        assert np.allclose(W, W_expected)
+
+    def test_insert_directly(self):
+        W = np.array([[1, 1, 0, 0, 0],
+                      [0, 1, 0, 1, 0]])
+        z = np.array([0, 0, 1, 0, 1])
+
+        W = insert_into_binary_matrix(W, z)
+        W_expected = np.array([[1, 1, 0, 0, 0],
+                               [0, 1, 0, 1, 0],
+                               [0, 0, 1, 0, 1]])
+
+        assert np.allclose(W, W_expected)
+
+    def test_insert_after_xor(self):
+        W = np.array([[1, 0, 0, 0, 0, 0],
+                      [0, 1, 1, 0, 0, 0]])
+
+        z = np.array([1, 0, 1, 0, 1, 1])
+
+        W = insert_into_binary_matrix(W, z)
+        W_expected = np.array([[1, 0, 0, 0, 0, 0],
+                               [0, 1, 1, 0, 0, 0],
+                               [0, 0, 1, 0, 1, 1]])
+
+        assert np.allclose(W, W_expected)

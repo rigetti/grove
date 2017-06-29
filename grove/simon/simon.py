@@ -22,19 +22,20 @@ def unitary_function(mappings):
     where the zeroth qubit is the scratch bit and the return value
     of the function is left in the qubits that follow.
 
-    :param list mappings: List of the mappings of :math:`f(x)` on all length
-                          :math:`n` in their decimal representation.
-                          For example, the following mapping:
+    :param list(int) mappings: List of the mappings of :math:`f(x)` on
+                               all length :math:`n` in their decimal
+                               representations.
+                               For example, the following mapping:
 
-                          - :math:`00 \\rightarrow 00`
-                          - :math:`01 \\rightarrow 10`
-                          - :math:`10 \\rightarrow 10`
-                          - :math:`11 \\rightarrow 00`
+                               - :math:`00 \\rightarrow 00`
+                               - :math:`01 \\rightarrow 10`
+                               - :math:`10 \\rightarrow 10`
+                               - :math:`11 \\rightarrow 00`
 
-                          Would be represented as :math:`[0, 2, 2, 0]`.
-                          Requires mappings to be either one-to-one,
-                          or two-to-one with unique mask :math:`s`,
-                          as specified in Simon's problem.
+                               Would be represented as :math:`[0, 2, 2, 0]`.
+                               Requires mappings to be either one-to-one,
+                               or two-to-one with unique mask :math:`s`,
+                               as specified in Simon's problem.
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
@@ -201,11 +202,11 @@ def insert_into_binary_matrix(W, z):
     If (and only if) no such row can be inserted with certainty,
     :math:`\\mathbf{\\mathit{W}}` is return unchanged.
 
-    :param W: a matrix of 0s and 1s in row-echelon form, with rows all
-              orthogonal to some vector of 0s and 1s.
+    :param 2darray W: a matrix of 0s and 1s in row-echelon form, with rows all
+                      orthogonal to some vector of 0s and 1s.
 
-    :param z: a vector of 0s and 1s known
-              to be orthogonal to :math:`\\mathbf{s}`
+    :param 1darray z: a vector of 0s and 1s known
+                      to be orthogonal to :math:`\\mathbf{s}`
     :return: either the same matrix :math:`\\mathbf{\\mathit{W}}`, unchanged,
              or :math:`\\mathbf{\\mathit{W}}` with one additional
              row added that maintains the property described above.
