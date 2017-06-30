@@ -121,18 +121,14 @@ def get_analytical_gradient_component_qaoa(
     for parameterized_inst, qubit_indices in parameterized_prog_lower:
         gradient_component_prog += parameterized_inst
     gradient_component_prog.inst(H(ancilla_qubit_index))
-
-    """
-    if component_index > cost_length - 1: #Then apply driver gate
-        print(terms_list[component_index])
-        #node_index = component_index_to_graph_element(component_index)
-        #Check the argument order on this
-        #gradient_component_prog.inst(CNOT(node_index, ancilla_qubit_index))
-    else:
-        #print(terms_list[component_index][1])
-        gradient_component_prog.inst(("CZ", edge_index_A, ancilla_qubit_index))
-        gradient_component_prog.inst(("CZ", edge_index_B, ancilla_qubit_index))
-    """
+    component_term, qubit_indices = terms_list[component_index]
+    if len(qubit_indices) == 1: #Then apply driver gate
+        gradient_component_prog.inst(CNOT(qubit_indices, ancilla_qubit_index))
+    if len(qubit_indices) == 2: #Then apply cost gate
+        gradient_component_prog.inst(("CZ", qubit_indices[0],
+            ancilla_qubit_index))
+        gradient_component_prog.inst(("CZ", qubit_indices[1],
+            ancilla_qubit_index))
     for parameterized_inst, qubit_indices in parameterized_prog_upper:
         gradient_component_prog += parameterized_inst
     gradient_component_prog.inst(("I-ONE", ancilla_qubit_index))
@@ -140,8 +136,8 @@ def get_analytical_gradient_component_qaoa(
     return gradient_component_prog
 
 if __name__ == "__main__":
-    #square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
-    square_ring_edges = [(0,1)]
+    square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
+    #square_ring_edges = [(0,1)]
     graph = edges_to_graph(square_ring_edges)
     num_qubits = len(graph.nodes())
     ref_state_prep = construct_ref_state_prep(num_qubits)
@@ -151,8 +147,8 @@ if __name__ == "__main__":
     program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
         cost_para_programs, driver_para_programs)
     component_index = 1
-    #start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
-    start_params = [2.2, 1.2] #Random test parameters
+    start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
+    #start_params = [2.2, 1.2] #Random test parameters
     terms_list, cost_length = program_parameterizer(start_params)
     get_analytical_gradient_component_qaoa(terms_list, num_qubits,
         cost_length, component_index)
