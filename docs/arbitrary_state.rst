@@ -19,7 +19,7 @@ This problem is approached in two different ways in this module, and will be des
 in the sections to follow.
 The first is to directly construct a circuit using a sequence of CNOT, rotation, Hadamard, and phase gates,
 that produces the desired state.
-The second is to construct a unitary matrix could be decomposed into different
+The second is to construct a unitary matrix that could be decomposed into different
 circuits depending on which gates one would see fit.
 
 More details on the first approach can be found in references [1]_ and [2]_.

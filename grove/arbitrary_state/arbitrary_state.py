@@ -36,9 +36,12 @@ def get_cnot_control_positions(k):
     decomposing uniformly controlled rotations, as outlined in
     arXiv:quant-ph/0407010.
 
-    It is assumed that the target is the zeroth qubit
-    and higher order bits are in consecutive integer order.
-    The list gives the positions going from left to right.
+    Referencing Fig. 2 in the aforementioned paper, this method
+    uses the convention that, going up from the target qubit,
+    the control qubits are labelled :math:`1, 2, \ldots, k`,
+    where :math:`k` is the number of control qubits.
+    The returned list provides the qubit that controls
+    each successive CNOT, in order from left to right.
 
     :param int k: the number of control qubits
     :return: the list of positions of the controls
