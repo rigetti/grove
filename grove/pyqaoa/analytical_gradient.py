@@ -64,10 +64,11 @@ def get_program_parameterizer_qaoa(steps, cost_para_programs,
     """
 
     def program_parameterizer(params):
-	"""Construct a Quil program for the vector (beta, gamma).
+	"""Constructs a list of Quil programs constituting the full Quil program
+            for the vector (beta, gamma).
 
 	:param params: array of 2*p angles, betas first, then gammas
-	:return: a pyquil program object
+	:return: a list of pyquil programs
 	"""
 	if len(params) != 2*steps:
 	    raise ValueError("""params doesn't match the number of parameters set
@@ -84,7 +85,6 @@ def get_program_parameterizer_qaoa(steps, cost_para_programs,
                 parameterized_cost_term = exponential_map(cost_term)
                 step_cost_term = parameterized_cost_term(step_gammas)
                 terms_list.append((step_cost_term, qubit_indices))
-            cost_length = len(cost_para_program) #eliminate this
 
             driver_para_program = driver_para_programs[step_index]
             step_betas = betas[step_index]
@@ -93,14 +93,13 @@ def get_program_parameterizer_qaoa(steps, cost_para_programs,
                 step_driver_term = parameterized_driver_term(step_betas)
                 terms_list.append((step_driver_term, qubit_index))
 
-	return (terms_list, cost_length)
+	return (terms_list)
 
     return program_parameterizer
 
 
-def get_analytical_gradient_component_qaoa(
-        terms_list,
-        num_qubits, cost_length, component_index):
+def get_analytical_gradient_component_qaoa(terms_list, num_qubits,
+        component_index):
     """
     Maps: Program -> Program
 
@@ -137,20 +136,18 @@ def get_analytical_gradient_component_qaoa(
 
 if __name__ == "__main__":
     square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
-    #square_ring_edges = [(0,1)]
     graph = edges_to_graph(square_ring_edges)
     num_qubits = len(graph.nodes())
     ref_state_prep = construct_ref_state_prep(num_qubits)
-    trotterization_steps = 1 #Referred to as "p" in the paper
+    trotterization_steps = 2 #Referred to as "p" in the paper
     cost_para_programs, driver_para_programs = define_parametric_program_qaoa(
         trotterization_steps, graph)
     program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
         cost_para_programs, driver_para_programs)
     component_index = 1
-    #start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
-    start_params = [2.2, 1.2] #Random test parameters
-    terms_list, cost_length = program_parameterizer(start_params)
-    get_analytical_gradient_component_qaoa(terms_list, num_qubits,
-        cost_length, component_index)
+    start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
+    #start_params = [2.2, 1.2] #Random test parameters
+    terms_list = program_parameterizer(start_params)
+    get_analytical_gradient_component_qaoa(terms_list, num_qubits, component_index)
 
 
