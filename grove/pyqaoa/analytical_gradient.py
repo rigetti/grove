@@ -39,14 +39,14 @@ def define_parametric_program_qaoa(trotterization_steps, graph):
             interaction_term = (PauliTerm("Z", qubit_index_A, 0.5)*
                                 PauliTerm("Z", qubit_index_B))
             constant_term = PauliTerm("I", 0, -0.5)
-            cost_para_program.append(interaction_term)
-            cost_para_program.append(constant_term)
-            #print(cost_para_program)
+            qubit_indices = (qubit_index_A, qubit_index_B)
+            cost_para_program.append((interaction_term, qubit_indices))
+            cost_para_program.append((constant_term, qubit_indices))
 
         for qubit_index in graph.nodes():
             driver_para_program = []
             driver_term = PauliTerm("X", qubit_index, -1.0)
-            driver_para_program.append(driver_term)
+            driver_para_program.append((driver_term, qubit_index))
 
         cost_para_programs.append(cost_para_program)
         driver_para_programs.append(driver_para_program)
@@ -75,29 +75,25 @@ def get_program_parameterizer_qaoa(steps, cost_para_programs,
 	betas = params[:steps]
 	gammas = params[steps:]
 
-	parameterized_prog = pq.Program()
-        underlying_prog = pq.Program()
         terms_list = []
 
 	for step_index in xrange(steps):
             cost_para_program = cost_para_programs[step_index]
             step_gammas = gammas[step_index]
-	    for cost_term in cost_para_program:
+	    for cost_term, qubit_indices in cost_para_program:
                 parameterized_cost_term = exponential_map(cost_term)
                 step_cost_term = parameterized_cost_term(step_gammas)
-                terms_list.append(step_cost_term)
-		parameterized_prog += step_cost_term
-            cost_length = len(cost_para_program)
+                terms_list.append((step_cost_term, qubit_indices))
+            cost_length = len(cost_para_program) #eliminate this
 
             driver_para_program = driver_para_programs[step_index]
             step_betas = betas[step_index]
-	    for driver_term in driver_para_program:
+	    for driver_term, qubit_index in driver_para_program:
                 parameterized_driver_term = exponential_map(driver_term)
                 step_driver_term = parameterized_driver_term(step_betas)
-                terms_list.append(step_driver_term)
-		parameterized_prog += step_driver_term
+                terms_list.append((step_driver_term, qubit_index))
 
-	return (terms_list, parameterized_prog, cost_length)
+	return (terms_list, cost_length)
 
     return program_parameterizer
 
@@ -106,10 +102,11 @@ def get_analytical_gradient_component_qaoa(
         terms_list,
         num_qubits, cost_length, component_index):
     """
-    Maps: Parameterized_Program -> Parameterized_Program
+    Maps: Program -> Program
 
     :returns: a function
     """
+    ancilla_qubit_index = num_qubits
     gradient_component_prog = pq.Program()
     i_one = np.array([[1.0, 0.0], [0.0, 1.0j]])
     gradient_component_prog.defgate("I-ONE", i_one)
@@ -118,29 +115,27 @@ def get_analytical_gradient_component_qaoa(
                    [0.0, 0.0, 1.0, 0.0],
                    [0.0, 0.0, 0.0, -1.0]])
     gradient_component_prog.defgate("CZ", cz)
-    parameterized_prog_lower = terms_list[:component_index-1]
+
+    parameterized_prog_lower = terms_list[:component_index]
     parameterized_prog_upper = terms_list[component_index:]
-    ancilla_qubit_index = num_qubits
-    offset = num_qubits
-    for parameterized_inst in parameterized_prog_lower:
+    for parameterized_inst, qubit_indices in parameterized_prog_lower:
         gradient_component_prog += parameterized_inst
     gradient_component_prog.inst(H(ancilla_qubit_index))
-    if component_index > cost_length + offset: #Then apply driver gate
-        print(parameterized_prog[component_index])
+
+    """
+    if component_index > cost_length - 1: #Then apply driver gate
+        print(terms_list[component_index])
         #node_index = component_index_to_graph_element(component_index)
         #Check the argument order on this
         #gradient_component_prog.inst(CNOT(node_index, ancilla_qubit_index))
-    elif component_index > offset:
-        #print(parameterized_prog[component_index])
-        #edge_index_A, edge_index_B = component_index_to_graph_element(
-        #    component_index)
-        #Check the argument order
-        gradient_component_prog.inst(CZ(edge_index_A, ancilla_qubit_index))
-        gradient_component_prog.inst(CZ(edge_index_B, ancilla_qubit_index))
-    #print(type(gradient_component_prog))
-    #print(parameterized_prog_upper)
-    gradient_component_prog.inst(parameterized_prog_upper)
-    gradient_component_prog.inst("I-ONE", ancilla_qubit_index)
+    else:
+        #print(terms_list[component_index][1])
+        gradient_component_prog.inst(("CZ", edge_index_A, ancilla_qubit_index))
+        gradient_component_prog.inst(("CZ", edge_index_B, ancilla_qubit_index))
+    """
+    for parameterized_inst, qubit_indices in parameterized_prog_upper:
+        gradient_component_prog += parameterized_inst
+    gradient_component_prog.inst(("I-ONE", ancilla_qubit_index))
     gradient_component_prog.inst(H(ancilla_qubit_index))
     return gradient_component_prog
 
@@ -155,11 +150,10 @@ if __name__ == "__main__":
         trotterization_steps, graph)
     program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
         cost_para_programs, driver_para_programs)
-    component_index = 3
+    component_index = 1
     #start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
     start_params = [2.2, 1.2] #Random test parameters
-    terms_list, parameterized_prog, cost_length = program_parameterizer(start_params)
-    #print(parameterized_prog[0])
+    terms_list, cost_length = program_parameterizer(start_params)
     get_analytical_gradient_component_qaoa(terms_list, num_qubits,
         cost_length, component_index)
 
