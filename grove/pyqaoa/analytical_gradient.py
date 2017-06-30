@@ -147,8 +147,8 @@ if __name__ == "__main__":
     program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
         cost_para_programs, driver_para_programs)
     component_index = 1
-    start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
-    #start_params = [2.2, 1.2] #Random test parameters
+    #start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
+    start_params = [2.2, 1.2] #Random test parameters
     terms_list, cost_length = program_parameterizer(start_params)
     get_analytical_gradient_component_qaoa(terms_list, num_qubits,
         cost_length, component_index)
