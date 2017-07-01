@@ -69,8 +69,10 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     cost_operators = []
     driver_operators = []
     for i, j in graph.edges():
-        cost_operators.append(PauliTerm("Z", i, 0.5)*PauliTerm("Z", j) +
-                              PauliTerm("I", 0, -0.5))
+        #cost_operators.append(PauliTerm("Z", i, 0.5)*PauliTerm("Z", j) +
+        #                      PauliTerm("I", 0, -0.5))
+        cost_operators.append(PauliSum([PauliTerm("Z", i)*PauliTerm("Z", j)]))
+
     for i in graph.nodes():
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 

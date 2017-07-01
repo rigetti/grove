@@ -1,3 +1,6 @@
+import numpy as np
+bnds = ((-0.1, np.pi), (-0.1, np.pi))
+
 minimizer_kwargs_dict = {
  'Nelder-Mead': {'method': 'Nelder-Mead',
                                    'options': {'disp': True,

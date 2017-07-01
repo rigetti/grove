@@ -1,7 +1,7 @@
 """
 This module implements the analytical gradient as defined in the paper:
 'Practical Optimization for hybrid quantum-classical algorithms'
-Compute the gradient of a given product of parametric unitary operators.
+Compute the gradient for the qaoa algorithm.
 """
 
 import networkx as nx
@@ -30,32 +30,32 @@ def construct_ref_state_prep(num_qubits):
     return ref_state_prep
 
 def define_parametric_program_qaoa(trotterization_steps, graph):
-    cost_para_programs = []
-    driver_para_programs = []
+    cost_programs = []
+    driver_programs = []
 
     for step in xrange(trotterization_steps):
         for qubit_index_A, qubit_index_B in graph.edges():
-            cost_para_program = []
+            cost_program = []
             interaction_term = (PauliTerm("Z", qubit_index_A, 0.5)*
                                 PauliTerm("Z", qubit_index_B))
-            constant_term = PauliTerm("I", 0, -0.5)
+            #constant_term = PauliTerm("I", 0, -0.5) #Can just neglect constant
             qubit_indices = (qubit_index_A, qubit_index_B)
-            cost_para_program.append((interaction_term, qubit_indices))
-            cost_para_program.append((constant_term, qubit_indices))
+            cost_program.append((interaction_term, qubit_indices))
+            #cost_program.append((constant_term, qubit_indices))
 
         for qubit_index in graph.nodes():
-            driver_para_program = []
+            driver_program = []
             driver_term = PauliTerm("X", qubit_index, -1.0)
-            driver_para_program.append((driver_term, qubit_index))
+            driver_program.append((driver_term, qubit_index))
 
-        cost_para_programs.append(cost_para_program)
-        driver_para_programs.append(driver_para_program)
+        cost_programs.append(cost_program)
+        driver_programs.append(driver_program)
 
-    return (cost_para_programs, driver_para_programs)
+    return (cost_programs, driver_programs)
 
 
-def get_program_parameterizer_qaoa(steps, cost_para_programs,
-        driver_para_programs):
+def get_program_parameterizer_qaoa(steps, cost_programs,
+        driver_programs):
     """
     Return a function that accepts parameters and returns a new Quil
     program
@@ -79,32 +79,33 @@ def get_program_parameterizer_qaoa(steps, cost_para_programs,
         terms_list = []
 
 	for step_index in xrange(steps):
-            cost_para_program = cost_para_programs[step_index]
+            cost_program = cost_programs[step_index]
             step_gammas = gammas[step_index]
-	    for cost_term, qubit_indices in cost_para_program:
+	    for cost_term, qubit_indices in cost_program:
                 parameterized_cost_term = exponential_map(cost_term)
                 step_cost_term = parameterized_cost_term(step_gammas)
                 terms_list.append((step_cost_term, qubit_indices))
 
-            driver_para_program = driver_para_programs[step_index]
+            driver_program = driver_programs[step_index]
             step_betas = betas[step_index]
-	    for driver_term, qubit_index in driver_para_program:
+	    for driver_term, qubit_index in driver_program:
                 parameterized_driver_term = exponential_map(driver_term)
                 step_driver_term = parameterized_driver_term(step_betas)
                 terms_list.append((step_driver_term, qubit_index))
 
-	return (terms_list)
+	return terms_list
 
     return program_parameterizer
 
 
-def get_analytical_gradient_component_qaoa(terms_list, num_qubits,
-        component_index):
+def get_analytical_gradient_component_qaoa(program_parameterizer, params,
+        num_qubits, component_index):
     """
     Maps: Program -> Program
 
     :returns: a function
     """
+    terms_list = program_parameterizer(params)
     ancilla_qubit_index = num_qubits
     gradient_component_prog = pq.Program()
     i_one = np.array([[1.0, 0.0], [0.0, 1.0j]])
@@ -138,16 +139,16 @@ if __name__ == "__main__":
     square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
     graph = edges_to_graph(square_ring_edges)
     num_qubits = len(graph.nodes())
-    ref_state_prep = construct_ref_state_prep(num_qubits)
+    #ref_state_prep = construct_ref_state_prep(num_qubits)
     trotterization_steps = 2 #Referred to as "p" in the paper
-    cost_para_programs, driver_para_programs = define_parametric_program_qaoa(
+    cost_programs, driver_programs = define_parametric_program_qaoa(
         trotterization_steps, graph)
     program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
-        cost_para_programs, driver_para_programs)
+        cost_programs, driver_programs)
     component_index = 1
-    start_params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
-    #start_params = [2.2, 1.2] #Random test parameters
-    terms_list = program_parameterizer(start_params)
-    get_analytical_gradient_component_qaoa(terms_list, num_qubits, component_index)
+    params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
+    #params = [2.2, 1.2] #Random test parameters
+    get_analytical_gradient_component_qaoa(params, num_qubits,
+        component_index)
 
 
