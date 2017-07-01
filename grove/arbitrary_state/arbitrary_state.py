@@ -115,6 +115,37 @@ def get_rotation_parameters(phases, magnitudes):
     return y_thetas, z_thetas, new_phases, new_magnitudes
 
 
+# TODO: documentation
+def get_unification_gates(angles, control_indices, target, controls, mode):
+    """
+
+    :param angles:
+    :param control_indices:
+    :param target:
+    :param controls:
+    :param mode:
+    :return:
+    """
+    if mode == 'phase':
+        gate = RZ
+    elif mode == 'magnitude':
+        gate = RY
+    else:
+        raise ValueError("mode must be \'phase\' or \'magnitude\'")
+
+    reversed_gates = []
+
+    for j in xrange(len(angles)):
+        if angles[j] != 0:
+            # angle is negated in conjugated/reversed circuit
+            reversed_gates.append(gate(-angles[j], target))
+        if len(controls) > 0:
+            reversed_gates.append(CNOT(controls[control_indices[j] - 1],
+                                       target))
+
+    return reversed_gates
+
+
 def create_arbitrary_state(vector, qubits=None):
     """
     This function makes a program that can generate an arbitrary state.
@@ -187,22 +218,18 @@ def create_arbitrary_state(vector, qubits=None):
         converted_y_thetas = np.dot(M, y_thetas)
 
         # phase unification
-        for j in xrange(len(converted_z_thetas)):
-            if converted_z_thetas[j] != 0:
-                # angle is negated in conjugated/reversed circuit
-                reversed_gates.append(RZ(-converted_z_thetas[j], qubits[0]))
-            if step < n - 1:
-                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
-                                           qubits[0]))
+        reversed_gates.extend(get_unification_gates(converted_z_thetas,
+                                                    rotation_cnots,
+                                                    qubits[0],
+                                                    qubits[step + 1:],
+                                                    'phase'))
 
         # probability unification
-        for j in xrange(len(converted_y_thetas)):
-            if converted_y_thetas[j] != 0:
-                # angle is negated in conjugated/reversed circuit
-                reversed_gates.append(RY(-converted_y_thetas[j], qubits[0]))
-            if step < n - 1:
-                reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
-                                           qubits[0]))
+        reversed_gates.extend(get_unification_gates(converted_y_thetas,
+                                                    rotation_cnots,
+                                                    qubits[0],
+                                                    qubits[step + 1:],
+                                                    'magnitude'))
 
         if step < n - 1:
             # swaps are applied after all rotation steps except the last
