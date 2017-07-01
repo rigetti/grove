@@ -57,6 +57,64 @@ def get_cnot_control_positions(k):
     return rotation_cnots
 
 
+def get_rotation_parameters(phases, magnitudes):
+    """
+    Simulates one step of rotations.
+
+    Given lists of phases and magnitudes of the same length :math:`N`,
+    such that :math:`N=2^n` for some positive integer :math:`n`,
+    finds the rotation angles required for one step of phase and magnitude
+    unification.
+
+    :param list phases: real valued phases from :math:`-\\pi` to :math:`\\pi`.
+    :param list magnitudes: positive, real value magnitudes such that
+                       the sum of the square of each magnitude is
+                       :math:`2^{-m}` for some nonnegative integer :math:`m`.
+    :return: A tuple t of four lists such that
+
+        - t[0] are the y-rotations needed to unify adjacent pairs of phases
+        - t[1] are the z-rotations needed to unify adjacent pairs of magnitudes
+        - t[2] are the updated phases after these rotations are applied
+        - t[3] are the updated magnitudes after these rotations are applied
+
+    :rtype: tuple
+    """
+    # will hold the angles for controlled rotations
+    # in the phase unification and probability unification steps,
+    # respectively
+    z_thetas = []
+    y_thetas = []
+
+    # will hold updated phases and magnitudes after rotations
+    new_phases = []
+    new_magnitudes = []
+
+    for i in xrange(0, len(phases), 2):
+        # find z rotation angles
+        phi = phases[i]
+        psi = phases[i + 1]
+        z_thetas.append(phi - psi)
+
+        # update phases after applying such rotations
+        kappa = (phi + psi) / 2.
+        new_phases.append(kappa)
+
+        # find y rotation angles
+        a = magnitudes[i]
+        b = magnitudes[i + 1]
+        if a == 0 and b == 0:
+            y_thetas.append(0)
+        else:
+            y_thetas.append(
+                2 * np.arcsin((a - b) / (np.sqrt(2 * (a ** 2 + b ** 2)))))
+
+        # update magnitudes after applying such rotations
+        c = np.sqrt((a ** 2 + b ** 2) / 2.)
+        new_magnitudes.append(c)
+
+    return y_thetas, z_thetas, new_phases, new_magnitudes
+
+
 def create_arbitrary_state(vector, qubits=None):
     """
     This function makes a program that can generate an arbitrary state.
@@ -116,38 +174,12 @@ def create_arbitrary_state(vector, qubits=None):
     rotation_cnots = get_cnot_control_positions(n - 1)
 
     for step in xrange(n):
-        # will hold the angles for controlled rotations
-        # in the phase unification and probability unification steps,
-        # respectively
-        z_thetas = []
-        y_thetas = []
-
-        # will hold updated phases and magnitudes after rotations
-        new_phases = []
-        new_magnitudes = []
-
-        for i in xrange(0, len(phases), 2):
-            # find z rotation angles
-            phi = phases[i]
-            psi = phases[i + 1]
-            z_thetas.append(phi - psi)
-
-            # update phases after applying such rotations
-            kappa = (phi + psi) / 2.
-            new_phases.append(kappa)
-
-            # find y rotation angles
-            a = magnitudes[i]
-            b = magnitudes[i + 1]
-            if a == 0 and b == 0:
-                y_thetas.append(0)
-            else:
-                y_thetas.append(
-                    2 * np.arcsin((a - b) / (np.sqrt(2 * (a ** 2 + b ** 2)))))
-
-            # update magnitudes after applying such rotations
-            c = np.sqrt((a ** 2 + b ** 2) / 2.)
-            new_magnitudes.append(c)
+        # get the y and z rotation angles needed to unify pairs
+        # of phases and magnitudes, respectively,
+        # as well as the new phases and magnitudes that these
+        # rotations will update the states to
+        y_thetas, z_thetas, phases, magnitudes = \
+            get_rotation_parameters(phases, magnitudes)
 
         # convert these rotation angles
         # to those for uncontrolled rotations + CNOTs
@@ -163,8 +195,6 @@ def create_arbitrary_state(vector, qubits=None):
                 reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
                                            qubits[0]))
 
-        phases = new_phases
-
         # probability unification
         for j in xrange(len(converted_y_thetas)):
             if converted_y_thetas[j] != 0:
@@ -173,8 +203,6 @@ def create_arbitrary_state(vector, qubits=None):
             if step < n - 1:
                 reversed_gates.append(CNOT(qubits[step + rotation_cnots[j]],
                                            qubits[0]))
-
-        magnitudes = new_magnitudes
 
         if step < n - 1:
             # swaps are applied after all rotation steps except the last
