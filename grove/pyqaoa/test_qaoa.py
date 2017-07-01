@@ -21,6 +21,7 @@ def edges_to_graph(edges_list):
     graph = maxcut_graph.copy()
     return graph
 
+
 def construct_reference_state_program(num_qubits):
     """Constructs the standard reference state for QAOA - "s"
     """
@@ -30,6 +31,7 @@ def construct_reference_state_program(num_qubits):
         reference_state_program.inst(gate)
     return reference_state_program
 
+
 def define_cost_hamiltonian(graph):
     cost_hamiltonian = PauliSum([])
     for qubit_index_A, qubit_index_B in graph.edges():
@@ -38,6 +40,7 @@ def define_cost_hamiltonian(graph):
         cost_hamiltonian += cost_term
     return cost_hamiltonian
 
+
 def define_driver_hamiltonian(graph):
     driver_hamiltonian = PauliSum([])
     for qubit_index in graph.nodes():
@@ -45,8 +48,9 @@ def define_driver_hamiltonian(graph):
         driver_hamiltonian += driver_term
     return driver_hamiltonian
 
-def get_program_parameterizer_maxcut(steps, graph,
-        reference_state_program):
+
+def get_program_parameterizer_maxcut(steps, reference_state_program,
+        cost_hamiltonian, driver_hamiltonian):
     """
     Return a function that accepts parameters and returns a list of
     pyquil programs constituting a full pyquil program
@@ -70,8 +74,8 @@ def get_program_parameterizer_maxcut(steps, graph,
 
         for step_index in xrange(steps):
             this_step_gammas = gammas[step_index]
-            cost_hamiltonian = define_cost_hamiltonian(graph) #check scope
-            #The terms all commute, so you can simply exponentiate in sequence.
+            #The terms for a given_step are all sigma_z operators and hence commute,
+            #so you can simply exponentiate in sequence.
             for cost_hermitian_term in cost_hamiltonian:
                 parameterized_cost_unitary_term = exponential_map(
                     cost_hermitian_term)
@@ -80,8 +84,8 @@ def get_program_parameterizer_maxcut(steps, graph,
                 parameterized_program += this_step_cost_unitary_term
 
             this_step_betas = betas[step_index]
-            driver_hamiltonian = define_driver_hamiltonian(graph)
-            #The terms all commute, so you can simply exponentiate in sequence.
+            #The terms for a given step are all sigma_x operators and hence commute,
+            #so you can simply exponentiate in sequence.
             for driver_hermitian_term in driver_hamiltonian:
                 parameterized_driver_unitary_term = exponential_map(
                     driver_hermitian_term)
@@ -94,7 +98,7 @@ def get_program_parameterizer_maxcut(steps, graph,
     return program_parameterizer
 
 
-def expectation(pyquil_program, pauli_sum, qvm_connection):
+def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
     """
     Computes the expectation value of the pauli_sum over the distribution
     generated from pyquil_prog.
@@ -119,28 +123,37 @@ def expectation(pyquil_program, pauli_sum, qvm_connection):
     result_overlaps = qvm_connection.expectation(pyquil_program,
         operator_programs=operator_programs)
     result_overlaps = list(result_overlaps)
-    assert len(result_overlaps) == len(operator_programs), """Incorrect number
-        of results were returned from the QVM"""
+    assert len(result_overlaps) == len(operator_programs), """The incorrect
+        number of results were returned from the QVM"""
     expectation = sum(map(lambda x: x[0]*x[1],
                           zip(result_overlaps, operator_coefficients)))
     return expectation.real
 
 
+def analytic_expectation(beta, gamma): #Mathematica this!
+    return np.sin(4*beta)*np.sin(2*gamma)
+
+
 if __name__ == "__main__":
     test_graph_edges = [(0,1)]
     test_graph = edges_to_graph(test_graph_edges)
-    trotterization_steps = 1
+    steps = 1 #the number of trotterization steps
     num_qubits = len(test_graph.nodes())
     reference_state_program = construct_reference_state_program(num_qubits)
-    cost_program = define_cost_hamiltonian(test_graph)
-    program_parameterizer = get_program_parameterizer_maxcut(
-        trotterization_steps, test_graph, reference_state_program)
-    beta = np.pi
-    gamma = np.pi
+    cost_hamiltonian = define_cost_hamiltonian(test_graph)
+    driver_hamiltonian = define_driver_hamiltonian(test_graph)
+
+    program_parameterizer = get_program_parameterizer_maxcut(steps,
+        reference_state_program, cost_hamiltonian, driver_hamiltonian)
+    #beta = np.pi
+    #gamma = np.pi
+    beta = 1.2
+    gamma = 1.4
     test_params = [beta, gamma]
     test_program = program_parameterizer(test_params)
     qvm_connection = api.SyncConnection()
-    print(expectation(test_program, cost_program, qvm_connection))
+    print(analytic_expectation(beta, gamma))
+    print(expectation(test_program, cost_hamiltonian, qvm_connection))
 
 
 
