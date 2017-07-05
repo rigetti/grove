@@ -76,8 +76,8 @@ def get_rotation_parameters(phases, magnitudes):
                        :math:`2^{-m}` for some nonnegative integer :math:`m`.
     :return: A tuple t of four lists such that
 
-        - t[0] are the y-rotations needed to unify adjacent pairs of phases
-        - t[1] are the z-rotations needed to unify adjacent pairs of magnitudes
+        - t[0] are the z-rotations needed to unify adjacent pairs of phases
+        - t[1] are the y-rotations needed to unify adjacent pairs of magnitudes
         - t[2] are the updated phases after these rotations are applied
         - t[3] are the updated magnitudes after these rotations are applied
 
@@ -116,14 +116,19 @@ def get_rotation_parameters(phases, magnitudes):
         c = np.sqrt((a ** 2 + b ** 2) / 2.)
         new_magnitudes.append(c)
 
-    return y_thetas, z_thetas, new_phases, new_magnitudes
+    return z_thetas, y_thetas, new_phases, new_magnitudes
 
 
-def get_unification_gates(angles, control_indices, target, controls, mode):
+def get_reversed_unification_program(angles, control_indices,
+                                     target, controls, mode):
     """
     Gets the Program representing the reversed circuit
     for the decomposition of the uniformly controlled
     rotations in a unification step.
+
+    If :math:`n` is the number of controls, the indices within control indices
+    must range from 1 to :math:`n`, inclusive. The length of control_indices
+    and the length of angles must both be :math:`2^n`.
 
     :param list angles: The angles of rotation in the the decomposition,
                         in order from left to right
@@ -132,7 +137,6 @@ def get_unification_gates(angles, control_indices, target, controls, mode):
                                  controlled rotations; see
                                  get_cnot_control_positions for labelling
                                  conventions.
-
     :param int target: Index of the target of all rotations
     :param list controls: Index of the controls, in order from bottom to top.
     :param str mode: The unification mode. Is either 'phase', corresponding
@@ -228,7 +232,7 @@ def create_arbitrary_state(vector, qubits=None):
         # of phases and magnitudes, respectively,
         # as well as the new phases and magnitudes that these
         # rotations will update the states to
-        y_thetas, z_thetas, phases, magnitudes = \
+        z_thetas, y_thetas, phases, magnitudes = \
             get_rotation_parameters(phases, magnitudes)
 
         # convert these rotation angles
@@ -237,18 +241,18 @@ def create_arbitrary_state(vector, qubits=None):
         converted_y_thetas = np.dot(M, y_thetas)
 
         # phase unification
-        phase_prog = get_unification_gates(converted_z_thetas,
-                                           rotation_cnots,
-                                           qubits[0],
-                                           qubits[step + 1:],
-                                           'phase')
+        phase_prog = get_reversed_unification_program(converted_z_thetas,
+                                                      rotation_cnots,
+                                                      qubits[0],
+                                                      qubits[step + 1:],
+                                                      'phase')
 
         # probability unification
-        prob_prog = get_unification_gates(converted_y_thetas,
-                                          rotation_cnots,
-                                          qubits[0],
-                                          qubits[step + 1:],
-                                          'magnitude')
+        prob_prog = get_reversed_unification_program(converted_y_thetas,
+                                                     rotation_cnots,
+                                                     qubits[0],
+                                                     qubits[step + 1:],
+                                                     'magnitude')
 
         # swaps are applied first, then reversed probability unification,
         # then reversed phase unification
@@ -277,7 +281,7 @@ def create_arbitrary_state(vector, qubits=None):
     reversed_prog = pq.Program().inst(map(H, qubits)) + reversed_prog
 
     # Correct the overall phase
-    reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0]))\
+    reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0])) \
                       .inst(PHASE(2 * phases[0], qubits[0])) + reversed_prog
 
     # Apply all gates in reverse

@@ -1,8 +1,8 @@
 """Tests for utils"""
 
 import pytest
-
 from grove.arbitrary_state.arbitrary_state import *
+from grove.pyqaoa.utils import compare_progs
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -87,6 +87,96 @@ class TestUniformlyControlledCNOTPositions(object):
         expected = [1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 4]
         actual = get_cnot_control_positions(4)
         assert expected == actual
+
+
+class TestGetRotationParameters(object):
+    def test_length_four_coefficients(self):
+        phases = [np.pi / 2, np.pi / 6, -np.pi / 7, np.pi / 8]
+        magnitudes = [0.1, 0.2, 0.3, 0.4]
+        z_thetas, y_thetas, new_phases, new_magnitudes = \
+            get_rotation_parameters(phases, magnitudes)
+        expected_z_thetas = [np.pi / 3, -np.pi * 15 / 56]
+        expected_y_thetas = [2 * np.arcsin(-0.1 / np.sqrt(0.1)),
+                             2 * np.arcsin(-0.1 / np.sqrt(0.5))]
+        expected_new_phases = [np.pi / 3, -np.pi / 112]
+        expected_new_magnitudes = [np.sqrt(0.025), np.sqrt(0.125)]
+
+        assert np.allclose(expected_z_thetas, z_thetas)
+        assert np.allclose(expected_y_thetas, y_thetas)
+        assert np.allclose(expected_new_phases, new_phases)
+        assert np.allclose(expected_new_magnitudes, new_magnitudes)
+
+    def test_length_eight_coefficients(self):
+        phases = [-np.pi / 6, -np.pi / 6, np.pi / 13, -np.pi / 7,
+                  -np.pi / 9, np.pi / 2, np.pi / 4, np.pi / 5]
+        magnitudes = [0.7, 0.3, 0.25, 0.6,
+                      0.84, 0.84, 0.05, 0.4]
+        z_thetas, y_thetas, new_phases, new_magnitudes = \
+            get_rotation_parameters(phases, magnitudes)
+        expected_z_thetas = [0, np.pi * 20 / 91, -np.pi * 11 / 18, np.pi / 20]
+        expected_y_thetas = [2 * np.arcsin(0.4 / np.sqrt(1.16)),
+                             2 * np.arcsin(-0.35 / np.sqrt(0.845)),
+                             0,
+                             2 * np.arcsin(-0.35 / np.sqrt(0.325))]
+        expected_new_phases = [-np.pi / 6, -np.pi * 3 / 91, np.pi * 7 / 36,
+                               np.pi * 9 / 40]
+        expected_new_magnitudes = [np.sqrt(0.29), np.sqrt(0.21125),
+                                   0.84, np.sqrt(0.08125)]
+
+        assert np.allclose(expected_z_thetas, z_thetas)
+        assert np.allclose(expected_y_thetas, y_thetas)
+        assert np.allclose(expected_new_phases, new_phases)
+        assert np.allclose(expected_new_magnitudes, new_magnitudes)
+
+
+class TestGetReversedUnificationProgram(object):
+    def test_length_four_phase_rotations(self):
+        angles = [np.pi / 4, np.pi / 11, np.pi / 7, -np.pi / 18]
+        control_indices = get_cnot_control_positions(2)
+        controls = [3, 8]
+        target = 0
+        reverse_prog = \
+            get_reversed_unification_program(angles, control_indices,
+                                             target, controls, "phase")
+
+        expected_prog = pq.Program().inst(CNOT(8, 0)) \
+            .inst(RZ(np.pi / 18, 0)) \
+            .inst(CNOT(3, 0)) \
+            .inst(RZ(-np.pi / 7, 0)) \
+            .inst(CNOT(8, 0)) \
+            .inst(RZ(-np.pi / 11, 0)) \
+            .inst(CNOT(3, 0)) \
+            .inst(RZ(-np.pi / 4, 0))
+
+        compare_progs(reverse_prog, expected_prog)
+
+    def test_length_eight_magnitude_rotations(self):
+        angles = [0, - np.pi / 12, np.pi / 15, -np.pi / 6,
+                  np.pi / 13, np.pi / 10, -np.pi / 3, np.pi / 4]
+        control_indices = get_cnot_control_positions(3)
+        controls = [1, 6, 2]
+        target = 4
+        reverse_prog = \
+            get_reversed_unification_program(angles, control_indices,
+                                             target, controls, "magnitude")
+
+        expected_prog = pq.Program().inst(CNOT(2, 4)) \
+            .inst(RY(-np.pi / 4, 4)) \
+            .inst(CNOT(1, 4)) \
+            .inst(RY(np.pi / 3, 4)) \
+            .inst(CNOT(6, 4)) \
+            .inst(RY(-np.pi / 10, 4)) \
+            .inst(CNOT(1, 4)) \
+            .inst(RY(-np.pi / 13, 4)) \
+            .inst(CNOT(2, 4)) \
+            .inst(RY(np.pi / 6, 4)) \
+            .inst(CNOT(1, 4)) \
+            .inst(RY(- np.pi / 15, 4)) \
+            .inst(CNOT(6, 4)) \
+            .inst(RY(np.pi / 12, 4)) \
+            .inst(CNOT(1, 4))
+
+        compare_progs(reverse_prog, expected_prog)
 
 
 def _state_generation_test_helper(v, qubits=None):
