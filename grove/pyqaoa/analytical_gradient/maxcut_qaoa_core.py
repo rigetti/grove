@@ -61,8 +61,10 @@ def get_program_parameterizer_maxcut(steps, reference_state_program,
     """
 
     def program_parameterizer(params):
-        """Constructs a list of pyquil programs constituting the full pyquil
-            program for the vector (beta, gamma).
+        """Constructs the pyquil program which rotates the reference state
+            using the cost hamiltonian and driver hamiltonian according to
+            the given parameters
+
         :param params: an array of 2*p angles, betas first, then gammas
         :return: a list of pyquil programs
         """
@@ -96,16 +98,21 @@ def get_program_parameterizer_maxcut(steps, reference_state_program,
 
     return program_parameterizer
 
-if __name__ == "__main__":
-    test_graph_edges = [(0,1)]
-    test_graph = edges_to_graph(test_graph_edges)
-    steps = 1 #the number of trotterization steps
-    num_qubits = len(test_graph.nodes())
+def maxcut_qaoa_constructor(graph_edges, steps):
+    graph = edges_to_graph(graph_edges)
+    num_qubits = len(graph.nodes())
     reference_state_program = construct_reference_state_program(num_qubits)
-    cost_hamiltonian = get_cost_hamiltonian(test_graph)
-    driver_hamiltonian = get_driver_hamiltonian(test_graph)
+    cost_hamiltonian = get_cost_hamiltonian(graph)
+    driver_hamiltonian = get_driver_hamiltonian(graph)
     program_parameterizer = get_program_parameterizer_maxcut(steps,
         reference_state_program, cost_hamiltonian, driver_hamiltonian)
+    return program_parameterizer, cost_hamiltonian
+
+if __name__ == "__main__":
+    test_graph_edges = [(0,1)]
+    steps = 1 #the number of trotterization steps
+    program_parameterizer, cost_hamiltonian = maxcut_qaoa_constructor(
+        test_graph_edges, steps)
     #beta = 0#np.pi/3
     #gamma = 0#np.pi/3
     #beta = np.pi/8
