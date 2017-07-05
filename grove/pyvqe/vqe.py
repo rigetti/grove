@@ -161,7 +161,7 @@ class VQE(object):
                 self._disp_fun("\tGrad-L1-Norm: {}".format(np.max(np.abs(grad))))
                 self._disp_fun("\tGrad-L2-Norm: {} ".format(np.linalg.norm(grad)))
 
-            self._disp_fun("\tExpectation => {}".format(self._current_expectation))
+            self._disp_fun("\tExpectation Value => {}".format(self._current_expectation))
             if return_all:
                 iteration_params.append(iter_vars)
                 expectation_vals.append(self._current_expectation)
@@ -214,7 +214,7 @@ class VQE(object):
         :param qvm: (qvm connection)
 
         :returns: (float) representing the expectation value of pauli_sum given
-                  given the distribution generated from quil_prog.
+                  the distribution generated from quil_prog.
         """
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
