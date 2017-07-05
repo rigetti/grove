@@ -1,9 +1,13 @@
-"""Class for generating a program that can generate an arbitrary quantum state
+"""Class for generating a program that can generate an arbitrary quantum state.
+References are available at:
 
 - http://140.78.161.123/digital/\
 2016_ismvl_logic_synthesis_quantum_state_generation.pdf
 - https://arxiv.org/pdf/quant-ph/0407010.pdf
 
+Note that the algorithm used creates a circuit that begins with a target state
+and brings it to the all zero state. Thus, many of this module's functions
+involve finding gates to be applied in the reversed circuit.
 """
 import numpy as np
 import pyquil.quil as pq
@@ -115,16 +119,27 @@ def get_rotation_parameters(phases, magnitudes):
     return y_thetas, z_thetas, new_phases, new_magnitudes
 
 
-# TODO: documentation
 def get_unification_gates(angles, control_indices, target, controls, mode):
     """
+    Gets the gates needed for the decomposition of the uniformly controlled
+    rotations in each unification step.
 
-    :param angles:
-    :param control_indices:
-    :param target:
-    :param controls:
-    :param mode:
-    :return:
+    :param list angles: The angles of rotation in the the decomposition,
+                        in order from left to right
+    :param list control_indices: a list of positions for the controls of the
+                                 CNOTs used when decomposing uniformly
+                                 controlled rotations; see
+                                 get_cnot_control_positions for labelling
+                                 conventions.
+
+    :param int target: Index of the target of all rotations
+    :param list controls: Index of the controls, in order from bottom to top.
+    :param str mode: The unification mode. Is either 'phase', corresponding
+                     to controlled RZ rotations, or 'magnitude', corresponding
+                     to controlled RY rotations.
+    :return: List of gates, in reverse order, to be applied in the reversed
+             circuit of this unification step.
+    :rtype: list
     """
     if mode == 'phase':
         gate = RZ
