@@ -121,8 +121,9 @@ def get_rotation_parameters(phases, magnitudes):
 
 def get_unification_gates(angles, control_indices, target, controls, mode):
     """
-    Gets the gates needed for the decomposition of the uniformly controlled
-    rotations in each unification step.
+    Gets the Program representing the reversed circuit
+    for the decomposition of the uniformly controlled
+    rotations in a unification step.
 
     :param list angles: The angles of rotation in the the decomposition,
                         in order from left to right
@@ -137,9 +138,8 @@ def get_unification_gates(angles, control_indices, target, controls, mode):
     :param str mode: The unification mode. Is either 'phase', corresponding
                      to controlled RZ rotations, or 'magnitude', corresponding
                      to controlled RY rotations.
-    :return: List of gates, in reverse order, to be applied in the reversed
-             circuit of this unification step.
-    :rtype: list
+    :return: The reversed circuit of this unification step.
+    :rtype: Program
     """
     if mode == 'phase':
         gate = RZ
@@ -158,7 +158,7 @@ def get_unification_gates(angles, control_indices, target, controls, mode):
             reversed_gates.append(CNOT(controls[control_indices[j] - 1],
                                        target))
 
-    return reversed_gates
+    return pq.Program().inst(reversed_gates[::-1])
 
 
 def create_arbitrary_state(vector, qubits=None):
@@ -205,11 +205,6 @@ def create_arbitrary_state(vector, qubits=None):
     magnitudes = map(np.abs, vec_norm)
     phases = map(np.angle, vec_norm)
 
-    # because conceptually this algorithm starts with the end state
-    # and makes it into the |0> state,
-    # the gates will be constructed in reverse order
-    reversed_gates = []
-
     # matrix that converts angles of uniformly controlled rotation
     # to angles of uncontrolled rotations
     # at first, all qubits except for the 0 qubit act as controls
@@ -219,7 +214,16 @@ def create_arbitrary_state(vector, qubits=None):
     # at first, all qubits except for the 0 qubit act as controls
     rotation_cnots = get_cnot_control_positions(n - 1)
 
+    # because conceptually this algorithm starts with the end state
+    # and makes it into the |0> state,
+    # the gates will be applied in reverse order
+    # from the circuit given in the paper
+    reversed_prog = pq.Program()
+
     for step in xrange(n):
+        # Will hold reversed program corresponding to this particular step.
+        reversed_step_prog = pq.Program()
+
         # get the y and z rotation angles needed to unify pairs
         # of phases and magnitudes, respectively,
         # as well as the new phases and magnitudes that these
@@ -233,22 +237,25 @@ def create_arbitrary_state(vector, qubits=None):
         converted_y_thetas = np.dot(M, y_thetas)
 
         # phase unification
-        reversed_gates.extend(get_unification_gates(converted_z_thetas,
-                                                    rotation_cnots,
-                                                    qubits[0],
-                                                    qubits[step + 1:],
-                                                    'phase'))
+        phase_prog = get_unification_gates(converted_z_thetas,
+                                           rotation_cnots,
+                                           qubits[0],
+                                           qubits[step + 1:],
+                                           'phase')
 
         # probability unification
-        reversed_gates.extend(get_unification_gates(converted_y_thetas,
-                                                    rotation_cnots,
-                                                    qubits[0],
-                                                    qubits[step + 1:],
-                                                    'magnitude'))
+        prob_prog = get_unification_gates(converted_y_thetas,
+                                          rotation_cnots,
+                                          qubits[0],
+                                          qubits[step + 1:],
+                                          'magnitude')
+
+        # swaps are applied first, then reversed probability unification,
+        # then reversed phase unification
 
         if step < n - 1:
             # swaps are applied after all rotation steps except the last
-            reversed_gates.append(SWAP(qubits[0], qubits[step + 1]))
+            reversed_step_prog += SWAP(qubits[0], qubits[step + 1])
 
             # just retain upper left square
             # for the next iteration (one less control)
@@ -258,16 +265,23 @@ def create_arbitrary_state(vector, qubits=None):
             rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
             rotation_cnots[-1] -= 1
 
+        reversed_step_prog += prob_prog
+        reversed_step_prog += phase_prog
+
+        # This step must be applied to the front
+        # of the currently built up reversed_prog because
+        # of the reversal of the steps in the final reversed program.
+        reversed_prog = reversed_step_prog + reversed_prog
+
     # Add Hadamard gates to remove superposition
-    reversed_gates += map(H, qubits)
+    reversed_prog = pq.Program().inst(map(H, qubits)) + reversed_prog
 
     # Correct the overall phase
-    reversed_gates.append(PHASE(2 * phases[0], qubits[0]))
-    reversed_gates.append(RZ(-2 * phases[0], qubits[0]))
+    reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0]))\
+                      .inst(PHASE(2 * phases[0], qubits[0])) + reversed_prog
 
     # Apply all gates in reverse
-    p = pq.Program().inst([reversed_gates[::-1]])
-    return p
+    return reversed_prog
 
 
 if __name__ == "__main__":
