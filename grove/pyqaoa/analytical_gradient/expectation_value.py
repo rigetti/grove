@@ -46,5 +46,13 @@ def get_analytic_expectation_p1(beta, gamma):
     #See Mathematica Notebook for derivation
     return np.sin(4*beta)*np.sin(2*gamma)
 
+def get_analytical_gradient_expectation_p1_driver(beta, gamma):
+    #See Mathematica Notebook for derivation
+    return 4*np.cos(4*beta)*np.sin(2*gamma)
+
+def get_analytical_gradient_expectation_p1_cost(beta, gamma):
+    #See Mathematica Notebook for derivation
+    return 2*np.sin(4*beta)*np.cos(2*gamma)
+
 #Need tests which assert that the analytical and numerical expecations are equal
 

@@ -106,15 +106,15 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
             parameterized_program += this_step_cost_unitary
             parameterized_program += this_step_driver_unitary
 
-            hermitian_structure[step_index + 1]["driver"] = [term for term in
-                driver_program]
             hermitian_structure[step_index + 1]["cost"] = [term for term in
                 cost_program]
+            hermitian_structure[step_index + 1]["driver"] = [term for term in
+                driver_program]
 
-            unitary_structure[step_index + 1]["driver"] = [term for term in
-                this_step_driver_unitary]
             unitary_structure[step_index + 1]["cost"] = [term for term in
                 this_step_cost_unitary]
+            unitary_structure[step_index + 1]["driver"] = [term for term in
+                this_step_driver_unitary]
 
         return parameterized_program, unitary_structure, hermitian_structure
 
@@ -136,12 +136,10 @@ if __name__ == "__main__":
     steps = 1 #the number of trotterization steps
     program_parameterizer, reference_state_program, cost_hamiltonian, num_qubits = \
         maxcut_qaoa_constructor(test_graph_edges, steps)
-    #beta = 0#np.pi/3
-    #gamma = 0#np.pi/3
-    #beta = np.pi/8
-    #gamma = np.pi/4
-    beta = 1.5
-    gamma = 1.2
+    beta = np.pi/8
+    gamma = np.pi/4
+    #beta = 1.5
+    #gamma = 1.2
 
     test_params = [beta, gamma]
     parameterized_program, unitary_structure, hermitian_structure = \
@@ -153,8 +151,8 @@ if __name__ == "__main__":
         beta, gamma)
     numeric_expectation = expectation_value.expectation(full_program,
         cost_hamiltonian, qvm_connection)
-    #print(analytic_expectation)
-    #print(numeric_expectation)
+    print(analytic_expectation)
+    print(numeric_expectation)
 
 
 
