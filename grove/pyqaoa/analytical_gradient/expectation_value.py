@@ -40,17 +40,17 @@ def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
         number of results were returned from the QVM"""
     expectation = sum(map(lambda x: x[0]*x[1],
                           zip(result_overlaps, operator_coefficients)))
-    return expectation.real
+    return expectation
 
 def get_analytic_expectation_p1(beta, gamma):
     #See Mathematica Notebook for derivation
     return np.sin(4*beta)*np.sin(2*gamma)
 
-def get_analytical_gradient_expectation_p1_driver(beta, gamma):
+def get_ag_expectation_p1_driver(beta, gamma):
     #See Mathematica Notebook for derivation
     return 4*np.cos(4*beta)*np.sin(2*gamma)
 
-def get_analytical_gradient_expectation_p1_cost(beta, gamma):
+def get_ag_expectation_p1_cost(beta, gamma):
     #See Mathematica Notebook for derivation
     return 2*np.sin(4*beta)*np.cos(2*gamma)
 
