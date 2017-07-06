@@ -1,154 +1,74 @@
 """
 This module implements the analytical gradient as defined in the paper:
 'Practical Optimization for hybrid quantum-classical algorithms'
-Compute the gradient for the qaoa algorithm.
+Compute the analytical gradient for the qaoa algorithm.
 """
 
-import networkx as nx
+
 import pyquil.quil as pq
 import pyquil.api as api
 from pyquil.gates import *
-from pyquil.paulis import *
 
-
-def edges_to_graph(edges_list):
-    """Converts a list of edges into a networkx graph object
-    """
-    maxcut_graph = nx.Graph()
-    for edge in edges_list:
-        maxcut_graph.add_edge(*edge)
-    graph = maxcut_graph.copy()
-    return graph
-
-def construct_ref_state_prep(num_qubits):
-    """Constructs the standard reference state for QAOA - "s"
-    """
-    ref_prog = pq.Program()
-    for i in xrange(num_qubits):
-        ref_prog.inst(H(i))
-    ref_state_prep = ref_prog
-    return ref_state_prep
-
-def define_parametric_program_qaoa(trotterization_steps, graph):
-    cost_programs = []
-    driver_programs = []
-
-    for step in xrange(trotterization_steps):
-        for qubit_index_A, qubit_index_B in graph.edges():
-            cost_program = []
-            interaction_term = (PauliTerm("Z", qubit_index_A, 0.5)*
-                                PauliTerm("Z", qubit_index_B))
-            #constant_term = PauliTerm("I", 0, -0.5) #Can just neglect constant
-            qubit_indices = (qubit_index_A, qubit_index_B)
-            cost_program.append((interaction_term, qubit_indices))
-            #cost_program.append((constant_term, qubit_indices))
-
-        for qubit_index in graph.nodes():
-            driver_program = []
-            driver_term = PauliTerm("X", qubit_index, -1.0)
-            driver_program.append((driver_term, qubit_index))
-
-        cost_programs.append(cost_program)
-        driver_programs.append(driver_program)
-
-    return (cost_programs, driver_programs)
-
-
-def get_program_parameterizer_qaoa(steps, cost_programs,
-        driver_programs):
-    """
-    Return a function that accepts parameters and returns a new Quil
-    program
-
-    :returns: a function
-    """
-
-    def program_parameterizer(params):
-	"""Constructs a list of Quil programs constituting the full Quil program
-            for the vector (beta, gamma).
-
-	:param params: array of 2*p angles, betas first, then gammas
-	:return: a list of pyquil programs
-	"""
-	if len(params) != 2*steps:
-	    raise ValueError("""params doesn't match the number of parameters set
-				by `steps`""")
-	betas = params[:steps]
-	gammas = params[steps:]
-
-        terms_list = []
-
-	for step_index in xrange(steps):
-            cost_program = cost_programs[step_index]
-            step_gammas = gammas[step_index]
-	    for cost_term, qubit_indices in cost_program:
-                parameterized_cost_term = exponential_map(cost_term)
-                step_cost_term = parameterized_cost_term(step_gammas)
-                terms_list.append((step_cost_term, qubit_indices))
-
-            driver_program = driver_programs[step_index]
-            step_betas = betas[step_index]
-	    for driver_term, qubit_index in driver_program:
-                parameterized_driver_term = exponential_map(driver_term)
-                step_driver_term = parameterized_driver_term(step_betas)
-                terms_list.append((step_driver_term, qubit_index))
-
-	return terms_list
-
-    return program_parameterizer
-
+import maxcut_qaoa_core
+import expectation_value
 
 def get_analytical_gradient_component_qaoa(program_parameterizer, params,
-        num_qubits, component_index):
+        num_qubits, step_index, hamiltonian_type):
     """
-    Maps: Program -> Program
+    Computes a single component of the analytical gradient
 
-    :returns: a function
+    MAKE SURE STEP_INDEX IS CONSISTENT!
     """
-    terms_list = program_parameterizer(params)
+    gradient_component_program = pq.Program()
+    unitary_program, unitary_structure, hermitian_structure = \
+        program_parameterizer(params)
+
     ancilla_qubit_index = num_qubits
-    gradient_component_prog = pq.Program()
-    i_one = np.array([[1.0, 0.0], [0.0, 1.0j]])
-    gradient_component_prog.defgate("I-ONE", i_one)
-    cz = np.array([[1.0, 0.0, 0.0, 0.0],
-                   [0.0, 1.0, 0.0, 0.0],
-                   [0.0, 0.0, 1.0, 0.0],
-                   [0.0, 0.0, 0.0, -1.0]])
-    gradient_component_prog.defgate("CZ", cz)
+    gradient_component_program.inst(H(ancilla_qubit_index))
 
-    parameterized_prog_lower = terms_list[:component_index]
-    parameterized_prog_upper = terms_list[component_index:]
-    for parameterized_inst, qubit_indices in parameterized_prog_lower:
-        gradient_component_prog += parameterized_inst
-    gradient_component_prog.inst(H(ancilla_qubit_index))
-    component_term, qubit_indices = terms_list[component_index]
-    if len(qubit_indices) == 1: #Then apply driver gate
-        gradient_component_prog.inst(CNOT(qubit_indices, ancilla_qubit_index))
-    if len(qubit_indices) == 2: #Then apply cost gate
-        gradient_component_prog.inst(("CZ", qubit_indices[0],
-            ancilla_qubit_index))
-        gradient_component_prog.inst(("CZ", qubit_indices[1],
-            ancilla_qubit_index))
-    for parameterized_inst, qubit_indices in parameterized_prog_upper:
-        gradient_component_prog += parameterized_inst
-    gradient_component_prog.inst(("I-ONE", ancilla_qubit_index))
-    gradient_component_prog.inst(H(ancilla_qubit_index))
-    return gradient_component_prog
+    unitary_gates_before_gradient = [unitary_structure[free_step_index] for
+        free_step_index in range(1, step_index + 1)]
+    for step_gates in unitary_gates_before_gradient:
+        for hamiltonian_operators in step_gates.values():
+            for op_type, gate in hamiltonian_operators:
+                gradient_component_program += gate
+
+    gradient_component_hermitian_gates = hermitian_structure[step_index][hamiltonian_type]
+    for op_type, gate in gradient_component_hermitian_gates:
+        gradient_component_program += gate
+
+    highest_step = max(unitary_structure.keys())
+    unitary_gates_after_gradient = [unitary_structure[free_step_index] for
+        free_step_index in range(step_index + 1, highest_step)]
+    for step_gates in unitary_gates_after_gradient:
+        for hamiltonian_type_gates in step_gates:
+            for gate in hamiltonian_type_gates:
+                gradient_component_program += gate
+
+    gradient_component_program.inst(S(ancilla_qubit_index))
+    gradient_component_program.inst(H(ancilla_qubit_index))
+    return gradient_component_program
+
 
 if __name__ == "__main__":
-    square_ring_edges = [(0,1), (1,2), (2,3), (3,0)]
-    graph = edges_to_graph(square_ring_edges)
-    num_qubits = len(graph.nodes())
-    #ref_state_prep = construct_ref_state_prep(num_qubits)
-    trotterization_steps = 2 #Referred to as "p" in the paper
-    cost_programs, driver_programs = define_parametric_program_qaoa(
-        trotterization_steps, graph)
-    program_parameterizer = get_program_parameterizer_qaoa(trotterization_steps,
-        cost_programs, driver_programs)
-    component_index = 1
-    params = [2.2, 1.2, 2.9, 5.3] #Random test parameters
-    #params = [2.2, 1.2] #Random test parameters
-    get_analytical_gradient_component_qaoa(params, num_qubits,
-        component_index)
+    test_graph_edges = [(0,1)]
+    steps = 1
+    program_parameterizer, reference_state_program, cost_hamiltonian, num_qubits = \
+        maxcut_qaoa_core.maxcut_qaoa_constructor(test_graph_edges, steps)
 
+    beta = 1.5
+    gamma = 1.2
+    params = [beta, gamma]
 
+    step_index = 1
+    hamiltonian_type = "cost"
+
+    gradient_component_program = get_analytical_gradient_component_qaoa(
+        program_parameterizer, params, num_qubits, step_index, hamiltonian_type)
+    #print(gradient_component_program)
+    full_program = reference_state_program + gradient_component_program
+    #print(full_program)
+    qvm_connection = api.SyncConnection()
+    numeric_expectation = expectation_value.expectation(full_program,
+        cost_hamiltonian, qvm_connection)
+    print(numeric_expectation)

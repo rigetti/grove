@@ -15,8 +15,8 @@ def get_finite_difference_component_qaoa(program_parameterizer, params,
     upper_difference_params = params[:]
     lower_difference_params[component_index] -= difference_step
     upper_difference_params[component_index] += difference_step
-    lower_program = program_parameterizer(lower_difference_params)
-    upper_program = program_parameterizer(upper_difference_params)
+    lower_program, _ = program_parameterizer(lower_difference_params)
+    upper_program, _ = program_parameterizer(upper_difference_params)
     return lower_program, upper_program
 
 test_structure = {
@@ -31,8 +31,8 @@ test_structure = {
 if __name__ == "__main__":
     test_graph_edges = [(0,1)]
     steps = 1
-    program_parameterizer, cost_hamiltonian = maxcut_qaoa_constructor(
-        test_graph_edges, steps)
+    program_parameterizer, cost_hamiltonian, num_qubits = \
+        maxcut_qaoa_constructor(test_graph_edges, steps)
 
     beta = 1.5
     gamma = 1.2
