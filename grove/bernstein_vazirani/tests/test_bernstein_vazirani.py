@@ -1,11 +1,11 @@
-import pyquil.api as api
 import numpy as np
+import pyquil.api as api
 import pyquil.quil as pq
-from pyquil.gates import X, I
+import pytest
+from pyquil.gates import X
 
 from grove.bernstein_vazirani.bernstein_vazirani import bernstein_vazirani, \
     oracle_function
-import pytest
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -71,11 +71,9 @@ def _oracle_test_helper(vec_a, b, x, trials=1):
     p = pq.Program()
 
     for i in xrange(len(bitstring)):
-        p.inst(I(i))
         if bitstring[-1 - i] == '1':
             p.inst(X(i))
 
-    p.inst(I(ancilla))
     oracle = oracle_function(vec_a, b, qubits, ancilla)
     p += oracle
     results = cxn.run_and_measure(p, [ancilla], trials)
