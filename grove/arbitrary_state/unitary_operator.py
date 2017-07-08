@@ -30,11 +30,11 @@ def unitary_operator(state_vector):
     :rtype: 2d array
     """
 
-    print np.linalg.norm(state_vector)
-    assert np.allclose([np.linalg.norm(state_vector)], [1]), \
-        "Vector must be normalized"
-    assert 2 ** get_bits_needed(len(state_vector)) == len(state_vector), \
-        "Vector length must be a power of two"
+    if not np.allclose([np.linalg.norm(state_vector)], [1]):
+        raise ValueError("Vector must be normalized")
+
+    if 2 ** get_bits_needed(len(state_vector)) != len(state_vector):
+        raise ValueError("Vector length must be a power of two and at least two")
 
     mat = np.identity(len(state_vector), dtype=complex)
     for i in range(len(state_vector)):
