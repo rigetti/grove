@@ -14,6 +14,8 @@ from pyquil.paulis import *
 import maxcut_qaoa_core
 import expectation_value
 
+qvm_connection = api.SyncConnection()
+
 
 def make_controlled(operator_name):
     mapping_dict = {
@@ -28,27 +30,31 @@ def insert_ancilla_controlled_hermitian(gradient_component_program,
         step_index][hamiltonian_type]
     for op_type, gate in gradient_component_hermitian_operators:
         operator_name = gate.operator_name
-        #print(operator_name)
         controlled_operator = make_controlled(operator_name)
         qubit_index = gate.arguments[0]
-        #print(qubit_index)
-        controlled_gate = controlled_operator(qubit_index, ancilla_qubit_index)
-        #controlled_gate = controlled_operator(ancilla_qubit_index, qubit_index)
-        #print(controlled_gate)
+        controlled_gate = controlled_operator(ancilla_qubit_index, qubit_index)
         gradient_component_program.inst(controlled_gate)
+        #print(controlled_gate)
+        #print(qvm_connection.wavefunction(gradient_component_program)[0])
+        #print
     return gradient_component_program
 
 def get_analytical_gradient_component_qaoa(program_parameterizer, params,
-        num_qubits, step_index, hamiltonian_type):
+        reference_state_program, num_qubits, step_index, hamiltonian_type):
     """
     Computes a single component of the analytical gradient
     """
-    gradient_component_program = pq.Program()
+    gradient_component_program = reference_state_program
     unitary_program, unitary_structure, hermitian_structure = \
         program_parameterizer(params)
+    #print(unitary_structure)
+    #print(hermitian_structure)
 
     ancilla_qubit_index = num_qubits
     gradient_component_program.inst(H(ancilla_qubit_index))
+    #print(H(ancilla_qubit_index))
+    #print(qvm_connection.wavefunction(gradient_component_program)[0])
+    #print
 
     for free_step_index in unitary_structure:
         step_unitary_structure = unitary_structure[free_step_index]
@@ -63,16 +69,23 @@ def get_analytical_gradient_component_qaoa(program_parameterizer, params,
             hamiltonian_operators = step_unitary_structure[free_hamiltonian_type]
             for op_type, gate in hamiltonian_operators:
                 gradient_component_program += gate
+                #print(gate)
+                #print(qvm_connection.wavefunction(gradient_component_program)[0])
+                #print
 
     gradient_component_program.inst(S(ancilla_qubit_index))
+    #print(S(ancilla_qubit_index))
+    #print(qvm_connection.wavefunction(gradient_component_program)[0])
+    #print
     gradient_component_program.inst(H(ancilla_qubit_index))
-
+    #print(H(ancilla_qubit_index))
+    #print(qvm_connection.wavefunction(gradient_component_program)[0])
+    #print
     return gradient_component_program
 
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
-    #print(full_cost_hamiltonian)
     return full_cost_hamiltonian
 
 if __name__ == "__main__":
@@ -82,9 +95,11 @@ if __name__ == "__main__":
         maxcut_qaoa_core.maxcut_qaoa_constructor(test_graph_edges, steps)
 
     #beta = np.pi/8
+    #gamma = np.pi/2
+    #beta = np.pi/4
     #gamma = np.pi/4
-    beta = 1.5
-    gamma = 1.2
+    beta = 1.2
+    gamma = 1.3
     params = [beta, gamma]
 
     step_index = 1
@@ -92,14 +107,13 @@ if __name__ == "__main__":
     #hamiltonian_type = "driver"
 
     gradient_component_program = get_analytical_gradient_component_qaoa(
-        program_parameterizer, params, num_qubits, step_index, hamiltonian_type)
+        program_parameterizer, params, reference_state_program,
+        num_qubits, step_index, hamiltonian_type)
 
     full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
         num_qubits)
-    full_program = reference_state_program + gradient_component_program
+    full_program = gradient_component_program
     print(full_program)
-
-    qvm_connection = api.SyncConnection()
     numeric_expectation = -2*expectation_value.expectation(full_program,
         full_cost_hamiltonian, qvm_connection)
     print(numeric_expectation)

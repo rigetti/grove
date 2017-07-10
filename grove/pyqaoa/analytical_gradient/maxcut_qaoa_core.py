@@ -153,6 +153,3 @@ if __name__ == "__main__":
         cost_hamiltonian, qvm_connection)
     print(analytic_expectation)
     print(numeric_expectation)
-
-
-

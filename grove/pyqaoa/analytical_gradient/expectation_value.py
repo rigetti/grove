@@ -32,7 +32,8 @@ def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
             operator_program.inst(STANDARD_GATES[operator](qubit_index))
         operator_programs.append(operator_program)
         operator_coefficients.append(cost_term.coefficient)
-
+    print(qvm_connection.wavefunction(pyquil_program)[0])
+    print(qvm_connection.wavefunction(operator_programs[0])[0])
     result_overlaps = qvm_connection.expectation(pyquil_program,
         operator_programs=operator_programs)
     result_overlaps = list(result_overlaps)
