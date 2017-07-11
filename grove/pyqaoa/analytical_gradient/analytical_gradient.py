@@ -24,37 +24,32 @@ def make_controlled(operator_name):
         }
     return mapping_dict[operator_name]
 
-def insert_ancilla_controlled_hermitian(gradient_component_program,
+def insert_ancilla_controlled_hermitian(gradient_component_programs,
         hermitian_structure, hamiltonian_type, ancilla_qubit_index):
     gradient_component_hermitian_operators = hermitian_structure[
         step_index][hamiltonian_type]
+    new_gradient_component_programs = []
     for op_type, gate in gradient_component_hermitian_operators:
         operator_name = gate.operator_name
         controlled_operator = make_controlled(operator_name)
         qubit_index = gate.arguments[0]
         controlled_gate = controlled_operator(ancilla_qubit_index, qubit_index)
-        gradient_component_program.inst(controlled_gate)
-        #print(controlled_gate)
-        #print(qvm_connection.wavefunction(gradient_component_program)[0])
-        #print
-    return gradient_component_program
+        new_gradient_component_programs.append(gradient_component_programs[0] +
+                                               controlled_gate)
+    return new_gradient_component_programs
 
 def get_analytical_gradient_component_qaoa(program_parameterizer, params,
         reference_state_program, num_qubits, step_index, hamiltonian_type):
     """
     Computes a single component of the analytical gradient
     """
-    gradient_component_program = reference_state_program
+    gradient_component_programs = [reference_state_program]
     unitary_program, unitary_structure, hermitian_structure = \
         program_parameterizer(params)
-    #print(unitary_structure)
-    #print(hermitian_structure)
 
     ancilla_qubit_index = num_qubits
-    gradient_component_program.inst(H(ancilla_qubit_index))
-    #print(H(ancilla_qubit_index))
-    #print(qvm_connection.wavefunction(gradient_component_program)[0])
-    #print
+    for gradient_component_program in gradient_component_programs:
+        gradient_component_program.inst(H(ancilla_qubit_index))
 
     for free_step_index in unitary_structure:
         step_unitary_structure = unitary_structure[free_step_index]
@@ -62,26 +57,19 @@ def get_analytical_gradient_component_qaoa(program_parameterizer, params,
 
             if (free_step_index == step_index and
                     free_hamiltonian_type == hamiltonian_type):
-                gradient_component_program = insert_ancilla_controlled_hermitian(
-                    gradient_component_program, hermitian_structure,
+                gradient_component_programs = insert_ancilla_controlled_hermitian(
+                    gradient_component_programs, hermitian_structure,
                     hamiltonian_type, ancilla_qubit_index)
 
             hamiltonian_operators = step_unitary_structure[free_hamiltonian_type]
             for op_type, gate in hamiltonian_operators:
-                gradient_component_program += gate
-                #print(gate)
-                #print(qvm_connection.wavefunction(gradient_component_program)[0])
-                #print
+                for gradient_component_program in gradient_component_programs:
+                    gradient_component_program.inst(gate)
 
-    gradient_component_program.inst(S(ancilla_qubit_index))
-    #print(S(ancilla_qubit_index))
-    #print(qvm_connection.wavefunction(gradient_component_program)[0])
-    #print
-    gradient_component_program.inst(H(ancilla_qubit_index))
-    #print(H(ancilla_qubit_index))
-    #print(qvm_connection.wavefunction(gradient_component_program)[0])
-    #print
-    return gradient_component_program
+    for gradient_component_program in gradient_component_programs:
+        gradient_component_program.inst(S(ancilla_qubit_index))
+        gradient_component_program.inst(H(ancilla_qubit_index))
+    return gradient_component_programs
 
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
@@ -106,18 +94,19 @@ if __name__ == "__main__":
     hamiltonian_type = "cost"
     #hamiltonian_type = "driver"
 
-    gradient_component_program = get_analytical_gradient_component_qaoa(
+    gradient_component_programs = get_analytical_gradient_component_qaoa(
         program_parameterizer, params, reference_state_program,
         num_qubits, step_index, hamiltonian_type)
-
+    for program in gradient_component_programs:
+        print(program)
     full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
         num_qubits)
-    full_program = gradient_component_program
-    #print(full_program)
-    numeric_expectation = -expectation_value.expectation(full_program,
-        full_cost_hamiltonian, qvm_connection)
-    print(numeric_expectation)
-    analytic_expectation = expectation_value.get_ag_expectation_p1_cost(beta, gamma)
-    print(analytic_expectation)
-    #analytic_expectation = expectation_value.get_ag_expectation_p1_driver(beta, gamma)
-    #print(analytic_expectation)
+    numerical_expectations = [expectation_value.expectation(
+        gradient_component_program, full_cost_hamiltonian, qvm_connection)
+        for gradient_component_program in gradient_component_programs]
+    numerical_expectation = sum(numerical_expectations)
+    print(numerical_expectation)
+    #driver_expectation = 2*np.cos(2*beta)*np.sin(gamma)
+    #print(driver_expectation)
+    cost_expectation = np.sin(2*beta)*np.cos(gamma)
+    print(cost_expectation)

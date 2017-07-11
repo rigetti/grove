@@ -32,8 +32,6 @@ def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
             operator_program.inst(STANDARD_GATES[operator](qubit_index))
         operator_programs.append(operator_program)
         operator_coefficients.append(cost_term.coefficient)
-    print(pyquil_program)
-    print(operator_programs[0])
     result_overlaps = qvm_connection.expectation(pyquil_program,
         operator_programs=operator_programs)
     result_overlaps = list(result_overlaps)
@@ -46,14 +44,4 @@ def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
 def get_analytic_expectation_p1(beta, gamma):
     #See Mathematica Notebook for derivation
     return np.sin(2*beta)*np.sin(gamma)
-
-def get_ag_expectation_p1_driver(beta, gamma):
-    #See Mathematica Notebook for derivation
-    return 2*np.cos(2*beta)*np.sin(gamma)
-
-def get_ag_expectation_p1_cost(beta, gamma):
-    #See Mathematica Notebook for derivation
-    return np.sin(2*beta)*np.cos(gamma)
-
-#Need tests which assert that the analytical and numerical expecations are equal
 

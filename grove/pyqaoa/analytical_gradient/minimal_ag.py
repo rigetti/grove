@@ -125,6 +125,7 @@ if __name__ == "__main__":
     ########################################
     #Constructs the driver gradient program#
     ########################################
+    #driver_gradient_program = pq.Program()
     driver_gradient_program = pq.Program()
 
     #Reference State Prep
