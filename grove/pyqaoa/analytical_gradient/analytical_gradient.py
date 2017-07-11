@@ -98,8 +98,8 @@ if __name__ == "__main__":
     #gamma = np.pi/2
     #beta = np.pi/4
     #gamma = np.pi/4
-    beta = 1.2
-    gamma = 1.3
+    beta = 1.3
+    gamma = 1.2
     params = [beta, gamma]
 
     step_index = 1
@@ -113,8 +113,8 @@ if __name__ == "__main__":
     full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
         num_qubits)
     full_program = gradient_component_program
-    print(full_program)
-    numeric_expectation = -2*expectation_value.expectation(full_program,
+    #print(full_program)
+    numeric_expectation = -expectation_value.expectation(full_program,
         full_cost_hamiltonian, qvm_connection)
     print(numeric_expectation)
     analytic_expectation = expectation_value.get_ag_expectation_p1_cost(beta, gamma)

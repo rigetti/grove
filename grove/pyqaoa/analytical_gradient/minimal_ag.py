@@ -55,29 +55,58 @@ if __name__ == "__main__":
     """Constructs a minimal ag implementation
     """
 
+    qvm = api.SyncConnection()
+
+    #########################################
+    #Constructs the cost hamiltonian program#
+    #########################################
+    cost_hamiltonian_program = pq.Program()
+
+    #Cost Hamiltonian
+    cost_hamiltonian_program.inst(Z(0))
+    cost_hamiltonian_program.inst(Z(1))
+    #Ancilla Hamiltonian
+    cost_hamiltonian_program.inst(Z(2))
+
     gamma, beta = 1.2, 1.3
 
-    #Constructs the cost gradient
+    ######################################
+    #Constructs the cost gradient program#
+    ######################################
     cost_gradient_program = pq.Program()
 
+    #Reference State Prep
     cost_gradient_program.inst(H(0))
     cost_gradient_program.inst(H(1))
+    #Ancilla Prep
     cost_gradient_program.inst(H(2))
 
+    #Z(0) and Z(1) gates become CZ(0) and CZ(1) gates respectively
     cost_gradient_program.inst(CPHASE(np.pi)(2,0))
     cost_gradient_program.inst(CPHASE(np.pi)(2,1))
 
+    #The exponentiated Z(0)Z(1) term
     cost_gradient_program.inst(CNOT(0,1))
     cost_gradient_program.inst(RZ(gamma)(1))
     cost_gradient_program.inst(CNOT(0,1))
 
+    #The exponentiated X(0) Term
     cost_gradient_program.inst(H(0))
     cost_gradient_program.inst(RZ(beta)(0))
     cost_gradient_program.inst(H(0))
 
+    #The exponentiated X(1) Term
     cost_gradient_program.inst(H(1))
     cost_gradient_program.inst(RZ(beta)(1))
     cost_gradient_program.inst(H(1))
 
+    #The final ancilla Operations
     cost_gradient_program.inst(S(2))
     cost_gradient_program.inst(H(2))
+
+    print(cost_gradient_program)
+    print(cost_hamiltonian_program)
+
+    expectation = qvm.expectation(cost_gradient_program,
+            operator_programs=[cost_hamiltonian_program])[0]
+    print(expectation)

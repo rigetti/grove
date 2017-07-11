@@ -97,11 +97,11 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
             #The terms for a given step are all sigma_x operators and hence commute,
             #so you can simply exponentiate in sequence.`
             this_step_driver_unitary = exponentiate_hamiltonian(
-                driver_hamiltonian, this_step_betas)
+                driver_hamiltonian, this_step_betas/2)
             #The terms for a given_step are all sigma_z operators and hence commute,
             #so you can simply exponentiate in sequence.
             this_step_cost_unitary = exponentiate_hamiltonian(
-                cost_hamiltonian, this_step_gammas)
+                cost_hamiltonian, this_step_gammas/2)
 
             parameterized_program += this_step_cost_unitary
             parameterized_program += this_step_driver_unitary
@@ -136,10 +136,10 @@ if __name__ == "__main__":
     steps = 1 #the number of trotterization steps
     program_parameterizer, reference_state_program, cost_hamiltonian, num_qubits = \
         maxcut_qaoa_constructor(test_graph_edges, steps)
-    beta = np.pi/8
-    gamma = np.pi/4
-    #beta = 1.5
-    #gamma = 1.2
+    #beta = np.pi/8
+    #gamma = np.pi/4
+    beta = 1.3
+    gamma = 1.2
 
     test_params = [beta, gamma]
     parameterized_program, unitary_structure, hermitian_structure = \
