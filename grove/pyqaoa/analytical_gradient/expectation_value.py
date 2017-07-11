@@ -10,7 +10,6 @@ import pyquil.api as api
 from pyquil.gates import *
 from pyquil.paulis import *
 
-
 def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
     """
     Computes the expectation value of the pauli_sum over the distribution

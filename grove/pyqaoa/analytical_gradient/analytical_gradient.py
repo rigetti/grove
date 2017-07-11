@@ -34,8 +34,12 @@ def insert_ancilla_controlled_hermitian(gradient_component_programs,
         controlled_operator = make_controlled(operator_name)
         qubit_index = gate.arguments[0]
         controlled_gate = controlled_operator(ancilla_qubit_index, qubit_index)
-        new_gradient_component_programs.append(gradient_component_programs[0] +
-                                               controlled_gate)
+        if hamiltonian_type == "driver":
+            new_gradient_component_programs.append(gradient_component_programs[0] +
+                                                   controlled_gate)
+        if hamiltonian_type == "cost":
+            gradient_component_programs[0].inst(controlled_gate)
+            new_gradient_component_programs = gradient_component_programs
     return new_gradient_component_programs
 
 def get_analytical_gradient_component_qaoa(program_parameterizer, params,
@@ -46,7 +50,7 @@ def get_analytical_gradient_component_qaoa(program_parameterizer, params,
     gradient_component_programs = [reference_state_program]
     unitary_program, unitary_structure, hermitian_structure = \
         program_parameterizer(params)
-
+    #The Hermitian Structure needs to flag if the operators are serial or parallel
     ancilla_qubit_index = num_qubits
     for gradient_component_program in gradient_component_programs:
         gradient_component_program.inst(H(ancilla_qubit_index))
@@ -104,7 +108,7 @@ if __name__ == "__main__":
     numerical_expectations = [expectation_value.expectation(
         gradient_component_program, full_cost_hamiltonian, qvm_connection)
         for gradient_component_program in gradient_component_programs]
-    numerical_expectation = sum(numerical_expectations)
+    numerical_expectation = -sum(numerical_expectations)
     print(numerical_expectation)
     #driver_expectation = 2*np.cos(2*beta)*np.sin(gamma)
     #print(driver_expectation)
