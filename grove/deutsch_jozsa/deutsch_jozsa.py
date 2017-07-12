@@ -16,22 +16,22 @@ def oracle_function(unitary_funct, qubits, ancilla):
 
     Allocates one scratch bit.
 
-    :param 2darray unitary_funct: Matrix representation of the function f, i.e. the
-                                   unitary transformation that must be applied to a
-                                   state |x> to put f(x) in qubit 0, where f(x)
-                                   returns either 0 or 1 for any n-bit string x.
-    :param 1d array qubits: List of qubits that enter as input |x>.
+    :param np.array unitary_funct: Matrix representation of the function f, i.e. the
+        unitary transformation that must be applied to a state |x> to put f(x) in qubit 0, where
+        f(x) returns either 0 or 1 for any n-bit string x
+    :param np.array qubits: List of qubits that enter as input |x>.
     :param Qubit ancilla: Qubit to serve as input |y>.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
     if not is_unitary(unitary_funct):
-        raise ValueError, "Function must be unitary."
+        raise ValueError("Function must be unitary.")
     p = pq.Program()
     scratch_bit = p.alloc()
     bits_for_funct = [scratch_bit] + qubits
     p.defgate("FUNCT", unitary_funct)
     p.defgate("FUNCT-INV", unitary_funct.T.conj())
+    # TODO Remove the cast to tuple once this is supported.
     p.inst(tuple(['FUNCT'] + bits_for_funct))
     p.inst(CNOT(qubits[0], ancilla))
     p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
@@ -63,6 +63,7 @@ def deutsch_jozsa(oracle, qubits, ancilla):
     p += oracle
     p.inst(map(H, qubits))
     return p
+
 
 def unitary_function(mappings):
     """
@@ -96,10 +97,10 @@ def unitary_function(mappings):
     swap_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
                             [0, 1, 0, 0], [0, 0, 0, 1]])
 
-    if sum(mappings) == 0: # Only zeros were entered
+    if sum(mappings) == 0:  # Only zeros were entered
         return np.kron(swap_matrix, np.identity(2 ** (n - 1)))
 
-    elif sum(mappings) == 2 ** (n - 1): # Half of the entries were 0, half 1
+    elif sum(mappings) == 2 ** (n - 1):  # Half of the entries were 0, half 1
         unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
         index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
         for j in xrange(2 ** n):
@@ -109,7 +110,7 @@ def unitary_function(mappings):
 
     elif sum(mappings) == 2 ** n: # Only ones were entered
         X_gate = np.array([[0, 1], [1, 0]])
-        return  np.kron(swap_matrix, np.identity(2 ** (n - 1))).dot(
+        return np.kron(swap_matrix, np.identity(2 ** (n - 1))).dot(
             np.kron(X_gate, np.identity(2 ** n)))
     else:
         raise ValueError("f(x) must be constant or balanced")
