@@ -15,15 +15,25 @@
 ##############################################################################
 
 import numpy as np
-from grove.pyqaoa.qaoa import QAOA
-from grove.pyqaoa.utils import compare_progs
 import pyquil.api as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
 from pyquil.wavefunction import Wavefunction
-from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
+
+import sys, os
+#Add the local qaoa and vqe directories
+dirname = os.path.dirname(os.path.abspath(__file__))
+qaoa_dir = os.path.join(dirname, '..')
+vqe_dir = os.path.join(dirname, '../../pyvqe')
+sys.path.append(qaoa_dir)
+sys.path.append(vqe_dir)
+
+#Use the local versions of the qaoa and vqe code
+from qaoa import QAOA
+from utils import compare_progs
+from vqe import VQE
 
 
 def test_probabilities():
