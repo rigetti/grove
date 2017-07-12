@@ -18,7 +18,8 @@ def oracle_function(unitary_funct, qubits, ancilla):
 
     :param 2darray unitary_funct: Matrix representation of the function f, i.e. the
                                    unitary transformation that must be applied to a
-                                   state |x> to put f(x) in qubit 0.
+                                   state |x> to put f(x) in qubit 0, where f(x) is
+                                   always either 0 or 1.
     :param 1d array qubits: List of qubits that enter as input |x>.
     :param Qubit ancilla: Qubit to serve as input |y>.
     :return: A program that performs the above unitary transformation.
