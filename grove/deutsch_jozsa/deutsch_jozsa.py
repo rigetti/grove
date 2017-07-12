@@ -87,11 +87,11 @@ def unitary_function(mappings):
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
-    assert len(mappings) >= 2, "Mappings must be over at least one bit"
+    assert len(mappings) >= 2, "mappings must be over at least one bit"
     assert 2 ** int(np.ceil(np.log2(len(mappings)))) == len(mappings), \
-        "Mappings' length must be a power of 2"
+        "mappings length must be a power of 2"
     assert len([i for i in mappings if i not in [0, 1]]) == 0, \
-        "Mappings can only contain binary values"
+        "mappings can only contain binary values"
 
     n = int(np.log2(len(mappings)))
     swap_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0],
@@ -103,15 +103,15 @@ def unitary_function(mappings):
     elif sum(mappings) == 2 ** (n - 1):  # Half of the entries were 0, half 1
         unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
         index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
-        for j in xrange(2 ** n):
+        for j in range(2 ** n):
             i = index_lists[mappings[j]].pop()
             unitary_funct[i, j] = 1
         return np.kron(np.identity(2), unitary_funct)
 
-    elif sum(mappings) == 2 ** n: # Only ones were entered
-        X_gate = np.array([[0, 1], [1, 0]])
+    elif sum(mappings) == 2 ** n:  # Only ones were entered
+        x_gate = np.array([[0, 1], [1, 0]])
         return np.kron(swap_matrix, np.identity(2 ** (n - 1))).dot(
-            np.kron(X_gate, np.identity(2 ** n)))
+            np.kron(x_gate, np.identity(2 ** n)))
     else:
         raise ValueError("f(x) must be constant or balanced")
 
@@ -127,12 +127,13 @@ def integer_to_bitstring(x, n):
     """
     return ''.join([str((x >> i) & 1) for i in range(0, n)])
 
+
 def is_unitary(mat):
     """
     Checks if a matrix is unitary.
 
-    :param 2darray mat: The matrix
-    :return: Whether or not mat is unitary
+    :param np.array mat: The matrix to check.
+    :return: Whether or not mat is unitary.
     :rtype: bool
     """
     rows, cols = mat.shape
@@ -148,13 +149,13 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print "Enter f(x) for the following n-bit inputs:"
     mappings = []
-    for i in xrange(2 ** n):
+    for i in range(2 ** n):
         val = int(input(integer_to_bitstring(i, n) + ': '))
-        assert val in [0,1], "f(x) must return only 0 and 1"
+        assert val in [0, 1], "f(x) must return only 0 and 1"
         mappings.append(val)
 
     deutsch_program = pq.Program()
-    qubits = [deutsch_program.alloc() for _ in xrange(n)]
+    qubits = [deutsch_program.alloc() for _ in range(n)]
     ancilla = deutsch_program.alloc()
 
     unitary_funct = unitary_function(mappings)
