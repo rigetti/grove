@@ -1,4 +1,5 @@
 from grove.fermion_transforms.jwtransform import JWTransform
+from itertools import product
 
 
 def test_create():
@@ -28,3 +29,20 @@ def test_hopping():
     jw = JWTransform()
     hopping = jw.create(2)*jw.kill(0) + jw.create(0)*jw.kill(2)
     assert '(0.5+0j)*X0*Z1*X2 + (0.5+0j)*Y0*Z1*Y2' == hopping.__str__()
+
+def test_multi_ops():
+    """
+    test construction of Paulis for product of second quantized operators
+    """
+    jw = JWTransform()
+    # test on one particle density matrix
+    for p, q, in product(range(6), repeat=2):
+        truth = jw.create(p)*jw.kill(q)
+        prod_ops_out = jw.product_ops([p, q], [-1, 1])
+        assert truth.__str__() == prod_ops_out.__str__()
+
+    # test on two particle density matrix
+    for p, q, r, s in product(range(4), repeat=4):
+        truth = jw.create(p)*jw.create(q)*jw.kill(s)*jw.kill(r)
+        prod_ops_out = jw.product_ops([p, q, s, r], [-1, -1, 1, 1])
+        assert truth.__str__() == prod_ops_out.__str__()
