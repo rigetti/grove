@@ -14,14 +14,22 @@
 #    limitations under the License.
 ##############################################################################
 
+import sys, os
+#Add the local qaoa and vqe directories
+dirname = os.path.dirname(os.path.abspath(__file__))
+vqe_dir = os.path.join(dirname, '../../pyvqe')
+sys.path.append(vqe_dir)
+
 from collections import Counter
 from scipy import optimize
 import numpy as np
-from grove.pyvqe.vqe import VQE
+
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
 
+#from grove.pyvqe.vqe import VQE
+import vqe
 
 class QAOA(object):
     def __init__(self, qvm, n_qubits, steps=1, init_betas=None,
@@ -185,14 +193,14 @@ class QAOA(object):
                   angles for the optimal solution.
         """
         stacked_params = np.hstack((self.betas, self.gammas))
-        vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
+        vqe_inst = vqe.VQE(self.minimizer, minimizer_args=self.minimizer_args,
                   minimizer_kwargs=self.minimizer_kwargs)
         cost_ham = reduce(lambda x, y: x + y, self.cost_ham)
         # maximizing the cost function!
         param_prog = self.get_parameterized_program()
-        result = vqe.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
-                             **self.vqe_options)
-        self.repetition_cost = vqe.repetition_cost
+        result = vqe_inst.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
+                                  **self.vqe_options)
+        self.repetition_cost = vqe_inst.repetition_cost
         self.result = result
         betas = result.x[:self.steps]
         gammas = result.x[self.steps:]

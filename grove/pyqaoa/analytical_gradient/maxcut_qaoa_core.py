@@ -5,11 +5,8 @@ This module prepares and evaluates the MAXCUT QAOA expectation value.
 import numpy as np
 import networkx as nx
 import pyquil.quil as pq
-import pyquil.api as api
 from pyquil.gates import *
 from pyquil.paulis import *
-
-import expectation_value
 
 
 def edges_to_graph(graph_edges):
@@ -68,25 +65,65 @@ def get_driver_hamiltonian(graph):
         driver_program.inst(X(qubit_index))
     return driver_hamiltonian, driver_program
 
-def exponentiate_hamiltonian(hamiltonian, parameters):
+def exponentiate_hamiltonian(hamiltonian, parameter):
     """
     Generates a unitary operator from a hamiltonian and a set of parameters
     :param (PauliSum) hamiltonian: a hermitian hamiltonian
-    :param (list[float]) parameters: the coefficient in the exponential
+    :param (float) parameter: the coefficient in the exponential
     :return (pq.Program) unitary: the program generated from the hamiltonian
     """
     unitary = pq.Program()
     for term in hamiltonian:
         exponentiated_term = exponential_map(term)
-        unitary_term = exponentiated_term(parameters)
+        unitary_term = exponentiated_term(parameter)
         unitary += unitary_term
     return unitary
 
 def pauli_term_to_gate(pauli_term):
-    qubit_index, operator = pauli_term
+    """
+    Converts a PauliTerm to the corresponding Gate
+    :param (PauliTerm) pauli_term: consists of a qubit index and operator
+    :param (Gate) gate: looked in the STANDARD_GATES dict
+    """
+    qubit_index, operator = list(pauli_term)[0]
     gate = STANDARD_GATES[operator](qubit_index)
     return gate
 
+def get_program_parameterizer(steps, hamiltonian):
+    """
+    Creates a function for parametrically generating maxcut qaoa pyquil programs
+    :param (int) steps: also known as the "level" or "p"
+    :param (PauliSum) hamiltonian: generates the parameterized unitaries
+    :return (function) program_parameterizer: maps angles to a pyquil program
+    """
+
+    def program_parameterizer(angles):
+        """
+        Creates a list of parameterized unitaries
+        :param (list[floats]) angles: the exponentiation angle for each step
+        :return (pq.Program()) parameterized_program: for maxcut qaoa
+        """
+        if len(angles) != steps:
+            raise ValueError("""len(params) doesn't match the number of
+                parameters required by `steps`""")
+        unitaries_list = [exponentiate_hamiltonian(hamiltonian, step_angle/2)
+            for step_angle in angles]
+        return unitaries_list
+
+    return program_parameterizer
+
+def operators_lists_to_program(operators_lists):
+    zipped_operators = zip(*operators_lists)
+    program = pq.Program()
+    for operators_slice in zipped_unitaries:
+        for operator in operators_slice:
+            program += operator
+    return program
+
+#def create_hermitian_structure():
+
+
+#Reduce the complexity
 def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
         driver_hamiltonian, cost_program, driver_program):
     """
@@ -116,30 +153,30 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
 
         parameterized_program = pq.Program()
 
-        hermitian_structure = {}
-        unitary_structure = {}
+        #hermitian_structure = {}
+        #unitary_structure = {}
 
         for step_index in xrange(steps):
 
-            unitary_structure[step_index + 1] = {}
-            hermitian_structure[step_index + 1] = {}
+            #unitary_structure[step_index + 1] = {}
+            #hermitian_structure[step_index + 1] = {}
 
-            this_step_betas = betas[step_index]
-            this_step_gammas = gammas[step_index]
+            this_step_beta = betas[step_index]
+            this_step_gamma = gammas[step_index]
 
             #The terms for a given step are all sigma_x operators and hence
             #commute, so you can simply exponentiate in sequence.`
             this_step_driver_unitary = exponentiate_hamiltonian(
-                driver_hamiltonian, this_step_betas/2)
+                driver_hamiltonian, this_step_beta/2)
             #The terms for a given_step are all sigma_z operators and hence
             #commute, so you can simply exponentiate in sequence.
             this_step_cost_unitary = exponentiate_hamiltonian(
-                cost_hamiltonian, this_step_gammas/2)
+                cost_hamiltonian, this_step_gamma/2)
 
             parameterized_program += this_step_cost_unitary
             parameterized_program += this_step_driver_unitary
 
-            #Look at the expectation code for a method to convert PauliSums into Programs
+            """
             hermitian_structure[step_index + 1]["cost"] = [term for term in
                 cost_program]
             hermitian_structure[step_index + 1]["driver"] = [term for term in
@@ -149,10 +186,12 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
                 this_step_cost_unitary]
             unitary_structure[step_index + 1]["driver"] = [term for term in
                 this_step_driver_unitary]
+            """
 
-        return parameterized_program, unitary_structure, hermitian_structure
+        return parameterized_program
 
     return program_parameterizer
+
 
 def maxcut_qaoa_constructor(graph_edges, steps):
     """
@@ -168,27 +207,3 @@ def maxcut_qaoa_constructor(graph_edges, steps):
         cost_hamiltonian, driver_hamiltonian, cost_program, driver_program)
     return (program_parameterizer, reference_state_program,
             cost_hamiltonian, num_qubits)
-
-#Migrate this into the test folder
-if __name__ == "__main__":
-    test_graph_edges = [(0,1)]
-    steps = 1 #the number of trotterization steps
-    program_parameterizer, reference_state_program, cost_hamiltonian, num_qubits = \
-        maxcut_qaoa_constructor(test_graph_edges, steps)
-    #beta = np.pi/8
-    #gamma = np.pi/4
-    beta = 1.3
-    gamma = 1.2
-
-    test_params = [beta, gamma]
-    parameterized_program, unitary_structure, hermitian_structure = \
-        program_parameterizer(test_params)
-    full_program = reference_state_program + parameterized_program
-    print(full_program)
-    qvm_connection = api.SyncConnection()
-    analytic_expectation = expectation_value.get_analytic_expectation_p1(
-        beta, gamma)
-    numeric_expectation = expectation_value.expectation(full_program,
-        cost_hamiltonian, qvm_connection)
-    print(analytic_expectation)
-    print(numeric_expectation)
