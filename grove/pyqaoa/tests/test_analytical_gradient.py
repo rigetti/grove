@@ -93,6 +93,14 @@ def test_get_program_parameterizer():
     for idx in xrange(len(angles)):
         utils.compare_progs(unitaries_list[idx], comparison_unitaries_list[idx])
 
+def test_zip_programs_lists():
+    programs_list_A = [X(0), X(1)]
+    programs_list_B = [Y(0), Y(1)]
+    program = maxcut_qaoa_core.zip_programs_lists([programs_list_A,
+                                                   programs_list_B])
+    comparison_program = pq.Program().inst(X(0), Y(0), X(1), Y(1))
+    utils.compare_progs(program, comparison_program)
+
 def test_maxcut_qaoa_expectation_value():
     graph_edges = [(0,1)]
     steps = 1
@@ -100,8 +108,14 @@ def test_maxcut_qaoa_expectation_value():
     gamma = 1.2
     angles = [beta, gamma]
 
-    program_parameterizer, reference_state_program, cost_hamiltonian, num_qubits = \
-	maxcut_qaoa_core.maxcut_qaoa_constructor(graph_edges, steps)
+    graph = maxcut_qaoa_core.edges_to_graph(graph_edges)
+    num_qubits = len(graph.nodes())
+    reference_state_program = maxcut_qaoa_core.construct_reference_state_program(num_qubits)
+    cost_hamiltonian, _ = maxcut_qaoa_core.get_cost_hamiltonian(graph)
+    driver_hamiltonian, _ = maxcut_qaoa_core.get_driver_hamiltonian(graph)
+    program_parameterizer = maxcut_qaoa_core.get_program_parameterizer_maxcut(steps,
+	cost_hamiltonian, driver_hamiltonian)
+
     parameterized_program = program_parameterizer(angles)
 
     full_program = reference_state_program + parameterized_program
@@ -120,4 +134,5 @@ if __name__ == "__main__":
     test_exponentiate_hamiltonian()
     test_pauli_term_to_gate()
     test_get_program_parameterizer()
+    test_zip_programs_lists()
     test_maxcut_qaoa_expectation_value()
