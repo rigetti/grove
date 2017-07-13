@@ -160,7 +160,6 @@ if __name__ == "__main__":
     #print(driver_gradient_program)
     #print(cost_hamiltonian_program)
 
-    #The qvm.expectation is clearly breaking...
     right_program = driver_gradient_program + cost_hamiltonian_program
     left_program = driver_gradient_program
     #print(right_program)
