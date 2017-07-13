@@ -51,17 +51,14 @@ def test_reference_state_program():
 def test_get_cost_hamiltonian():
     n_2_path_graph_edges = [(0,1)]
     n_2_path_graph = maxcut_qaoa_core.edges_to_graph(n_2_path_graph_edges)
-    cost_hamiltonian, cost_program = maxcut_qaoa_core.get_cost_hamiltonian(
-        n_2_path_graph)
+    cost_hamiltonian= maxcut_qaoa_core.get_cost_hamiltonian(n_2_path_graph)
     comparison_hamiltonian = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1)])
-    comparison_program = pq.Program().inst(Z(0)).inst(Z(1))
     utils.compare_paulisums(cost_hamiltonian, comparison_hamiltonian)
-    utils.compare_progs(cost_program, comparison_program)
 
 def test_get_driver_hamiltonian():
     n_2_path_graph_edges = [(0,1)]
     n_2_path_graph = maxcut_qaoa_core.edges_to_graph(n_2_path_graph_edges)
-    driver_hamiltonian, driver_program = maxcut_qaoa_core.get_driver_hamiltonian(
+    driver_hamiltonian = maxcut_qaoa_core.get_driver_hamiltonian(
         n_2_path_graph)
     reference_hamiltonian = (PauliSum([PauliTerm("X", 0, 1.0)]) +
                              PauliSum([PauliTerm("X", 1, 1.0)]))
@@ -104,27 +101,28 @@ def test_zip_programs_lists():
 def test_maxcut_qaoa_expectation_value():
     graph_edges = [(0,1)]
     steps = 1
-    beta = 1.3
-    gamma = 1.2
-    angles = [beta, gamma]
+    betas = [1.3]
+    gammas = [1.2]
 
     graph = maxcut_qaoa_core.edges_to_graph(graph_edges)
     num_qubits = len(graph.nodes())
     reference_state_program = maxcut_qaoa_core.construct_reference_state_program(num_qubits)
-    cost_hamiltonian, _ = maxcut_qaoa_core.get_cost_hamiltonian(graph)
-    driver_hamiltonian, _ = maxcut_qaoa_core.get_driver_hamiltonian(graph)
-    program_parameterizer = maxcut_qaoa_core.get_program_parameterizer_maxcut(steps,
-	cost_hamiltonian, driver_hamiltonian)
-
-    parameterized_program = program_parameterizer(angles)
-
-    full_program = reference_state_program + parameterized_program
+    cost_hamiltonian = maxcut_qaoa_core.get_cost_hamiltonian(graph)
+    driver_hamiltonian = maxcut_qaoa_core.get_driver_hamiltonian(graph)
+    cost_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
+        steps, cost_hamiltonian)(gammas)
+    driver_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
+        steps, driver_hamiltonian)(betas)
+    maxcut_qaoa_unitary_program = maxcut_qaoa_core.zip_programs_lists(
+        [cost_unitary_list, driver_unitary_list])
+    full_program = reference_state_program + maxcut_qaoa_unitary_program
     qvm_connection = api.SyncConnection()
     numerical_expectation_value = expectation_value.expectation(full_program,
         cost_hamiltonian, qvm_connection)
 
-    analytical_expectation_value = np.sin(2*beta)*np.sin(gamma)
+    analytical_expectation_value = np.sin(2*betas[0])*np.sin(gammas[0])
     assert round(analytical_expectation_value, 6) == round(numerical_expectation_value,6)
+
 
 if __name__ == "__main__":
     test_edges_to_graph()
