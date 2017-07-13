@@ -28,6 +28,8 @@ of which has its own self-contained documentation.
    phaseestimation
    grover
    bernstein_vazirani
+   deutsch_jozsa
+   arbitrary_state
 
 Indices and Tables
 __________________
