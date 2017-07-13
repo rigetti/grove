@@ -12,17 +12,23 @@ from pyquil.paulis import *
 import expectation_value
 
 
-def edges_to_graph(edges_list):
-    """Converts a list of edges into a networkx graph object
+def edges_to_graph(graph_edges):
+    """
+    Converts a list of edges into a networkx graph object
+    :param (list[tuple[int]]) graph_edges: list of int pairs e.g. [(0,1), (0,2)]
+    :return (networkx.Graph) graph: a graph defined by the given edges_list
     """
     maxcut_graph = nx.Graph()
-    for edge in edges_list:
+    for edge in graph_edges:
         maxcut_graph.add_edge(*edge)
     graph = maxcut_graph.copy()
     return graph
 
 def construct_reference_state_program(num_qubits):
-    """Constructs the standard reference state for QAOA - "s"
+    """
+    Constructs the program for the standard reference state for QAOA - "s"
+    :param (int) num_qubits: the number of qubits in the reference state
+    :return (Program) reference_state_program: the pyquil program
     """
     reference_state_program = pq.Program()
     for qubit_index in xrange(num_qubits):
@@ -31,6 +37,12 @@ def construct_reference_state_program(num_qubits):
     return reference_state_program
 
 def get_cost_hamiltonian(graph):
+    """
+    Constructs the cost hamiltonian for a given graph
+    :param (networkx.Graph) graph: a graph where each node is a qubit index
+    :return (PauliSum) cost_hamiltonian: the hamiltonian for the cost function
+    :return (pq.Program) cost_program: evolves a state with the
+    """
     cost_hamiltonian = PauliSum([])
     cost_program = pq.Program()
     for qubit_index_A, qubit_index_B in graph.edges():
@@ -42,6 +54,12 @@ def get_cost_hamiltonian(graph):
     return cost_hamiltonian, cost_program
 
 def get_driver_hamiltonian(graph):
+    """
+    Constructs the driver hamiltonian for a given graph
+    :param (networkx.Graph) graph: a graph where each node is a qubit index
+    :return (PauliSum) driver_hamiltonian: hamiltonian for the driver function
+    :return (pq.Program) driver_program: evolves a state according to the driver
+    """
     driver_hamiltonian = PauliSum([])
     driver_program = pq.Program()
     for qubit_index in graph.nodes():
@@ -51,6 +69,12 @@ def get_driver_hamiltonian(graph):
     return driver_hamiltonian, driver_program
 
 def exponentiate_hamiltonian(hamiltonian, parameters):
+    """
+    Generates a unitary operator from a hamiltonian and a set of parameters
+    :param (PauliSum) hamiltonian: a hermitian hamiltonian
+    :param (list[float]) parameters: the coefficient in the exponential
+    :return (pq.Program) unitary: the program generated from the hamiltonian
+    """
     unitary = pq.Program()
     for term in hamiltonian:
         exponentiated_term = exponential_map(term)
@@ -58,20 +82,30 @@ def exponentiate_hamiltonian(hamiltonian, parameters):
         unitary += unitary_term
     return unitary
 
+def pauli_term_to_gate(pauli_term):
+    qubit_index, operator = pauli_term
+    gate = STANDARD_GATES[operator](qubit_index)
+    return gate
+
 def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
         driver_hamiltonian, cost_program, driver_program):
     """
-    Return a function that accepts parameters and returns a list of
-    pyquil programs constituting a full pyquil program
+    Creates a function for parametrically generating maxcut qaoa pyquil programs
+    :param (int) steps: also known as the "level" or "p"
+    :param (PauliSum) cost_hamiltonian: the hamiltonian for the cost function
+    :param (PauliSum) driver_hamiltonian: hamiltonian for the driver function
+    :param (pq.Program) cost_program: encodes the hermitian structure
+    :param (pq.Program) driver_program: encodes the hermitian structure
+    :return (function) program_parameterizer: maps params to a pyquil program
     """
 
     def program_parameterizer(params):
-        """Constructs the pyquil program which rotates the reference state
-            using the cost hamiltonian and driver hamiltonian according to
-            the given parameters
+        """
+        Constructs the pyquil program which alters the reference state using the
+        cost hamiltonian and driver hamiltonian according to the given params
 
-        :param params: an array of 2*p angles, betas first, then gammas
-        :return: a list of pyquil programs
+        :param (list[floats]) params: betas first, then gammas
+        :return (pq.Program()) parameterized_program: for maxcut qaoa
         """
         if len(params) != 2*steps:
             raise ValueError("""len(params) doesn't match the number of
@@ -81,7 +115,6 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
         gammas = params[steps:]
 
         parameterized_program = pq.Program()
-        #parameterized_program += reference_state_program
 
         hermitian_structure = {}
         unitary_structure = {}
@@ -94,18 +127,19 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
             this_step_betas = betas[step_index]
             this_step_gammas = gammas[step_index]
 
-            #The terms for a given step are all sigma_x operators and hence commute,
-            #so you can simply exponentiate in sequence.`
+            #The terms for a given step are all sigma_x operators and hence
+            #commute, so you can simply exponentiate in sequence.`
             this_step_driver_unitary = exponentiate_hamiltonian(
                 driver_hamiltonian, this_step_betas/2)
-            #The terms for a given_step are all sigma_z operators and hence commute,
-            #so you can simply exponentiate in sequence.
+            #The terms for a given_step are all sigma_z operators and hence
+            #commute, so you can simply exponentiate in sequence.
             this_step_cost_unitary = exponentiate_hamiltonian(
                 cost_hamiltonian, this_step_gammas/2)
 
             parameterized_program += this_step_cost_unitary
             parameterized_program += this_step_driver_unitary
 
+            #Look at the expectation code for a method to convert PauliSums into Programs
             hermitian_structure[step_index + 1]["cost"] = [term for term in
                 cost_program]
             hermitian_structure[step_index + 1]["driver"] = [term for term in
@@ -121,6 +155,10 @@ def get_program_parameterizer_maxcut(steps, cost_hamiltonian,
     return program_parameterizer
 
 def maxcut_qaoa_constructor(graph_edges, steps):
+    """
+    Convenience function which wraps the intermediate functions
+    :param (list[tuple[int]]) graph_edges: list of int pairs e.g. [(0,1), (0,2)]
+    """
     graph = edges_to_graph(graph_edges)
     num_qubits = len(graph.nodes())
     reference_state_program = construct_reference_state_program(num_qubits)
@@ -131,6 +169,7 @@ def maxcut_qaoa_constructor(graph_edges, steps):
     return (program_parameterizer, reference_state_program,
             cost_hamiltonian, num_qubits)
 
+#Migrate this into the test folder
 if __name__ == "__main__":
     test_graph_edges = [(0,1)]
     steps = 1 #the number of trotterization steps
