@@ -30,6 +30,7 @@ from pyquil.gates import *
 from pyquil.paulis import *
 
 import analytical_gradient
+import maxcut_qaoa_core
 import utils
 import expectation_value
 
@@ -62,6 +63,18 @@ def test_hamiltonian_to_programs():
     for idx in xrange(len(programs)):
         utils.compare_progs(programs[idx], comparison_programs[idx])
 
+def test_get_analytical_derivative_unitary_product():
+    generator = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    parameter = 1.0
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
+    analytical_derivative = analytical_gradient.get_analytical_derivative_unitary(
+        unitary, generator, make_controlled)
+    comparison_programs = [pq.Program().inst(CPHASE(np.pi)(2, 0),
+        CPHASE(np.pi)(2, 1)) + unitary]
+    for idx in xrange(len(analytical_derivative)):
+        utils.compare_progs(analytical_derivative[idx], comparison_programs[idx])
+
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
     steps = 1
@@ -78,6 +91,23 @@ def test_analytical_gradient_expectation_value():
     driver_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
         steps, driver_hamiltonian)(betas)
 
+    gradient_component_programs = get_analytical_gradient_component_qaoa(
+         program_parameterizer, params, reference_state_program,
+         num_qubits, step_index, hamiltonian_type)
+    for program in gradient_component_programs:
+	print(program)
+    full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
+	num_qubits)
+    numerical_expectations = [expectation_value.expectation(
+	gradient_component_program, full_cost_hamiltonian, qvm_connection)
+	for gradient_component_program in gradient_component_programs]
+    numerical_expectation = -sum(numerical_expectations)
+    print(numerical_expectation)
+    #driver_expectation = 2*np.cos(2*beta)*np.sin(gamma)
+    #print(driver_expectation)
+    cost_expectation = np.sin(2*beta)*np.cos(gamma)
+    print(cost_expectation)
+
     #maxcut_qaoa_unitary_program = maxcut_qaoa_core.zip_programs_lists(
     #    [cost_unitary_list, driver_unitary_list])
     full_program = reference_state_program + maxcut_qaoa_unitary_program
@@ -93,3 +123,4 @@ if __name__ == "__main__":
     test_generate_make_controlled()
     test_pauli_term_to_program()
     test_hamiltonian_to_programs()
+    test_get_analytical_derivative_unitary_product()
