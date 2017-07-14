@@ -52,28 +52,77 @@ def test_pauli_term_to_program():
     comparison_program = pq.Program().inst(CNOT(2,0), CNOT(2,1))
     utils.compare_progs(program, comparison_program)
 
-def test_hamiltonian_to_programs():
+def test_hamiltonian_to_program_branches():
     hamiltonian = (PauliTerm("X", 0, 1.0)*PauliTerm("X", 1, 1.0) +
                    PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0))
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    programs = analytical_gradient.hamiltonian_to_programs(hamiltonian,
-        make_controlled)
+    program_branches = analytical_gradient.hamiltonian_to_program_branches(
+        hamiltonian, make_controlled)
     comparison_programs = [pq.Program().inst(CNOT(2, 0), CNOT(2, 1)),
         pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1))]
-    for idx in xrange(len(programs)):
-        utils.compare_progs(programs[idx], comparison_programs[idx])
+    for idx in xrange(len(program_branches)):
+        utils.compare_progs(program_branches[idx], comparison_programs[idx])
 
 def test_get_analytical_derivative_unitary_product():
     generator = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
     parameter = 1.0
     make_controlled = analytical_gradient.generate_make_controlled(2)
     unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
-    analytical_derivative = analytical_gradient.get_analytical_derivative_unitary(
+    analytical_derivative_branches = \
+        analytical_gradient.get_analytical_derivative_branches(
         unitary, generator, make_controlled)
     comparison_programs = [pq.Program().inst(CPHASE(np.pi)(2, 0),
         CPHASE(np.pi)(2, 1)) + unitary]
-    for idx in xrange(len(analytical_derivative)):
-        utils.compare_progs(analytical_derivative[idx], comparison_programs[idx])
+    for idx in xrange(len(analytical_derivative_branches)):
+        utils.compare_progs(analytical_derivative_branches[idx],
+                                       comparison_programs[idx])
+
+def test_get_analytical_derivative_unitary_sum():
+    generator = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    parameter = 1.0
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
+    analytical_derivative_branches = \
+        analytical_gradient.get_analytical_derivative_branches(
+        unitary, generator, make_controlled)
+    comparison_programs = [pq.Program().inst(CNOT(2, 0)) + unitary,
+                           pq.Program().inst(CNOT(2, 1)) + unitary]
+    for idx in xrange(len(analytical_derivative_branches)):
+        utils.compare_progs(analytical_derivative_branches[idx],
+                                       comparison_programs[idx])
+
+def test_unitaries_list_to_analytical_derivatives_list_branches():
+    step_index = 0
+    hamiltonian = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    unitary_step_0 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.1)
+    unitary_step_1 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.7)
+    unitaries_list = [unitary_step_0, unitary_step_1]
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    analytical_derivatives_list_branches = \
+        analytical_gradient.unitaries_list_to_analytical_derivatives_list_branches(
+        step_index, hamiltonian, unitaries_list, make_controlled)
+    comparison_programs_list_branch_A = [
+        pq.Program().inst(CNOT(2, 0)) + unitary_step_0, unitary_step_1]
+    comparison_programs_list_branch_B = [
+        pq.Program().inst(CNOT(2, 1)) + unitary_step_0, unitary_step_1]
+    comparison_programs_list_branches = [comparison_programs_list_branch_A,
+                                         comparison_programs_list_branch_B]
+    assert (len(analytical_derivatives_list_branches) ==
+            len(comparison_programs_list_branches))
+    for idx in xrange(len(analytical_derivatives_list_branches)):
+        analytical_derivatives_list_branch = \
+            analytical_derivatives_list_branches[idx]
+        comparison_programs_list_branch = comparison_programs_list_branches[idx]
+        assert (len(analytical_derivatives_list_branch) ==
+                len(comparison_programs_list_branch))
+        for jdx in xrange(len(analytical_derivatives_list_branch)):
+            #print(analytical_derivatives_list_branch[jdx])
+            #print(comparison_programs_list_branch[jdx])
+            utils.compare_progs(analytical_derivatives_list_branch[jdx],
+                                comparison_programs_list_branch[jdx])
+
+def test_generate_step_analytical_gradient():
+    pass
 
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
@@ -83,17 +132,22 @@ def test_analytical_gradient_expectation_value():
 
     graph = maxcut_qaoa_core.edges_to_graph(graph_edges)
     num_qubits = len(graph.nodes())
-    reference_state_program = maxcut_qaoa_core.construct_reference_state_program(num_qubits)
+    ancilla_qubit_index = num_qubits
+    reference_state_program = \
+        maxcut_qaoa_core.construct_reference_state_program(num_qubits)
     cost_hamiltonian = maxcut_qaoa_core.get_cost_hamiltonian(graph)
     driver_hamiltonian = maxcut_qaoa_core.get_driver_hamiltonian(graph)
     cost_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
         steps, cost_hamiltonian)(gammas)
     driver_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
         steps, driver_hamiltonian)(betas)
+    make_controlled = analytical_gradient.generate_make_controlled(
+        ancilla_qubit_index)
+    step_analytical_gradient = generate_step_analytical_gradient(
+        [cost_unitary_list, driver_unitary_list],
+        [cost_hamiltonian, driver_hamiltonian], make_controlled)
 
-    gradient_component_programs = get_analytical_gradient_component_qaoa(
-         program_parameterizer, params, reference_state_program,
-         num_qubits, step_index, hamiltonian_type)
+
     for program in gradient_component_programs:
 	print(program)
     full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
@@ -122,5 +176,7 @@ def test_analytical_gradient_expectation_value():
 if __name__ == "__main__":
     test_generate_make_controlled()
     test_pauli_term_to_program()
-    test_hamiltonian_to_programs()
+    test_hamiltonian_to_program_branches()
     test_get_analytical_derivative_unitary_product()
+    test_get_analytical_derivative_unitary_sum()
+    test_unitaries_list_to_analytical_derivatives_list_branches()
