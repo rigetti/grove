@@ -23,6 +23,9 @@ def generate_make_controlled(ancilla_qubit_index):
 
     def make_controlled(pauli_operator):
         """
+        Maps Pauli operators to the corresponding controlled gate
+        :param (pauli_op) pauli_operator: a qubit_index, and gate_name pair
+        :return (Gate) mapped_gate: the corresponding controlled gate
         """
         qubit_index, gate_name = pauli_operator
         mapping_dict = {
@@ -59,7 +62,7 @@ def hamiltonian_to_programs(hamiltonian, pauli_operator_mapping):
         for pauli_term in hamiltonian]
     return programs
 
-def get_analytical_derivative_unitary(unitary, generator,
+def get_analytical_derivative_program(unitary, generator,
         pauli_operator_mapping):
     """
     Writes the analytical derivative of a unitary
@@ -68,9 +71,60 @@ def get_analytical_derivative_unitary(unitary, generator,
     :return (list[pq.Program]) analytical_derivative: the derivative programs
     """
     programs = hamiltonian_to_programs(generator, pauli_operator_mapping)
-    analytical_derivative = [program + unitary for program in programs]
-    return analytical_derivative
+    analytical_derivative_programs = [program + unitary for program in programs]
+    return analytical_derivative_programs
 
+def unitaries_list_to_analytical_derivatives_list(step_index, hamiltonian,
+        unitaries_list, make_controlled):
+    """
+    Computes the analytical derivative of a unitary in a list of unitaries
+    :param (int) step_index: the index of selected unitary in the list
+    :param (PauliSum) hamiltonian: the hamiltonian which generates the unitaries
+    :param (list[pq.Program()]) unitaries_list: the generated unitaries
+    :param (function) make controlled: Maps Pauli operators to controlled gates
+    :return (list[list[pq.Program()]]): the derivative terms for a given step
+    """
+    unitaries_before = unitaries_list[:step_index]
+    unitary_term = unitaries_list[step_index]
+    unitaries_after = unitaries_list[step_index:]
+    analytical_derivative_programs = get_analytical_derivative_programs(
+        unitary_term, hamiltonian, make_controlled)
+    unitaries_list_analytical_derivatives_programs = []
+    for analytical_derivative_program in analytical_derivative_programs:
+        unitaries_list_analytical_derivative_program = (
+            unitaries_after + analytical_derivative_term + unitaries_before)
+        unitaries_list_analytical_derivative_programs.append(
+            unitaries_list_analytical_derivative_program)
+    return unitaries_list_analytical_derivative_programs
+
+
+def generate_analytical_derivative_map(unitaries_lists, hamiltonians,
+        make_controlled):
+    """
+    Generates a map which
+    """
+    assert len(unitaries_lists) == len(hamiltonians)
+
+    def analytical_derivative_map(step_index):
+        ham_indices = xrange(len(hamiltonians)
+        combined_analytical_derivatives = []
+        for ham_index in ham_indices:
+            other_ham_indices = [_idx for _idx in indices if _idx != ham_index]
+            this_hamiltonian = hamiltonians[ham_index]
+            this_unitaries_list = unitaries_lists[ham_index]
+            analytical_derivatives_list = \
+                unitaries_list_to_analytical_derivatives_list(step_index,
+                this_hamiltonian, this_unitaries_list, make_controlled)
+            for other_ham_index in other_ham_indices:
+                other_unitaries_list = unitaries_list[other_ham_index]
+                combined other_unitaries_list + analytical_derivatives_list
+
+
+
+    return analytical_gradient_finder
+
+def compute_qaoa_analytical_derivative(cost_unitary_list, driver_unitary_list,
+    make_controlled)
 
 
 #Reduce the complexity!
@@ -94,7 +148,7 @@ def insert_ancilla_controlled_hermitian(gradient_component_programs,
 
 
 #Reduce the complexity!
-def get_analytical_gradient_component_qaoa(program_parameterizer, params,
+def get_analytical_gradient_component_qaoa(params,
         reference_state_program, num_qubits, step_index, hamiltonian_type):
     """
     Computes a single component of the analytical gradient
@@ -102,7 +156,6 @@ def get_analytical_gradient_component_qaoa(program_parameterizer, params,
     gradient_component_programs = [reference_state_program]
     unitary_program, unitary_structure, hermitian_structure = \
         program_parameterizer(params)
-    #The Hermitian Structure needs to flag if the operators are serial or parallel
     ancilla_qubit_index = num_qubits
     for gradient_component_program in gradient_component_programs:
         gradient_component_program.inst(H(ancilla_qubit_index))
