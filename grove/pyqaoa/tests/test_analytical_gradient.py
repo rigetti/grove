@@ -34,7 +34,6 @@ import maxcut_qaoa_core
 import utils
 import expectation_value
 
-#What Graphs should I write test cases for?
 
 def test_generate_make_controlled():
     ancilla_qubit_index = 1
@@ -122,7 +121,23 @@ def test_unitaries_list_to_analytical_derivatives_list_branches():
                                 comparison_programs_list_branch[jdx])
 
 def test_generate_step_analytical_gradient():
-    pass
+    hamiltonian_A = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    hamiltonian_B = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians = [hamiltonian_A, hamiltonian_B]
+    unitaries_A_list = [
+        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.1),
+        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.7)]
+    unitaries_B_list = [
+        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_B, 0.3),
+        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_B, 0.8)]
+    unitaries_lists = [unitaries_A_list, unitaries_B_list]
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    step_analytical_gradient = \
+        analytical_gradient.generate_step_analytical_gradient(
+        unitaries_lists, hamiltonians, make_controlled)
+    step_0_analytical_gradient = step_analytical_gradient(0)
+    print(step_0_analytical_gradient)
+
 
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
@@ -162,8 +177,6 @@ def test_analytical_gradient_expectation_value():
     cost_expectation = np.sin(2*beta)*np.cos(gamma)
     print(cost_expectation)
 
-    #maxcut_qaoa_unitary_program = maxcut_qaoa_core.zip_programs_lists(
-    #    [cost_unitary_list, driver_unitary_list])
     full_program = reference_state_program + maxcut_qaoa_unitary_program
     qvm_connection = api.SyncConnection()
     numerical_expectation_value = expectation_value.expectation(full_program,
@@ -180,3 +193,4 @@ if __name__ == "__main__":
     test_get_analytical_derivative_unitary_product()
     test_get_analytical_derivative_unitary_sum()
     test_unitaries_list_to_analytical_derivatives_list_branches()
+    test_generate_step_analytical_gradient()

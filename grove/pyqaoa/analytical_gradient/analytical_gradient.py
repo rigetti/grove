@@ -76,7 +76,6 @@ def get_analytical_derivative_branches(unitary, generator,
         program_branch in program_branches]
     return analytical_derivative_branches
 
-#Need better naming
 def unitaries_list_to_analytical_derivatives_list_branches(step_index,
         hamiltonian, unitaries_list, make_controlled):
     """
@@ -98,14 +97,38 @@ def unitaries_list_to_analytical_derivatives_list_branches(step_index,
             analytical_derivatives_list_branch)
     return analytical_derivatives_list_branches
 
+def zip_analytical_derivatives_list_branches(
+        analytical_derivatives_list_branches, unitaries_lists,
+        derivative_index):
+    """
+    Creates a an analytical_derivative program with branches for each term
+    :param (list[list[pq.Program()]]) analytical_derivatives_list_branches: >
+    :param (list[list[pq.Program()]]) unitaries_lists: [ham][branch]
+    :param (int) derivative_index:
+    :return (list[pq.Program()]) analytical_derivative_branches: for each term
+    """
+    analytical_derivative_branches = []
+    for analytical_derivatives_list_branch in analytical_derivatives_list_branches:
+        analytical_derivative_branch_slices = []
+        for jdx, unitaries_list in enumerate(unitaries_lists):
+            if jdx == derivative_index:
+                analytical_derivative_branch_slices.append(
+                    analytical_derivatives_list_branch)
+        else:
+            analytical_derivative_branch_slices.append(unitaries_list)
+        analytical_derivative_branch = maxcut_qaoa_core.zip_programs_lists(
+            analytical_derivative_branch_slices)
+        analytical_derivative_branches.append(analytical_derivative_branch)
+    return analytical_derivative_branches
+
 def generate_step_analytical_gradient(unitaries_lists, hamiltonians,
         make_controlled):
     """
     Generates a function which finds the derivatives at a given step
-    :param (list[list[pq.Program]]) unitaries_lists: differentiate each list
+    :param (list[list[pq.Program]]) unitaries_lists: [ham][branch]
     :param (list[PauliSum]) hamiltonians: each one generates a unitaries_list
     :param (function) make_controlled: Maps Pauli Operators to controlled gates
-    :return (function) analytical_derivative_map: computes the step derivative
+    :return (function) step_analytical_gradient: gradient for a given step
     """
     assert len(unitaries_lists) == len(hamiltonians)
 
@@ -113,23 +136,17 @@ def generate_step_analytical_gradient(unitaries_lists, hamiltonians,
         """
         Computes all the derivatives at a given step and zips unitaries
         :param (int) step_index: the step to compute the derivatives at
-        :return (list[pq.Program]) analytical_gradient: for each hamiltonian
+        :return (list[list[pq.Program]]) analytical_gradient: [ham][branch]
         """
         analytical_gradient = []
         for idx, unitaries_list in enumerate(unitaries_lists):
-            analytical_derivatives_programs = \
-                unitaries_list_to_analytical_derivatives_list(step_index,
-                hamiltonians[idx], unitaries_list, make_controlled)
-            analytical_gradient_list = [] #type(list[list[pq.Program]])
-            for jdx, unitaries_list in enumerate(unitaries_lists):
-                if jdx == idx:
-                    analytical_gradient_list.append(
-                        analytical_derivative_programs)
-                else:
-                    analytical_gradient_list.append(unitaries_list)
-            analytical_derivative = maxcut_qaoa_core.zip_programs_lists(
-                analytical_gradient_list) #type(pq.Program)
-            analytical_gradient.append(analytical_derivative)
+            analytical_derivatives_list_branches = \
+                unitaries_list_to_analytical_derivatives_list_branches(
+                step_index, hamiltonians[idx], unitaries_list, make_controlled)
+            analytical_derivative_branches = \
+                zip_analytical_derivatives_list_branches(
+                analytical_derivatives_list_branches, unitaries_lists, idx)
+            analytical_gradient.append(analytical_derivative_branches)
         return analytical_gradient
 
     return step_analytical_gradient
