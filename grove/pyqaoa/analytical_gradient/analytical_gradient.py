@@ -151,6 +151,7 @@ def generate_step_analytical_gradient(unitaries_lists, hamiltonians,
 
     return step_analytical_gradient
 
+
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term

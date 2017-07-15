@@ -115,29 +115,65 @@ def test_unitaries_list_to_analytical_derivatives_list_branches():
         assert (len(analytical_derivatives_list_branch) ==
                 len(comparison_programs_list_branch))
         for jdx in xrange(len(analytical_derivatives_list_branch)):
-            #print(analytical_derivatives_list_branch[jdx])
-            #print(comparison_programs_list_branch[jdx])
             utils.compare_progs(analytical_derivatives_list_branch[jdx],
                                 comparison_programs_list_branch[jdx])
 
+def test_zip_analytical_derivatives_list_branches():
+    #zip_analytical_derivatives_list_branches()
+    pass
+
+
 def test_generate_step_analytical_gradient():
-    hamiltonian_A = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    hamiltonian_B = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    hamiltonians = [hamiltonian_A, hamiltonian_B]
-    unitaries_A_list = [
-        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.1),
-        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.7)]
-    unitaries_B_list = [
-        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_B, 0.3),
-        maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_B, 0.8)]
-    unitaries_lists = [unitaries_A_list, unitaries_B_list]
+    ham_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    ham_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians = [ham_0, ham_1]
+    step_0_unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.1)
+    step_1_unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.7)
+    step_0_unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.3)
+    step_1_unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.8)
+    unitaries_0_list = [step_0_unitary_0, step_1_unitary_0]
+    unitaries_1_list = [step_0_unitary_1, step_1_unitary_1]
+    unitaries_lists = [unitaries_0_list, unitaries_1_list]
+
     make_controlled = analytical_gradient.generate_make_controlled(2)
     step_analytical_gradient = \
         analytical_gradient.generate_step_analytical_gradient(
         unitaries_lists, hamiltonians, make_controlled)
-    step_0_analytical_gradient = step_analytical_gradient(0)
-    print(step_0_analytical_gradient)
 
+    analytical_gradient_step_0 = step_analytical_gradient(0)
+    comparison_gradient_step_0_ham_0_branch_0 = (pq.Program().inst(CNOT(2,0)) +
+        step_0_unitary_0 + step_0_unitary_1 +
+        step_1_unitary_0 + step_1_unitary_1)
+    comparison_gradient_step_0_ham_0_branch_1 = (pq.Program().inst(CNOT(2,1)) +
+        step_0_unitary_0 + step_0_unitary_1 +
+        step_1_unitary_0 + step_1_unitary_1)
+    comparison_gradient_step_0_ham_1_branch_0 = (
+        pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
+        step_0_unitary_0 + step_0_unitary_1 +
+        step_1_unitary_0 + step_1_unitary_1)
+    utils.compare_progs(analytical_gradient_step_0[0][0],
+                       comparison_gradient_step_0_ham_0_branch_0)
+    utils.compare_progs(analytical_gradient_step_0[0][1],
+                       comparison_gradient_step_0_ham_0_branch_1)
+    #utils.compare_progs(analytical_gradient_step_0[1][0],
+    print(analytical_gradient_step_0[1][0])
+    #step_0_comparison_gradient_A = [
+    #    maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.1)
+    #print(step_0_comparison_gradient_A)
+    #step_0_comparison_gradient_B = maxcut_qaoa_core.exponentiate_hamiltonian(
+    #    hamiltonian_B, 0.3)
+    #step_0_comparison_gradient = [step_0_comparison_gradient_A,
+    #                              step_0_comparison_gradient_B]
+    #assert (len(step_0_analytical_gradient) == len(step_0_comparison_gradient))
+    #for idx in xrange(len(step_0_analytical_gradient)):
+        #assert (len(step_0_analytical_gradient[idx]) ==
+        #        len(step_0_comparison_gradient[idx]))
+        #print(step_0_comparison_gradient[idx])
+        #for jdx in xrange(len(step_0_analytical_gradient[idx])):
+            #pass
+            #utils.compare_progs(step_0_analytical_gradient[idx][jdx],
+            #                    step_0_comparison_gradient[idx][jdx]))
+            #print(step_0_analytical_gradient[idx][jdx])
 
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
