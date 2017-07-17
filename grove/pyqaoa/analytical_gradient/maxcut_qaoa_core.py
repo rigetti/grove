@@ -59,9 +59,22 @@ def get_driver_hamiltonian(graph):
         driver_hamiltonian += driver_term
     return driver_hamiltonian
 
+def exponential_map_hamiltonian(hamiltonian):
+    """
+    Generates a unitary operator from a hamiltonian
+    :param (PauliSum) hamiltonian: a hermitian hamiltonian
+    :param (float) parameter: the coefficient in the exponential
+    :return (list[function]) p_unitary: the generated parameterized unitary
+    """
+    p_unitary = []
+    for term in hamiltonian:
+        p_unitary_term = exponential_map(term)
+        p_unitary.append(p_unitary_term)
+    return p_unitary
+
 def exponentiate_hamiltonian(hamiltonian, parameter):
     """
-    Generates a unitary operator from a hamiltonian and a set of parameters
+    Generates a unitary operator from a hamiltonian and a parameter
     :param (PauliSum) hamiltonian: a hermitian hamiltonian
     :param (float) parameter: the coefficient in the exponential
     :return (pq.Program) unitary: the program generated from the hamiltonian

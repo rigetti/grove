@@ -62,46 +62,53 @@ def test_hamiltonian_to_program_branches():
     for idx in xrange(len(program_branches)):
         utils.compare_progs(program_branches[idx], comparison_programs[idx])
 
-def test_get_analytical_derivative_unitary_product():
-    generator = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    parameter = 1.0
-    make_controlled = analytical_gradient.generate_make_controlled(2)
-    unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
-    analytical_derivative_branches = \
-        analytical_gradient.get_analytical_derivative_branches(
-        unitary, generator, make_controlled)
-    comparison_programs = [pq.Program().inst(CPHASE(np.pi)(2, 0),
-        CPHASE(np.pi)(2, 1)) + unitary]
-    for idx in xrange(len(analytical_derivative_branches)):
-        utils.compare_progs(analytical_derivative_branches[idx],
-                                       comparison_programs[idx])
-
-def test_get_analytical_derivative_unitary_sum():
+def test_differentiate_unitary_sum():
     generator = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     parameter = 1.0
     make_controlled = analytical_gradient.generate_make_controlled(2)
     unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
-    analytical_derivative_branches = \
-        analytical_gradient.get_analytical_derivative_branches(
-        unitary, generator, make_controlled)
+    p_unitary = maxcut_qaoa_core.exponential_map_hamiltonian(generator)
+    p_analytical_derivative_branches = analytical_gradient.differentiate_unitary(
+        p_unitary, generator, make_controlled)
+    analytical_derivative_branches = [p_analytical_derivative_branch(parameter)
+        for p_analytical_derivative_branch in p_analytical_derivative_branches]
     comparison_programs = [pq.Program().inst(CNOT(2, 0)) + unitary,
                            pq.Program().inst(CNOT(2, 1)) + unitary]
     for idx in xrange(len(analytical_derivative_branches)):
         utils.compare_progs(analytical_derivative_branches[idx],
                                        comparison_programs[idx])
 
-def test_unitaries_list_to_analytical_derivatives_list_branches():
-    step_index = 0
-    hamiltonian = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    unitary_step_0 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.1)
-    unitary_step_1 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.7)
-    unitaries_list = [unitary_step_0, unitary_step_1]
+def test_differentiate_unitary_product():
+    generator = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    parameter = 1.0
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    analytical_derivatives_list_branches = \
-        analytical_gradient.unitaries_list_to_analytical_derivatives_list_branches(
-        step_index, hamiltonian, unitaries_list, make_controlled)
-    comparison_programs_list_branch_A = [
-        pq.Program().inst(CNOT(2, 0)) + unitary_step_0, unitary_step_1]
+    unitary = maxcut_qaoa_core.exponentiate_hamiltonian(generator, parameter)
+    p_unitary = maxcut_qaoa_core.exponential_map_hamiltonian(generator)
+    p_analytical_derivative_branches = analytical_gradient.differentiate_unitary(
+        p_unitary, generator, make_controlled)
+    analytical_derivative_branches = [p_analytical_derivative_branch(parameter)
+        for p_analytical_derivative_branch in p_analytical_derivative_branches]
+    comparison_programs = [pq.Program().inst(CPHASE(np.pi)(2, 0),
+        CPHASE(np.pi)(2, 1)) + unitary]
+    for idx in xrange(len(analytical_derivative_branches)):
+        utils.compare_progs(analytical_derivative_branches[idx],
+                                       comparison_programs[idx])
+
+def test_parallelize():
+    pass
+
+def test_differentiate_product_rule():
+    hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians_list = [hamiltonian_0, hamiltonian_1]
+    unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_0)
+    unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_1)
+    unitaries_list = [unitary_0, unitary_1]
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    differentiated_product = analytical_gradient.differentiate_product_rule(
+        unitaries_list, hamiltonians_list, make_controlled)
+    comparison_programs = [
+        pq.Program().inst(CNOT(2, 0)) + unitary_0, unitary_step_1]
     comparison_programs_list_branch_B = [
         pq.Program().inst(CNOT(2, 1)) + unitary_step_0, unitary_step_1]
     comparison_programs_list_branches = [comparison_programs_list_branch_A,
@@ -118,10 +125,51 @@ def test_unitaries_list_to_analytical_derivatives_list_branches():
             utils.compare_progs(analytical_derivatives_list_branch[jdx],
                                 comparison_programs_list_branch[jdx])
 
+def test_unitaries_list_to_analytical_derivatives_list_branches_product():
+    step_index = 0
+    hamiltonian = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    unitary_step_0 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.1)
+    unitary_step_1 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.7)
+    unitaries_list = [unitary_step_0, unitary_step_1]
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    analytical_derivatives_list_branches = \
+        analytical_gradient.differentiate_unitary_in_list(
+        step_index, hamiltonian, unitaries_list, make_controlled)
+    comparison_programs_list_branch_A = [
+        pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
+        unitary_step_0, unitary_step_1]
+    comparison_programs_list_branches = [comparison_programs_list_branch_A]
+    assert (len(analytical_derivatives_list_branches) ==
+            len(comparison_programs_list_branches))
+    for idx in xrange(len(analytical_derivatives_list_branches)):
+        analytical_derivatives_list_branch = \
+            analytical_derivatives_list_branches[idx]
+        comparison_programs_list_branch = comparison_programs_list_branches[idx]
+        assert (len(analytical_derivatives_list_branch) ==
+                len(comparison_programs_list_branch))
+        for jdx in xrange(len(analytical_derivatives_list_branch)):
+            utils.compare_progs(analytical_derivatives_list_branch[jdx],
+                                comparison_programs_list_branch[jdx])
+
 def test_zip_analytical_derivatives_list_branches():
+    ham_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    ham_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians = [ham_0, ham_1]
+    unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.1)
+    unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.3)
+    unitaries_list = [unitary_0, unitary_1]
+    step_index = 0
+    derivative_index = 0
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    analytical_derivatives_0_list_branches = \
+        analytical_gradient.differentiate_unitary_in_list(
+        step_index, ham_0, unitaries_list, make_controlled)
+    print(analytical_derivatives_0_list_branches)
+
+    #analytical_derivatives_list_branch_0 = [
+    #analytical_derivatives_list_branch_1 =
     #zip_analytical_derivatives_list_branches()
     pass
-
 
 def test_generate_step_analytical_gradient():
     ham_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
@@ -151,12 +199,15 @@ def test_generate_step_analytical_gradient():
         pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
         step_0_unitary_0 + step_0_unitary_1 +
         step_1_unitary_0 + step_1_unitary_1)
+    print(comparison_gradient_step_0_ham_1_branch_0)
+    #print(analytical_gradient_step_0[1][0])
     utils.compare_progs(analytical_gradient_step_0[0][0],
                        comparison_gradient_step_0_ham_0_branch_0)
     utils.compare_progs(analytical_gradient_step_0[0][1],
                        comparison_gradient_step_0_ham_0_branch_1)
     #utils.compare_progs(analytical_gradient_step_0[1][0],
-    print(analytical_gradient_step_0[1][0])
+    #                   comparison_gradient_step_0_ham_1_branch_0)
+    #utils.compare_progs(analytical_gradient_step_0[1][0],
     #step_0_comparison_gradient_A = [
     #    maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.1)
     #print(step_0_comparison_gradient_A)
@@ -226,7 +277,10 @@ if __name__ == "__main__":
     test_generate_make_controlled()
     test_pauli_term_to_program()
     test_hamiltonian_to_program_branches()
-    test_get_analytical_derivative_unitary_product()
-    test_get_analytical_derivative_unitary_sum()
-    test_unitaries_list_to_analytical_derivatives_list_branches()
-    test_generate_step_analytical_gradient()
+    test_differentiate_unitary_sum()
+    test_differentiate_unitary_product()
+    #test_parallelize()
+    #test_unitaries_list_to_analytical_derivatives_list_branches_sum()
+    #test_unitaries_list_to_analytical_derivatives_list_branches_product()
+    #test_zip_analytical_derivatives_list_branches()
+    #test_generate_step_analytical_gradient()
