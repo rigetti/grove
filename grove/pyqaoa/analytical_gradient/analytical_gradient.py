@@ -13,7 +13,6 @@ from pyquil.paulis import *
 
 import maxcut_qaoa_core
 
-
 def generate_make_controlled(ancilla_qubit_index):
     """
     Creates a function which maps operators to controlled operators
@@ -64,14 +63,14 @@ def hamiltonian_to_program_branches(hamiltonian, pauli_operator_mapping):
 
 def gen_p_analytical_derivative(program_branch, p_unitary):
     """
-    Maps a program to
-    :param (pq.Program) program_branch:
-    :param (function) p_unitary:
-    :return (function) p_analytical_derivative:
+    Creates one branch of an analytical derivative
+    :param (pq.Program) program_branch: from one term of the generator
+    :param (function) p_unitary: the differentiated unitary
+    :return (function) p_analytical_derivative_branch: for the program branch
     """
-    def p_analytical_derivative(param):
+    def p_analytical_derivative_branch(param):
         return program_branch + p_unitary(param)
-    return p_analytical_derivative
+    return p_analytical_derivative_branch
 
 def differentiate_unitary(p_unitary, generator,
         pauli_operator_mapping):
@@ -106,22 +105,26 @@ def parallelize(column, partial_row, new_column_index):
         matrix.append(row)
     return matrix
 
-def differentiate_product_rule(p_unitaries_list, hamiltonians_list,
+def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         make_controlled):
     """
-    :param (list[function]) p_unitaries_list:
-    :param (list[PauliSum]) hamiltonians_list:
-    :param (function) make_controlled:
-    :return (list[list[function]]) differentiated_product:
+    :param (list[function]) p_unitaries_product: [ham]
+    :param (list[PauliSum]) hamiltonians_list: for each factor in the product
+    :param (function) make_controlled: e.g. X -> CNOT
+    :return (list[list[list[function]]]) differentiated_product: indexing below
     """
-    differentiated_product = []
-    for unitary_index in xrange(len(p_unitaries_list)):
+    #gain one index for branches of the derivative
+    #gain one index for product rule
+    differentiated_product = [] #[summand][ham][branch]
+    for unitary_index in xrange(len(p_unitaries_product)):
+        #(list[function])
         p_analytical_derivative_branches = differentiate_unitary(
-            p_unitaries_list[unitary_index], hamiltonians_list[unitary_index],
-            make_controlled)
-        differentiated_term = parallelize(p_analytical_derivative_branches,
-                p_unitaries_list, unitary_index)
-        differentiated_product.append(differentiated_term)
+            p_unitaries_product[unitary_index],
+            hamiltonians_list[unitary_index], make_controlled)
+        #(list[list[function]])
+        derivative_summand = parallelize(p_analytical_derivative_branches,
+                p_unitaries_product, unitary_index)
+        differentiated_product.append(derivative_summand)
     return differentiated_product
 
 #The role of the index is confusing!

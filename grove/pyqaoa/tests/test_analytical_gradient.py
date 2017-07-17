@@ -104,11 +104,55 @@ def test_parallelize():
     assert matrix == comparison_matrix
 
 def evaluate_differentiated_product(differentiated_product, parameters):
-    for differentiated_term in differentiated_product:
-        assert len(parameters) == len(differentiated_term)
+    evaluated_product = []
+    for summand in differentiated_product:
+        evaluated_summand = []
+        for factor in summand:
+            evaluated_factor = []
+            for branch, param in zip(factor, parameters):
+                evaluated_branch = branch(param)
+                evaluated_factor.append(evaluated_branch)
+            evaluated_summand.append(evaluated_factor)
+        evaluated_product.append(evaluated_summand)
+    return evaluated_product
 
+def test_differentiate_product_rule_one_ham():
+    #####################
+    #For One Hamiltonian#
+    #####################
+    hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    hamiltonians_list = [hamiltonian_0]
+    p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
+    unitaries_list = [p_unitary_0]
+    make_controlled = analytical_gradient.generate_make_controlled(2)
+    differentiated_product = analytical_gradient.differentiate_product_rule(
+        unitaries_list, hamiltonians_list, make_controlled)
+    parameters = [0.1]
+    evaluated_product = evaluate_differentiated_product(differentiated_product,
+        parameters)
+    comparison_product = [[
+        [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
+        [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
+        ]]
+    assert len(comparison_product) == len(evaluated_product)
+    for summand_idx in xrange(len(evaluated_product)):
+        #print(len(comparison_product[summand_idx]))
+        #print(len(evaluated_product[summand_idx]))
+        assert (len(comparison_product[summand_idx]) ==
+                len(evaluated_product[summand_idx]))
+        for factor_idx in xrange(len(evaluated_product[summand_idx])):
+            #print(len(comparison_product[summand_idx][factor_idx]))
+            #print(len(evaluated_product[summand_idx][factor_idx]))
+            for branch_idx in xrange(len(
+                    evaluated_product[summand_idx][factor_idx])):
+                branch = evaluated_product[summand_idx][factor_idx][branch_idx]
+                comparison_branch = comparison_product[summand_idx][factor_idx][branch_idx]
+                utils.compare_progs(branch, comparison_branch)
 
-def test_differentiate_product_rule():
+def test_differentiate_product_rule_two_hams():
+    ######################
+    #For Two Hamiltonians#
+    ######################
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
     hamiltonians_list = [hamiltonian_0, hamiltonian_1]
@@ -118,33 +162,37 @@ def test_differentiate_product_rule():
     make_controlled = analytical_gradient.generate_make_controlled(2)
     differentiated_product = analytical_gradient.differentiate_product_rule(
         unitaries_list, hamiltonians_list, make_controlled)
-    print(differentiated_product)
-    #product_parameters = [0.1, 0.7]
-    #evaluate_differentiated_product(differentiated_product,  product_parameters)
-    """
-    comparison_programs_ham_0_branch_0 = [
-        pq.Program().inst(CNOT(2, 0)) + unitary_0, unitary_1]
-    comparison_programs_ham_0_branch_0 = [
-        pq.Program().inst(CNOT(2, 1)) + unitary_0, unitary_1]
-    comparison_programs_ham_1_branch_0 = [
-        pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-        unitary_0, unitary_1]
-    """
-    """
-    comparison_programs_list_branches = [comparison_programs_list_branch_A,
-                                         comparison_programs_list_branch_B]
-    assert (len(analytical_derivatives_list_branches) ==
-            len(comparison_programs_list_branches))
-    for idx in xrange(len(analytical_derivatives_list_branches)):
-        analytical_derivatives_list_branch = \
-            analytical_derivatives_list_branches[idx]
-        comparison_programs_list_branch = comparison_programs_list_branches[idx]
-        assert (len(analytical_derivatives_list_branch) ==
-                len(comparison_programs_list_branch))
-        for jdx in xrange(len(analytical_derivatives_list_branch)):
-            utils.compare_progs(analytical_derivatives_list_branch[jdx],
-                                comparison_programs_list_branch[jdx])
-    """
+    parameters = [0.1, 0.7]
+    evaluated_product = evaluate_differentiated_product(differentiated_product,
+        parameters)
+    comparison_product = [
+        [
+            [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0]),
+             p_unitary_1(parameters[1])],
+            [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0]),
+             p_unitary_1(parameters[1])]
+        ],
+        [
+            [p_unitary_0(parameters[0]),
+             pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
+             p_unitary_1(parameters[1])]
+        ],
+    ]
+    assert len(comparison_product) == len(evaluated_product)
+    for summand_idx in xrange(len(evaluated_product)):
+        #print(len(comparison_product[summand_idx]))
+        #print(len(evaluated_product[summand_idx]))
+        assert (len(comparison_product[summand_idx]) ==
+                len(evaluated_product[summand_idx]))
+        for factor_idx in xrange(len(evaluated_product[summand_idx])):
+            #print(len(comparison_product[summand_idx][factor_idx]))
+            #print(len(evaluated_product[summand_idx][factor_idx]))
+            for branch_idx in xrange(len(
+                    evaluated_product[summand_idx][factor_idx])):
+                branch = evaluated_product[summand_idx][factor_idx][branch_idx]
+                comparison_branch = comparison_product[summand_idx][factor_idx][branch_idx]
+                utils.compare_progs(branch, comparison_branch)
+
 
 def test_unitaries_list_to_analytical_derivatives_list_branches_product():
     step_index = 0
@@ -301,7 +349,8 @@ if __name__ == "__main__":
     test_differentiate_unitary_sum()
     test_differentiate_unitary_product()
     test_parallelize()
-    test_differentiate_product_rule()
+    test_differentiate_product_rule_one_ham()
+    test_differentiate_product_rule_two_hams()
     #test_unitaries_list_to_analytical_derivatives_list_branches_sum()
     #test_unitaries_list_to_analytical_derivatives_list_branches_product()
     #test_zip_analytical_derivatives_list_branches()
