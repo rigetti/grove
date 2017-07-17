@@ -65,35 +65,44 @@ def unitary_function(mappings):
 
     # Strategy: add an extra qubit by default
     # and force the function to be one-to-one
-    output_counts = {x: 0 for x in xrange(2 ** n)}
+    reverse_mapping = {x: list() for x in xrange(2 ** n)}
 
     unitary_funct = np.zeros(shape=(2 ** (n + 1), 2 ** (n + 1)))
 
     # Fill in what is known so far
+    prospective_mask = None
     for j in xrange(2 ** n):
         i = mappings[j]
-        if i not in output_counts:
+        reverse_mapping[i].append(j)
+        num_mappings_to_i = len(reverse_mapping[i])
+        if num_mappings_to_i > 2:
             raise ValueError("Function must be one-to-one or two-to-one;"
                              " at least three domain values map to "
                              + np.binary_repr(i, n))
-        output_counts[i] += 1
-        if output_counts[i] == 2:
-            # no more inputs will have output i
-            del output_counts[i]
+        if num_mappings_to_i == 2:
             # to force it to be one-to-one, we promote the output
             # to have scratch bit set to 1
+            mask_for_i = reverse_mapping[i][0] \
+                         ^ reverse_mapping[i][1]
+            if prospective_mask is None:
+                prospective_mask = mask_for_i
+            else:
+                if prospective_mask != mask_for_i:
+                    raise ValueError("Mask is not consistent")
             i += 2 ** n
         unitary_funct[i, j] = 1
 
     # if one to one, just ignore the scratch bit as it's already unitary
-    if len(output_counts) == 2 ** n:
+    unmapped_range_values = filter(lambda i: len(reverse_mapping[i]) == 0,
+                                   reverse_mapping.keys())
+    if len(unmapped_range_values) == 0:
         return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
 
     # otherwise, if two-to-one, fill the array to make it unitary
     # assuming scratch bit will properly be 0
     lower_index = 2 ** n
 
-    for i in output_counts:
+    for i in unmapped_range_values:
         unitary_funct[i, lower_index] = 1
         unitary_funct[i + 2 ** n, lower_index + 1] = 1
         lower_index += 2
