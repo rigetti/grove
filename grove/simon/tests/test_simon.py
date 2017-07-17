@@ -94,13 +94,13 @@ class TestIsUnitary(object):
 
 class TestMostSignificantBits(object):
     def test_single_one(self):
-        assert most_significant_bit([1]) == 0
+        assert most_significant_bit(np.array([1])) == 0
 
     def test_single_one_leading_zeroes(self):
-        assert most_significant_bit([0, 1, 0, 0]) == 1
+        assert most_significant_bit(np.array([0, 1, 0, 0])) == 1
 
     def test_multiple_ones_leading_zeroes(self):
-        assert most_significant_bit([0, 0, 1, 1, 0, 1]) == 2
+        assert most_significant_bit(np.array([0, 0, 1, 1, 0, 1])) == 2
 
 
 class TestInsertIntoBinaryMatrix(object):

@@ -58,7 +58,7 @@ def unitary_function(mappings):
     if len(mappings) < 2:
         raise ValueError("function domain must be at least one bit (size 2)")
 
-    n = int(np.log2(len(mappings)))
+    n = len(mappings).bit_length() - 1
 
     if len(mappings) != 2 ** n:
         raise ValueError("mappings must have a length that is a power of two")
@@ -110,7 +110,7 @@ def unitary_function(mappings):
     return unitary_funct
 
 
-def oracle_function(unitary_funct, qubits, ancillas):
+def oracle_function(unitary_funct, qubits, ancillas, gate_name='FUNCT'):
     """
     Given a unitary :math:`U_f` that acts as a function
     :math:`f:\\{0,1\\}^n\\rightarrow \\{0,1\\}^n`, such that
@@ -141,20 +141,24 @@ def oracle_function(unitary_funct, qubits, ancillas):
                         :math:`\\vert x \\rangle`.
     :param list(int) ancillas: List of qubits to serve as the ancillary input
                      :math:`\\vert y \\rangle`.
+    :param str gate_name: Optional parameter specifying the name of
+                          the gate that will represent unitary_funct
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
     assert is_unitary(unitary_funct), "Function must be unitary."
     p = pq.Program()
 
+    inverse_gate_name = gate_name + '-INV'
     scratch_bit = p.alloc()
     bits_for_funct = [scratch_bit] + qubits
 
-    p.defgate("FUNCT", unitary_funct)
-    p.defgate("FUNCT-INV", np.linalg.inv(unitary_funct))
-    p.inst(tuple(['FUNCT'] + bits_for_funct))
+    p.defgate(gate_name, unitary_funct)
+    print unitary_funct.shape
+    p.defgate(inverse_gate_name, np.linalg.inv(unitary_funct))
+    p.inst(tuple([gate_name] + bits_for_funct))
     p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
-    p.inst(tuple(['FUNCT-INV'] + bits_for_funct))
+    p.inst(tuple([inverse_gate_name] + bits_for_funct))
 
     p.free(scratch_bit)
     return p
@@ -202,10 +206,10 @@ def is_unitary(matrix):
 def most_significant_bit(lst):
     """
     A helper function that finds the position of
-    the most significant bit in a list of 1s and 0s,
+    the most significant bit in a 1darray of 1s and 0s,
     i.e. the first position where a 1 appears, reading left to right.
 
-    :param list(int) lst: a list of 0s and 1s with at least one 1
+    :param 1darray lst: a 1darray of 0s and 1s with at least one 1
     :return: the first position in lst that a 1 appears
     :rtype: int
     """
@@ -239,7 +243,7 @@ def insert_into_row_echelon_binary_matrix(W, z):
     :rtype: 2darray
     """
     n = len(z)
-    while np.any(z):  # while z is not all zeros
+    while np.any(z != 0):  # while z is not all zeros
         if len(W) == 0:
             W = z
             W = W.reshape(1, n)
@@ -300,7 +304,7 @@ def make_square_row_echelon(W):
     while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
         insert_row_num += 1
 
-    new_row = np.zeros(shape=(n,))
+    new_row = np.zeros(shape=(n,), dtype=int)
     new_row[insert_row_num] = 1
     W = np.insert(W, insert_row_num, new_row, 0)
 
@@ -317,10 +321,10 @@ def binary_back_substitute(W, s):
 
     :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
               in row-echelon form
-    :param list(int) s: An :math:`n\\times 1` vector of 0s and 1s
+    :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
     :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
              system of equations.
-    :rtype: list(int)
+    :rtype: 1darray
     """
     # iterate backwards, starting from second to last row for back-substitution
     s_copy = np.array(s)
@@ -329,7 +333,7 @@ def binary_back_substitute(W, s):
         row = W[row_num]
         for col_num in xrange(row_num + 1, n):
             if row[col_num] == 1:
-                s_copy[row_num] = int(s_copy[row_num]) ^ int(s_copy[col_num])
+                s_copy[row_num] = (s_copy[row_num] + s_copy[col_num]) % 2
 
     return s_copy
 
@@ -338,7 +342,7 @@ def find_mask(cxn, oracle, qubits):
     """
     Runs Simon's algorithm to find the mask.
 
-    :param SyncConnection cxn: the connection used to run programs
+    :param JobConnection cxn: the connection used to run programs
     :param Program oracle: the oracle to query;
                    emulates a classical :math:`f(x)` function as a blackbox.
     :param list(int) qubits: the input qubits
@@ -357,11 +361,12 @@ def find_mask(cxn, oracle, qubits):
     # Done so by running the quantum program repeatedly
     # and building up a row-echelon matrix W
     iterations = 0
-    W = np.array([])
+    W = np.array([], dtype=int)
     while True:
         if len(W) == n - 1:
             break
-        z = np.array(cxn.run_and_measure(simon_program, qubits)[0])
+        print simon_program
+        z = np.array(cxn.run_and_measure(simon_program, qubits)[0], dtype=int)
         # attempt to insert z in such a way that
         # W remains row-echelon
         # and all rows are orthogonal to s
@@ -372,13 +377,13 @@ def find_mask(cxn, oracle, qubits):
     # that maintain W in row-echelon form
     W, insert_row_num = make_square_row_echelon(W)
 
-    s = np.zeros(shape=(n,))
+    s = np.zeros(shape=(n,), dtype=int)
     # inserted row is chosen not be orthogonal to s
     s[insert_row_num] = 1
 
     s = binary_back_substitute(W, s)
 
-    s_str = ''.join(map(str, map(int, s)))
+    s_str = ''.join(str(x) for x in s)
 
     return s_str, iterations, simon_program
 
@@ -389,7 +394,7 @@ def check_two_to_one(cxn, oracle, ancillas, s):
     to represent either a one-to-one function, or a two-to-one function
     with mask :math:`s`.
 
-    :param SyncConnection cxn: the connection used to run programs
+    :param JobConnection cxn: the connection used to run programs
     :param Program oracle: the oracle to query;
                            emulates a classical :math:`f(x)`
                            function as a blackbox.
