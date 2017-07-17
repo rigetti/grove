@@ -26,31 +26,38 @@ The quantum part follows similarly to other blackbox oracle algorithms.
 First, assume a blackbox oracle \\(U_f\\) is available with the property
 $$U_f\\vert x\\rangle\\vert y\\rangle = \\vert x\\rangle\\vert y\\oplus f(x)\\rangle$$
 
-where the top \\(n\\) qubits are the input, and the bottom \\(n\\) qubits are called ancilla qubits.
+where the top \\(n\\) qubits \\(\\vert x \\rangle\\) are the input,
+and the bottom \\(n\\) qubits \\(\\vert y \\rangle\\) are called ancilla qubits.
 
-Prepare the input into the state
+The input qubits are prepared with the ancilla qubits into the state
+$$(H^{\\otimes n} \\otimes I^{\\otimes n})\\vert 0\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n} = \\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
+and sent through a blackbox gate \\(U_f\\). Then, the Hadamard-Walsh transform
+\\(H^{\\otimes n}\\) is applied to the \\(n\\) input qubits, resulting in the state given by
+ $$(H^{\\otimes n} \\otimes I^{\\otimes n})U_f\\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
 
-$$\\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
+It turns out the resulting \\(n\\) input qubits are in a uniform random state
+over the space killed by (modulo \\(2\\), bitwise) dot product with \\(s\\).
+This covers the one-to-one case as well, if one considers it to be the degenerate \\(s=0\\) case.
 
-and send it through a black box gate \\(U_f\\). Apply the Hadamard-Walsh transform
-\\(H^{\\otimes n}\\) to the \\(n\\) input qubits, and measure out those \\(n\\) qubits. Call this output \\(y\\).
+Suppose we then measured the \\(n\\) input qubits, calling the bitstring output \\(y\\).
+The above property then requires \\(s\\cdot y = 0\\). The space of \\(y\\) that satisfies this is \\(n-1\\) dimensional.
+By running this quantum subroutine several times, \\(n-1\\) nonzero linearly independent bitstrings \\(y_i\\), \\(i = 0, \\ldots, n-2\\), can be found, each orthogonal to \\(s\\).
 
-If the function \\(f\\) is two-to-one with mask \\(s\\), it turns out that the only possible values of \\(y\\) that can be measured
-are those that are orthogonal to \\(s\\), i.e. \\(s\\cdot y = 0\\), where \\((\\cdot)\\) is a bitwise dot product, modulo \\(2\\).
-
-By running this algorithm several times, \\(n-1\\) nonzero linearly independent bitstrings \\(y_i\\), \\(i = 0, \\ldots, n-2\\), can be found, each orthogonal to \\(s\\).
-
-One final nonzero bitstring \\(y^{\\prime}\\) can be found that is linearly independent to the other \\(y_i\\), but with the property that \\(s\\cdot y^{\\prime} = 1\\).
-This must be true, because there are \\(n\\) linearly independent bitstrings orthogonal to \\(s\\). We have found \\(n-1\\) of these, and the last one,
-the all zero bitstring, is not helpful for solving for \\(s\\).
-
+This gives a system of \\(n-1\\) equations, with \\(n\\) unknowns for finding \\(s\\).
+One final nonzero bitstring \\(y^{\\prime}\\) can be classically found that is linearly independent to the other \\(y_i\\), but with the property that \\(s\\cdot y^{\\prime} = 1\\).
 The combination of \\(y^{\\prime}\\) and the \\(y_i\\) give a system of \\(n\\) independent equations that can then be solved for \\(s\\).
 
-By using a clever implementation of Gaussian Elimination and Back Substitution for mod-2 equations,
-as outlined in Reference [2]_, \\(s\\) can be found relatively quickly.
+By using a clever implementation of Gaussian Elimination and Back Substitution
+for mod-2 equations, as outlined in Reference [2]_,
+\\(s\\) can be found relatively quickly. By then
+sending separate input states \\(\\vert 0\\rangle\\)
+and \\(\\vert s\\rangle\\) through the blackbox \\(U_f\\),
+we can find whether or not \\(f(0) = f(s)\\) (in fact,
+any pair \\(\\vert x\\rangle\\) and \\(\\vert x\\oplus s\\rangle\\) will do as well). If so, we conclude \\(f\\) is
+two-to-one with mask \\(s\\); otherwise, \\(f\\) is one-to-one.
 
-Overall, this algorithm can be solved in \\(O(n^3)\\), i.e. polynomial, time, whereas the best classical algorithm
-requires exponential time.
+Overall, this algorithm can be solved in \\(O(n^3)\\), i.e., polynomial, time,
+whereas the best classical algorithm requires exponential time.
 
 
 Source Code Docs
