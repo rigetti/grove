@@ -6,7 +6,8 @@ import pytest
 
 from grove.simon.simon import find_mask, unitary_function, \
     oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
-    insert_into_row_echelon_binary_matrix, make_square_row_echelon, binary_back_substitute
+    insert_into_row_echelon_binary_matrix, make_square_row_echelon, \
+    binary_back_substitute
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -222,8 +223,6 @@ class TestBinaryBackSubstitute(object):
         prod = np.dot(W, x)
         prod = np.vectorize(lambda x: x % 2)(prod)
 
-        print x, s, prod
-
         assert np.allclose(s, prod)
 
     def test_one_at_middle(self):
@@ -238,7 +237,5 @@ class TestBinaryBackSubstitute(object):
 
         prod = np.dot(W, x)
         prod = np.vectorize(lambda x: x % 2)(prod)
-
-        print x, s, prod
 
         assert np.allclose(s, prod)
