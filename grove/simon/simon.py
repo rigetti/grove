@@ -1,3 +1,19 @@
+##############################################################################
+# Copyright 2016-2017 Rigetti Computing
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+##############################################################################
+
 """Module for the Simon's Algorithm.
 For more information, see
 
@@ -39,16 +55,13 @@ def unitary_function(mappings):
     :return: Matrix representing specified unitary transformation.
     :rtype: numpy array
     """
-    assert len(mappings) > 1, \
-        "function domain must be at least one bit (size 2)"
+    if len(mappings) < 2:
+        raise ValueError("function domain must be at least one bit (size 2)")
 
     n = int(np.log2(len(mappings)))
-    assert len(mappings) == 2 ** n, \
-        "mappings must have a length that is a power of two"
 
-    distinct_outputs = len(set(mappings))
-    assert distinct_outputs in {2 ** (n - 1), 2 ** n}, \
-        "Function must be one-to-one or two-to-one"
+    if len(mappings) != 2 ** n:
+        raise ValueError("mappings must have a length that is a power of two")
 
     # Strategy: add an extra qubit by default
     # and force the function to be one-to-one
@@ -59,6 +72,10 @@ def unitary_function(mappings):
     # Fill in what is known so far
     for j in xrange(2 ** n):
         i = mappings[j]
+        if i not in output_counts:
+            raise ValueError("Function must be one-to-one or two-to-one;"
+                             " at least three domain values map to "
+                             + np.binary_repr(i, n))
         output_counts[i] += 1
         if output_counts[i] == 2:
             # no more inputs will have output i
@@ -69,7 +86,7 @@ def unitary_function(mappings):
         unitary_funct[i, j] = 1
 
     # if one to one, just ignore the scratch bit as it's already unitary
-    if distinct_outputs == 2 ** n:
+    if len(output_counts) == 2 ** n:
         return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
 
     # otherwise, if two-to-one, fill the array to make it unitary
