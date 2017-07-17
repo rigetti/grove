@@ -215,7 +215,7 @@ def most_significant_bit(lst):
     return msb
 
 
-def insert_into_binary_matrix(W, z):
+def insert_into_row_echelon_binary_matrix(W, z):
     """
     Given a matrix :math:`\\mathbf{\\mathit{W}}` of 0s and 1s
     in row-echelon form, such that each row is orthogonal to some (unknown)
@@ -365,7 +365,7 @@ def find_mask(cxn, oracle, qubits):
         # attempt to insert z in such a way that
         # W remains row-echelon
         # and all rows are orthogonal to s
-        W = insert_into_binary_matrix(W, z)
+        W = insert_into_row_echelon_binary_matrix(W, z)
         iterations += 1
 
     # make the matrix square by inserting a row

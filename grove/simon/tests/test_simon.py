@@ -6,7 +6,7 @@ import pytest
 
 from grove.simon.simon import find_mask, unitary_function, \
     oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
-    insert_into_binary_matrix, make_square_row_echelon, binary_back_substitute
+    insert_into_row_echelon_binary_matrix, make_square_row_echelon, binary_back_substitute
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -109,7 +109,7 @@ class TestInsertIntoBinaryMatrix(object):
                       [0, 0, 0, 1, 0]])
         z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows
 
-        W = insert_into_binary_matrix(W, z)
+        W = insert_into_row_echelon_binary_matrix(W, z)
 
         W_expected = np.array([[1, 0, 1, 0, 0],
                                [0, 1, 0, 0, 0],
@@ -122,7 +122,7 @@ class TestInsertIntoBinaryMatrix(object):
                       [0, 1, 0, 1, 0]])
         z = np.array([0, 0, 1, 0, 1])
 
-        W = insert_into_binary_matrix(W, z)
+        W = insert_into_row_echelon_binary_matrix(W, z)
         W_expected = np.array([[1, 1, 0, 0, 0],
                                [0, 1, 0, 1, 0],
                                [0, 0, 1, 0, 1]])
@@ -135,7 +135,7 @@ class TestInsertIntoBinaryMatrix(object):
 
         z = np.array([1, 0, 1, 0, 1, 1])
 
-        W = insert_into_binary_matrix(W, z)
+        W = insert_into_row_echelon_binary_matrix(W, z)
         W_expected = np.array([[1, 0, 0, 0, 0, 0],
                                [0, 1, 1, 0, 0, 0],
                                [0, 0, 1, 0, 1, 1]])
