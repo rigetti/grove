@@ -64,12 +64,18 @@ def exponential_map_hamiltonian(hamiltonian):
     Generates a unitary operator from a hamiltonian
     :param (PauliSum) hamiltonian: a hermitian hamiltonian
     :param (float) parameter: the coefficient in the exponential
-    :return (list[function]) p_unitary: the generated parameterized unitary
+    :return (function) p_unitary: the generated parameterized unitary
     """
-    p_unitary = []
+    p_unitary_list = []
     for term in hamiltonian:
         p_unitary_term = exponential_map(term)
-        p_unitary.append(p_unitary_term)
+        p_unitary_list.append(p_unitary_term)
+
+    def p_unitary(param):
+        p_unitary_program = pq.Program()
+        for p_unitary_term in p_unitary_list:
+            p_unitary_program += p_unitary_term(param)
+        return p_unitary_program
     return p_unitary
 
 def exponentiate_hamiltonian(hamiltonian, parameter):

@@ -63,6 +63,14 @@ def test_get_driver_hamiltonian():
                              PauliSum([PauliTerm("X", 1, 1.0)]))
     utils.compare_paulisums(driver_hamiltonian, reference_hamiltonian)
 
+def test_exponential_map_hamiltonian():
+    hamiltonian = PauliSum([PauliTerm("X", 0, 1.0)])
+    parameter = 0.1
+    p_unitary = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
+    unitary = p_unitary(parameter/2.0)
+    comparison_unitary = pq.Program().inst(H(0), RZ(parameter)(0), H(0))
+    utils.compare_progs(unitary, comparison_unitary)
+
 def test_exponentiate_hamiltonian():
     hamiltonian = PauliSum([PauliTerm("X", 0, 1.0)])
     parameter = 0.1
@@ -122,6 +130,7 @@ if __name__ == "__main__":
     test_reference_state_program()
     test_get_cost_hamiltonian()
     test_get_driver_hamiltonian()
+    test_exponential_map_hamiltonian()
     test_exponentiate_hamiltonian()
     test_get_program_parameterizer()
     test_zip_programs_lists()
