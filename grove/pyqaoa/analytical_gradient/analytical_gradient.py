@@ -12,6 +12,7 @@ from pyquil.gates import *
 from pyquil.paulis import *
 
 import maxcut_qaoa_core
+import expectation_value
 
 #Need to generalize this to make arbitrary one qubit ops controlled
 def generate_make_controlled(ancilla_qubit_index):
@@ -106,6 +107,10 @@ def parallelize(column, partial_row, new_column_index):
         matrix.append(row)
     return matrix
 
+#Currently Debugging Here!
+
+#Flatten this final structure
+#All the sums can be over the same list
 def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         make_controlled):
     """
@@ -116,6 +121,8 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
     """
     #gain one index for branches of the derivative
     #gain one index for product rule
+    #Indexing should be [summand*branch][ham]
+    #i.e. just list[list[function]]?
     differentiated_product = [] #[summand][ham][branch]
     for unitary_index in xrange(len(p_unitaries_product)):
         #(list[function])
@@ -128,32 +135,45 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         differentiated_product.append(derivative_summand)
     return differentiated_product
 
-#Redesign this structure
+#Flatten this structure
 def evaluate_differentiated_product(differentiated_product, parameters,
-        program_map=None):
+        program_maps=[]):
+    """
+    Evaluates each term in the differentiated product using the given parameters
+    :param (list[list[list[function]]]) differentiated_product:
+    :param (list[float]) parameters:
+    """
     evaluated_product = []
     for summand in differentiated_product:
         evaluated_summand = []
         for factor in summand:
             evaluated_factor = []
             for branch, param in zip(factor, parameters):
-                if program_map:
-                    evaluated_branch = program_map(branch(param))
-                else:
-                    evaluated_branch = branch(param)
+                evaluated_branch = branch(param)
+                for program_map in program_maps:
+                    evaluated_branch = program_map(evaluated_branch)
                 evaluated_factor.append(evaluated_branch)
             evaluated_summand.append(evaluated_factor)
         evaluated_product.append(evaluated_summand)
     return evaluated_product
 
-#Based on the 2002 Eckert Paper
+def generate_state_preparation(num_qubits):
+    def add_state_preparation(gradient_term):
+        state_preparation = pq.Program()
+        for qubit_index in num_qubits:
+            state_preparation.inst(H(qubit_index))
+        prepared_term = state_preparation  + gradient_term
+        return prepared_term
+    return add_state_preparation
+
+#Based on the 2002 Ekert Paper
 def generate_phase_correction(ancilla_qubit_index):
     def add_phase_correction(gradient_term):
         """
         Adds the ancilla qubit phase correction operations
-        :param (pq.Program) gradient_term:
-        :param (int) ancilla_qubit_index:
-        :return (pq.Program) phase_corrected_term:
+        :param (pq.Program) gradient_term: original uncorrected term
+        :param (int) ancilla_qubit_index: the qubit used as control
+        :return (pq.Program) phase_corrected_term: with the ancilla operations
         """
         phase_corrected_term = pq.Program()
         phase_corrected_term.inst(H(ancilla_qubit_index))
@@ -164,7 +184,7 @@ def generate_phase_correction(ancilla_qubit_index):
     return add_phase_correction
 
 #need to simplify the return type
-def generate_analytical_gradient(hamiltonians, steps, ancilla_qubit_index):
+def generate_analytical_gradient(hamiltonians, steps, num_qubits):
     """
     Generates the analytical gradient corresponding to a list of hamiltonians
     :param (list[pq.Program]) hamiltonians:
@@ -179,17 +199,27 @@ def generate_analytical_gradient(hamiltonians, steps, ancilla_qubit_index):
         repeated_hamiltonians = hamiltonians*steps
         assert len(repeated_hamiltonians) == len(steps_parameters)
 
-        make_controlled = generate_make_controlled(ancilla_qubit_index)
-        add_phase_correction = generate_phase_correction(ancilla_qubit_index)
+        make_controlled = generate_make_controlled(num_qubits)
+        add_state_preparation = generate_state_preperation(num_qubits)
+        add_phase_correction = generate_phase_correction(num_qubits)
 
     	differentiated_product = differentiate_product_rule(repeated_p_unitaries,
             repeated_hamiltonians, make_controlled)
         evaluated_gradient = evaluate_differentiated_product(
-            differentiated_product, steps_parameters, add_phase_correction)
+            differentiated_product, steps_parameters,
+            [add_phase_correction, add_state_preparation])
         return evaluated_gradient
     return gradient
 
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
+    """
+    """
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
     return full_cost_hamiltonian
+
+def compute_gradient_term_expectation_value(cost_hamiltonian, gradient_term,
+        qvm_connection):
+    numerical_expectation_value = expectation_value.expectation(gradient_term,
+        cost_hamiltonian, qvm_connection)
+    return numerical_expectation_value

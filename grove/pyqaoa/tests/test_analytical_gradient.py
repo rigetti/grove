@@ -222,7 +222,8 @@ def test_analytical_gradient_expectation_value():
         cost_hamiltonian, qvm_connection)
 
     analytical_expectation_value = np.sin(2*betas[0])*np.sin(gammas[0])
-    assert round(analytical_expectation_value, 6) == round(numerical_expectation_value,6)
+    assert (round(analytical_expectation_value, 6) ==
+            round(numerical_expectation_value, 6))
 
 if __name__ == "__main__":
     test_generate_make_controlled()
