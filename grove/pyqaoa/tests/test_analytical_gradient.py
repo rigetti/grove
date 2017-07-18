@@ -148,32 +148,22 @@ def test_differentiate_product_rule_two_hams():
     evaluated_product = analytical_gradient.evaluate_differentiated_product(
         differentiated_product, parameters)
     comparison_product = [
-        [
-            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
-             p_unitaries[1](parameters[1])],
-            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
-             p_unitaries[1](parameters[1])]
-        ],
-        [
-            [p_unitaries[0](parameters[0]),
-             pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-             p_unitaries[1](parameters[1])]
-        ],
+        [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
+         p_unitaries[1](parameters[1])],
+        [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
+         p_unitaries[1](parameters[1])],
+        [p_unitaries[0](parameters[0]),
+         pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
+         p_unitaries[1](parameters[1])]
     ]
     assert len(comparison_product) == len(evaluated_product)
     for summand_idx in xrange(len(evaluated_product)):
-        #print(len(comparison_product[summand_idx]))
-        #print(len(evaluated_product[summand_idx]))
         assert (len(comparison_product[summand_idx]) ==
                 len(evaluated_product[summand_idx]))
         for factor_idx in xrange(len(evaluated_product[summand_idx])):
-            #print(len(comparison_product[summand_idx][factor_idx]))
-            #print(len(evaluated_product[summand_idx][factor_idx]))
-            for branch_idx in xrange(len(
-                    evaluated_product[summand_idx][factor_idx])):
-                branch = evaluated_product[summand_idx][factor_idx][branch_idx]
-                comparison_branch = comparison_product[summand_idx][factor_idx][branch_idx]
-                utils.compare_progs(branch, comparison_branch)
+            factor = evaluated_product[summand_idx][factor_idx]
+            comparison_factor = comparison_product[summand_idx][factor_idx]
+            utils.compare_progs(factor, comparison_factor)
 
 def test_generate_analytical_gradient():
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
@@ -229,5 +219,5 @@ if __name__ == "__main__":
     test_differentiate_unitary_product()
     test_parallelize()
     test_differentiate_product_rule_one_ham()
-    #test_differentiate_product_rule_two_hams()
+    test_differentiate_product_rule_two_hams()
     #test_generate_analytical_gradient()
