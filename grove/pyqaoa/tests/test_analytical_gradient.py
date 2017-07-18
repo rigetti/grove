@@ -100,7 +100,7 @@ def test_parallelize():
     new_column_index = 1
     matrix = analytical_gradient.parallelize(column, partial_row,
         new_column_index)
-    comparison_matrix = [[4, 1, 4], [4, 2, 4], [4, 3, 4]]
+    comparison_matrix = [[4, 4, 4], [1, 2, 3], [4, 4, 4]]
     assert matrix == comparison_matrix
 
 def test_differentiate_product_rule_one_ham():
@@ -232,6 +232,6 @@ if __name__ == "__main__":
     test_differentiate_unitary_sum()
     test_differentiate_unitary_product()
     test_parallelize()
-    test_differentiate_product_rule_one_ham()
-    test_differentiate_product_rule_two_hams()
-    test_generate_analytical_gradient()
+    #test_differentiate_product_rule_one_ham()
+    #test_differentiate_product_rule_two_hams()
+    #test_generate_analytical_gradient()

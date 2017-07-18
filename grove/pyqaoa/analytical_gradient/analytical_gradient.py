@@ -91,21 +91,25 @@ def differentiate_unitary(p_unitary, generator,
             gen_p_analytical_derivative(program_branch, p_unitary))
     return p_analytical_derivative_branches
 
-def parallelize(column, partial_row, new_column_index):
+def parallelize(new_column, old_row, new_column_index):
     """
     Map a column and a row to a full matrix
-    :param (list[Abstract]) column: the new elements to be added
-    :param (list[Abstract]) partial_row: replace elements at new_column_index
-    :param (int) new_column_index: the index in partial row to be replaced
-    :return (list[list[Abstract]]) matrix: the generated matrix
+    :param (list[Abstract]) new_column: the new elements to be added
+    :param (list[Abstract]) old_row: replace elements at new_column_index
+    :param (int) new_column_index: the index in old_row to be replaced
+    :return (list[list[Abstract]]) matrix: [column][row]
     """
     matrix = []
-    for column_element in column:
-        row = [column_element if column_index == new_column_index
-               else row_element for column_index, row_element
-               in enumerate(partial_row)]
-        matrix.append(row)
+    for column_index, row_element in enumerate(old_row):
+        if column_index == new_column_index:
+            matrix_column = new_column
+        else:
+            matrix_column = [old_row[column_index]]*len(new_column)
+        matrix.append(matrix_column)
     return matrix
+
+def distribute_branch_sums(differentiated_product):
+    pass
 
 #Currently Debugging Here!
 
