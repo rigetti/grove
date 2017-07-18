@@ -100,7 +100,7 @@ def test_parallelize():
     new_column_index = 1
     matrix = analytical_gradient.parallelize(column, partial_row,
         new_column_index)
-    comparison_matrix = [[4, 4, 4], [1, 2, 3], [4, 4, 4]]
+    comparison_matrix = [[4, 1, 4], [4, 2, 4], [4, 3, 4]]
     assert matrix == comparison_matrix
 
 def test_differentiate_product_rule_one_ham():
@@ -117,24 +117,20 @@ def test_differentiate_product_rule_one_ham():
     parameters = [0.1]
     evaluated_product = analytical_gradient.evaluate_differentiated_product(
         differentiated_product, parameters)
-    comparison_product = [[
+    comparison_product = [
         [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
         [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
-        ]]
+        ]
     assert len(comparison_product) == len(evaluated_product)
     for summand_idx in xrange(len(evaluated_product)):
-        #print(len(comparison_product[summand_idx]))
-        #print(len(evaluated_product[summand_idx]))
         assert (len(comparison_product[summand_idx]) ==
                 len(evaluated_product[summand_idx]))
         for factor_idx in xrange(len(evaluated_product[summand_idx])):
-            #print(len(comparison_product[summand_idx][factor_idx]))
-            #print(len(evaluated_product[summand_idx][factor_idx]))
-            for branch_idx in xrange(len(
-                    evaluated_product[summand_idx][factor_idx])):
-                branch = evaluated_product[summand_idx][factor_idx][branch_idx]
-                comparison_branch = comparison_product[summand_idx][factor_idx][branch_idx]
-                utils.compare_progs(branch, comparison_branch)
+            factor = evaluated_product[summand_idx][factor_idx]
+            comparison_factor = comparison_product[summand_idx][factor_idx]
+            utils.compare_progs(factor, comparison_factor)
+
+#Debugging here
 
 def test_differentiate_product_rule_two_hams():
     ######################
@@ -232,6 +228,6 @@ if __name__ == "__main__":
     test_differentiate_unitary_sum()
     test_differentiate_unitary_product()
     test_parallelize()
-    #test_differentiate_product_rule_one_ham()
+    test_differentiate_product_rule_one_ham()
     #test_differentiate_product_rule_two_hams()
     #test_generate_analytical_gradient()

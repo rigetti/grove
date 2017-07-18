@@ -100,68 +100,61 @@ def parallelize(new_column, old_row, new_column_index):
     :return (list[list[Abstract]]) matrix: [column][row]
     """
     matrix = []
-    for column_index, row_element in enumerate(old_row):
-        if column_index == new_column_index:
-            matrix_column = new_column
-        else:
-            matrix_column = [old_row[column_index]]*len(new_column)
-        matrix.append(matrix_column)
+    for column_element in new_column:
+        new_row = [column_element if column_index == new_column_index
+                   else row_element for column_index, row_element
+                   in enumerate(old_row)]
+        matrix.append(new_row)
+    #for column_index, row_element in enumerate(old_row):
+    #    if column_index == new_column_index:
+    #        matrix_column = new_column
+    #    else:
+    #        matrix_column = [old_row[column_index]]*len(new_column)
+    #    matrix.append(matrix_column)
     return matrix
 
-def distribute_branch_sums(differentiated_product):
-    pass
-
-#Currently Debugging Here!
-
-#Flatten this final structure
-#All the sums can be over the same list
 def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         make_controlled):
     """
-    :param (list[function]) p_unitaries_product: [ham]
+    :param (list[function]) p_unitaries_product: [uni]
     :param (list[PauliSum]) hamiltonians_list: for each factor in the product
     :param (function) make_controlled: e.g. X -> CNOT
-    :return (list[list[list[function]]]) differentiated_product: indexing below
+    :return (list[list[function]]) differentiated_product: [summand*branch][uni]
     """
-    #gain one index for branches of the derivative
-    #gain one index for product rule
-    #Indexing should be [summand*branch][ham]
-    #i.e. just list[list[function]]?
-    differentiated_product = [] #[summand][ham][branch]
+    differentiated_product = []
     for unitary_index in xrange(len(p_unitaries_product)):
-        #(list[function])
         p_analytical_derivative_branches = differentiate_unitary(
             p_unitaries_product[unitary_index],
             hamiltonians_list[unitary_index], make_controlled)
-        #(list[list[function]])
         derivative_summand = parallelize(p_analytical_derivative_branches,
                 p_unitaries_product, unitary_index)
-        differentiated_product.append(derivative_summand)
+        differentiated_product += derivative_summand
     return differentiated_product
 
-#Flatten this structure
 def evaluate_differentiated_product(differentiated_product, parameters,
         program_maps=[]):
     """
     Evaluates each term in the differentiated product using the given parameters
-    :param (list[list[list[function]]]) differentiated_product:
+    :param (list[list[function]]) differentiated_product:
     :param (list[float]) parameters:
+    :return (list[list[pq.Program]]) evaluated_product:
     """
     evaluated_product = []
     for summand in differentiated_product:
         evaluated_summand = []
-        for factor in summand:
-            evaluated_factor = []
-            for branch, param in zip(factor, parameters):
-                evaluated_branch = branch(param)
-                for program_map in program_maps:
-                    evaluated_branch = program_map(evaluated_branch)
-                evaluated_factor.append(evaluated_branch)
+        assert len(summand) == len(parameters)
+        for factor, param in zip(summand, parameters):
+            evaluated_factor = factor(param)
+            for program_map in program_maps:
+                evaluated_factor = program_map(evaluated_factor)
             evaluated_summand.append(evaluated_factor)
         evaluated_product.append(evaluated_summand)
     return evaluated_product
 
 def generate_state_preparation(num_qubits):
+    """
+    Adds the gates used for preparing the reference state
+    """
     def add_state_preparation(gradient_term):
         state_preparation = pq.Program()
         for qubit_index in num_qubits:
