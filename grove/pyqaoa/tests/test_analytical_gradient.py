@@ -103,33 +103,20 @@ def test_parallelize():
     comparison_matrix = [[4, 1, 4], [4, 2, 4], [4, 3, 4]]
     assert matrix == comparison_matrix
 
-def evaluate_differentiated_product(differentiated_product, parameters):
-    evaluated_product = []
-    for summand in differentiated_product:
-        evaluated_summand = []
-        for factor in summand:
-            evaluated_factor = []
-            for branch, param in zip(factor, parameters):
-                evaluated_branch = branch(param)
-                evaluated_factor.append(evaluated_branch)
-            evaluated_summand.append(evaluated_factor)
-        evaluated_product.append(evaluated_summand)
-    return evaluated_product
-
 def test_differentiate_product_rule_one_ham():
     #####################
     #For One Hamiltonian#
     #####################
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    hamiltonians_list = [hamiltonian_0]
+    hamiltonians = [hamiltonian_0]
     p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
-    unitaries_list = [p_unitary_0]
+    p_unitaries = [p_unitary_0]
     make_controlled = analytical_gradient.generate_make_controlled(2)
     differentiated_product = analytical_gradient.differentiate_product_rule(
-        unitaries_list, hamiltonians_list, make_controlled)
+        p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1]
-    evaluated_product = evaluate_differentiated_product(differentiated_product,
-        parameters)
+    evaluated_product = analytical_gradient.evaluate_differentiated_product(
+        differentiated_product, parameters)
     comparison_product = [[
         [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
         [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
@@ -155,16 +142,15 @@ def test_differentiate_product_rule_two_hams():
     ######################
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    hamiltonians_list = [hamiltonian_0, hamiltonian_1]
-    p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
-    p_unitary_1 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_1)
-    unitaries_list = [p_unitary_0, p_unitary_1]
+    hamiltonians = [hamiltonian_0, hamiltonian_1]
+    p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
+                   for hamiltonian in hamiltonians]
     make_controlled = analytical_gradient.generate_make_controlled(2)
     differentiated_product = analytical_gradient.differentiate_product_rule(
-        unitaries_list, hamiltonians_list, make_controlled)
+        p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1, 0.7]
-    evaluated_product = evaluate_differentiated_product(differentiated_product,
-        parameters)
+    evaluated_product = analytical_gradient.evaluate_differentiated_product(
+        differentiated_product, parameters)
     comparison_product = [
         [
             [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0]),
@@ -193,113 +179,29 @@ def test_differentiate_product_rule_two_hams():
                 comparison_branch = comparison_product[summand_idx][factor_idx][branch_idx]
                 utils.compare_progs(branch, comparison_branch)
 
-
-def test_unitaries_list_to_analytical_derivatives_list_branches_product():
-    step_index = 0
-    hamiltonian = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    unitary_step_0 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.1)
-    unitary_step_1 = maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian, 0.7)
-    unitaries_list = [unitary_step_0, unitary_step_1]
+def test_generate_analytical_gradient():
+    hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians = [hamiltonian_0, hamiltonian_1]
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    analytical_derivatives_list_branches = \
-        analytical_gradient.differentiate_unitary_in_list(
-        step_index, hamiltonian, unitaries_list, make_controlled)
-    comparison_programs_list_branch_A = [
-        pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-        unitary_step_0, unitary_step_1]
-    comparison_programs_list_branches = [comparison_programs_list_branch_A]
-    assert (len(analytical_derivatives_list_branches) ==
-            len(comparison_programs_list_branches))
-    for idx in xrange(len(analytical_derivatives_list_branches)):
-        analytical_derivatives_list_branch = \
-            analytical_derivatives_list_branches[idx]
-        comparison_programs_list_branch = comparison_programs_list_branches[idx]
-        assert (len(analytical_derivatives_list_branch) ==
-                len(comparison_programs_list_branch))
-        for jdx in xrange(len(analytical_derivatives_list_branch)):
-            utils.compare_progs(analytical_derivatives_list_branch[jdx],
-                                comparison_programs_list_branch[jdx])
+    steps = 2
+    analytical_gradient = analytical_gradient.generate_analytical_gradient(
+        hamiltonians, make_controlled, steps)
 
-def test_zip_analytical_derivatives_list_branches():
-    ham_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    ham_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    hamiltonians = [ham_0, ham_1]
-    unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.1)
-    unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.3)
-    unitaries_list = [unitary_0, unitary_1]
-    step_index = 0
-    derivative_index = 0
-    make_controlled = analytical_gradient.generate_make_controlled(2)
-    analytical_derivatives_0_list_branches = \
-        analytical_gradient.differentiate_unitary_in_list(
-        step_index, ham_0, unitaries_list, make_controlled)
-    print(analytical_derivatives_0_list_branches)
 
-    #analytical_derivatives_list_branch_0 = [
-    #analytical_derivatives_list_branch_1 =
-    #zip_analytical_derivatives_list_branches()
+def test_add_phase_correction():
     pass
 
-def test_generate_step_analytical_gradient():
-    ham_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    ham_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    hamiltonians = [ham_0, ham_1]
-    step_0_unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.1)
-    step_1_unitary_0 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_0, 0.7)
-    step_0_unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.3)
-    step_1_unitary_1 = maxcut_qaoa_core.exponentiate_hamiltonian(ham_1, 0.8)
-    unitaries_0_list = [step_0_unitary_0, step_1_unitary_0]
-    unitaries_1_list = [step_0_unitary_1, step_1_unitary_1]
-    unitaries_lists = [unitaries_0_list, unitaries_1_list]
-
-    make_controlled = analytical_gradient.generate_make_controlled(2)
-    step_analytical_gradient = \
-        analytical_gradient.generate_step_analytical_gradient(
-        unitaries_lists, hamiltonians, make_controlled)
-
-    analytical_gradient_step_0 = step_analytical_gradient(0)
-    comparison_gradient_step_0_ham_0_branch_0 = (pq.Program().inst(CNOT(2,0)) +
-        step_0_unitary_0 + step_0_unitary_1 +
-        step_1_unitary_0 + step_1_unitary_1)
-    comparison_gradient_step_0_ham_0_branch_1 = (pq.Program().inst(CNOT(2,1)) +
-        step_0_unitary_0 + step_0_unitary_1 +
-        step_1_unitary_0 + step_1_unitary_1)
-    comparison_gradient_step_0_ham_1_branch_0 = (
-        pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-        step_0_unitary_0 + step_0_unitary_1 +
-        step_1_unitary_0 + step_1_unitary_1)
-    print(comparison_gradient_step_0_ham_1_branch_0)
-    #print(analytical_gradient_step_0[1][0])
-    utils.compare_progs(analytical_gradient_step_0[0][0],
-                       comparison_gradient_step_0_ham_0_branch_0)
-    utils.compare_progs(analytical_gradient_step_0[0][1],
-                       comparison_gradient_step_0_ham_0_branch_1)
-    #utils.compare_progs(analytical_gradient_step_0[1][0],
-    #                   comparison_gradient_step_0_ham_1_branch_0)
-    #utils.compare_progs(analytical_gradient_step_0[1][0],
-    #step_0_comparison_gradient_A = [
-    #    maxcut_qaoa_core.exponentiate_hamiltonian(hamiltonian_A, 0.1)
-    #print(step_0_comparison_gradient_A)
-    #step_0_comparison_gradient_B = maxcut_qaoa_core.exponentiate_hamiltonian(
-    #    hamiltonian_B, 0.3)
-    #step_0_comparison_gradient = [step_0_comparison_gradient_A,
-    #                              step_0_comparison_gradient_B]
-    #assert (len(step_0_analytical_gradient) == len(step_0_comparison_gradient))
-    #for idx in xrange(len(step_0_analytical_gradient)):
-        #assert (len(step_0_analytical_gradient[idx]) ==
-        #        len(step_0_comparison_gradient[idx]))
-        #print(step_0_comparison_gradient[idx])
-        #for jdx in xrange(len(step_0_analytical_gradient[idx])):
-            #pass
-            #utils.compare_progs(step_0_analytical_gradient[idx][jdx],
-            #                    step_0_comparison_gradient[idx][jdx]))
-            #print(step_0_analytical_gradient[idx][jdx])
 
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
     steps = 1
-    betas = [1.3]
-    gammas = [1.2]
+    beta = 1.3
+    gamma = 1.2
+    parameters = [beta, gamma]
+
+    gamma_derivative = np.sin(2*beta)*np.cos(gamma)
+    beta_derivative = 2*np.cos(2*beta)*np.sin(gamma)
 
     graph = maxcut_qaoa_core.edges_to_graph(graph_edges)
     num_qubits = len(graph.nodes())
@@ -308,16 +210,11 @@ def test_analytical_gradient_expectation_value():
         maxcut_qaoa_core.construct_reference_state_program(num_qubits)
     cost_hamiltonian = maxcut_qaoa_core.get_cost_hamiltonian(graph)
     driver_hamiltonian = maxcut_qaoa_core.get_driver_hamiltonian(graph)
-    cost_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
-        steps, cost_hamiltonian)(gammas)
-    driver_unitary_list = maxcut_qaoa_core.get_program_parameterizer(
-        steps, driver_hamiltonian)(betas)
     make_controlled = analytical_gradient.generate_make_controlled(
         ancilla_qubit_index)
-    step_analytical_gradient = generate_step_analytical_gradient(
-        [cost_unitary_list, driver_unitary_list],
-        [cost_hamiltonian, driver_hamiltonian], make_controlled)
-
+    analytical_gradient = analytical_gradient_generate_analytical_gradient(
+        [cost_hamiltonian, driver_hamiltonian], make_controlled, steps)
+    add_phase_correction(analytical_gradient, ancilla_qubit_index)
 
     for program in gradient_component_programs:
 	print(program)
@@ -330,7 +227,6 @@ def test_analytical_gradient_expectation_value():
     print(numerical_expectation)
     #driver_expectation = 2*np.cos(2*beta)*np.sin(gamma)
     #print(driver_expectation)
-    cost_expectation = np.sin(2*beta)*np.cos(gamma)
     print(cost_expectation)
 
     full_program = reference_state_program + maxcut_qaoa_unitary_program

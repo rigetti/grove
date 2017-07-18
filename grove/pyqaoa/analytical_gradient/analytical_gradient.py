@@ -13,6 +13,7 @@ from pyquil.paulis import *
 
 import maxcut_qaoa_core
 
+#Need to generalize this to make arbitrary one qubit ops controlled
 def generate_make_controlled(ancilla_qubit_index):
     """
     Creates a function which maps operators to controlled operators
@@ -127,140 +128,62 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         differentiated_product.append(derivative_summand)
     return differentiated_product
 
-#The role of the index is confusing!
-def differentiate_unitary_in_list(step_index,
-        hamiltonian, unitaries_list, make_controlled):
+#Redesign this structure
+def evaluate_differentiated_product(differentiated_product, parameters,
+        program_map=None):
+    evaluated_product = []
+    for summand in differentiated_product:
+        evaluated_summand = []
+        for factor in summand:
+            evaluated_factor = []
+            for branch, param in zip(factor, parameters):
+                if program_map:
+                    evaluated_branch = program_map(branch(param))
+                else:
+                    evaluated_branch = branch(param)
+                evaluated_factor.append(evaluated_branch)
+            evaluated_summand.append(evaluated_factor)
+        evaluated_product.append(evaluated_summand)
+    return evaluated_product
+
+#There are multiple ways of doing this phase correction!
+def add_phase_correction(gradient_term, ancilla_qubit_index):
     """
-    Computes the analytical derivative of a unitary in a list of unitaries
-    :param (int) step_index: the index of selected unitary in the list
-    :param (PauliSum) hamiltonian: the hamiltonian which generates the unitaries
-    :param (list[pq.Program()]) unitaries_list: each from a term in the PauliSum
-    :param (function) make controlled: Maps Pauli operators to controlled gates
-    :return (list[list[pq.Program()]]) analytical_derivative_list_branches:
+    Adds the ancilla qubit phase correction operations
+    :param (pq.Program) gradient_term:
+    :param (int) ancilla_qubit_index:
+    :return (pq.Program) phase_corrected_term:
     """
-    analytical_derivative_branches = differentiate_unitary(
-        unitaries_list[step_index], hamiltonian, make_controlled)
-    analytical_derivatives_list_branches = []
-    for analytical_derivative_branch in analytical_derivative_branches:
-        analytical_derivatives_list_branch = [analytical_derivative_branch
-            if idx == step_index else unitary
-            for idx, unitary in enumerate(unitaries_list)] #(list[pq.Program()])
-        analytical_derivatives_list_branches.append(
-            analytical_derivatives_list_branch)
-    return analytical_derivatives_list_branches
+    phase_corrected_term = pq.Program()
+    phase_corrected_term.inst(H(ancilla_qubit_index))
+    phase_corrected_term += gradient_term
+    phase_corrected_term.inst(S(ancilla_qubit_index))
+    phase_corrected_term.inst(H(ancilla_qubit_index))
+    return phase_corrected_term
 
-def zip_analytical_derivatives_list_branches(
-        analytical_derivatives_list_branches, unitaries_lists,
-        hamiltonian_index):
+#need to simplify the return type
+def generate_analytical_gradient(hamiltonians, make_controlled, steps):
     """
-    Creates a an analytical_derivative program with branches for each term
-    :param (list[list[pq.Program()]]) analytical_derivatives_list_branches:
-    :param (list[list[pq.Program()]]) unitaries_lists: [ham][branch]
-    :param (int) hamiltonian_index: the index of the corresponding hamiltonian
-    :return (list[pq.Program()]) analytical_derivative_branches: for each term
+    Generates the analytical gradient corresponding to a list of hamiltonians
+    :param (list[pq.Program]) hamiltonians:
+    :param (function) make_controlled:
+    :param (int) steps:
+    :return ? :
     """
-    analytical_derivative_branches = []
-    for analytical_derivatives_list_branch in analytical_derivatives_list_branches:
-        analytical_derivative_branch_slices = []
-        for jdx, unitaries_list in enumerate(unitaries_lists):
-            if jdx == hamiltonian_index:
-                analytical_derivative_branch_slices.append(
-                    analytical_derivatives_list_branch)
-        else:
-            analytical_derivative_branch_slices.append(unitaries_list)
-        analytical_derivative_branch = maxcut_qaoa_core.zip_programs_lists(
-            analytical_derivative_branch_slices)
-        analytical_derivative_branches.append(analytical_derivative_branch)
-    return analytical_derivative_branches
-
-def generate_step_analytical_gradient(unitaries_lists, hamiltonians,
-        make_controlled):
-    """
-    Generates a function which finds the derivatives at a given step
-    :param (list[list[pq.Program]]) unitaries_lists: [ham][branch]
-    :param (list[PauliSum]) hamiltonians: each one generates a unitaries_list
-    :param (function) make_controlled: Maps Pauli Operators to controlled gates
-    :return (function) step_analytical_gradient: gradient for a given step
-    """
-    assert len(unitaries_lists) == len(hamiltonians)
-
-    def step_analytical_gradient(step_index):
-        """
-        Computes all the derivatives at a given step and zips unitaries
-        :param (int) step_index: the step to compute the derivatives at
-        :return (list[list[pq.Program]]) analytical_gradient: [ham][branch]
-        """
-        analytical_gradient = []
-        for idx, unitaries_list in enumerate(unitaries_lists):
-            analytical_derivatives_list_branches = \
-                differentiate_unitary_in_list(
-                step_index, hamiltonians[idx], unitaries_list, make_controlled)
-            analytical_derivative_branches = \
-                zip_analytical_derivatives_list_branches(
-                analytical_derivatives_list_branches, unitaries_lists, idx)
-            analytical_gradient.append(analytical_derivative_branches)
-        return analytical_gradient
-
-    return step_analytical_gradient
-
-
-
-
+    p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
+                   for hamiltonian in hamiltonians]
+    def analytical_gradient(steps_parameters):
+        repeated_p_unitaries = p_unitaries*steps
+        repeated_hamiltonians = hamiltonians*steps
+        assert len(repeated_hamiltonians) == len(steps_parameters)
+    	differentiated_product = differentiate_product_rule(repeated_p_unitaries,
+            hamiltonians)
+        evaluated_product = evaluate_differentiated_product(
+            differentiated_product, steps_parameters, add_phase_correction)
+        return evaluated_product
+    return analytical_gradient
 
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
     return full_cost_hamiltonian
-
-#Reduce the complexity!
-def insert_ancilla_controlled_hermitian(gradient_component_programs,
-        hermitian_structure, hamiltonian_type, ancilla_qubit_index):
-    gradient_component_hermitian_operators = hermitian_structure[
-        step_index][hamiltonian_type]
-    new_gradient_component_programs = []
-    for op_type, gate in gradient_component_hermitian_operators:
-        operator_name = gate.operator_name
-        controlled_operator = make_controlled(operator_name)
-        qubit_index = gate.arguments[0]
-        controlled_gate = controlled_operator(ancilla_qubit_index, qubit_index)
-        if hamiltonian_type == "driver":
-            new_gradient_component_programs.append(gradient_component_programs[0] +
-                                                   controlled_gate)
-        if hamiltonian_type == "cost":
-            gradient_component_programs[0].inst(controlled_gate)
-            new_gradient_component_programs = gradient_component_programs
-    return new_gradient_component_programs
-
-
-#Reduce the complexity!
-def get_analytical_gradient_component_qaoa(params,
-        reference_state_program, num_qubits, step_index, hamiltonian_type):
-    """
-    Computes a single component of the analytical gradient
-    """
-    gradient_component_programs = [reference_state_program]
-    unitary_program, unitary_structure, hermitian_structure = \
-        program_parameterizer(params)
-    ancilla_qubit_index = num_qubits
-    for gradient_component_program in gradient_component_programs:
-        gradient_component_program.inst(H(ancilla_qubit_index))
-
-    for free_step_index in unitary_structure:
-        step_unitary_structure = unitary_structure[free_step_index]
-        for free_hamiltonian_type in step_unitary_structure:
-
-            if (free_step_index == step_index and
-                    free_hamiltonian_type == hamiltonian_type):
-                gradient_component_programs = insert_ancilla_controlled_hermitian(
-                    gradient_component_programs, hermitian_structure,
-                    hamiltonian_type, ancilla_qubit_index)
-
-            hamiltonian_operators = step_unitary_structure[free_hamiltonian_type]
-            for op_type, gate in hamiltonian_operators:
-                for gradient_component_program in gradient_component_programs:
-                    gradient_component_program.inst(gate)
-
-    for gradient_component_program in gradient_component_programs:
-        gradient_component_program.inst(S(ancilla_qubit_index))
-        gradient_component_program.inst(H(ancilla_qubit_index))
-    return gradient_component_programs
