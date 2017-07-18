@@ -395,7 +395,7 @@ Here are some links to get you started:
 
 - `A Variational Eigenvalue Solver on a Quantum Processor <https://arxiv.org/abs/1304.3061>`_
 
-- `The Theory of Variational Hybrid Quantum-Classical Algorithms <https://arxiv.org/abs/1304.3061>`_
+- `The Theory of Variational Hybrid Quantum-Classical Algorithms <https://arxiv.org/abs/1509.04279>`_
 
 - `Hybrid Quantum-Classical Approach to Correlated Materials <https://arxiv.org/abs/1510.03859>`_
 
