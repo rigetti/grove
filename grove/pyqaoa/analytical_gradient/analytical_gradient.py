@@ -105,65 +105,85 @@ def parallelize(new_column, old_row, new_column_index):
                    else row_element for column_index, row_element
                    in enumerate(old_row)]
         matrix.append(new_row)
-    #for column_index, row_element in enumerate(old_row):
-    #    if column_index == new_column_index:
-    #        matrix_column = new_column
-    #    else:
-    #        matrix_column = [old_row[column_index]]*len(new_column)
-    #    matrix.append(matrix_column)
     return matrix
 
 def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         make_controlled):
     """
-    :param (list[function]) p_unitaries_product: [uni]
+    :param (list[function]) p_unitaries_product: [uni] i.e. unitary_index
     :param (list[PauliSum]) hamiltonians_list: for each factor in the product
     :param (function) make_controlled: e.g. X -> CNOT
     :return (list[list[function]]) differentiated_product: [summand*branch][uni]
     """
-    differentiated_product = []
+    sum_of_differentiated_products = []
     for unitary_index in xrange(len(p_unitaries_product)):
         p_analytical_derivative_branches = differentiate_unitary(
             p_unitaries_product[unitary_index],
             hamiltonians_list[unitary_index], make_controlled)
-        derivative_summand = parallelize(p_analytical_derivative_branches,
+        summand = parallelize(p_analytical_derivative_branches,
                 p_unitaries_product, unitary_index)
-        differentiated_product += derivative_summand
-    return differentiated_product
+        sum_of_differentiated_products += summand
+    return sum_of_differentiated_products
 
-def evaluate_differentiated_product(differentiated_product, parameters,
-        program_maps=[]):
+def generate_evaluate_product(parameters):
     """
-    Evaluates each term in the differentiated product using the given parameters
-    :param (list[list[function]]) differentiated_product:
-    :param (list[float]) parameters:
-    :return (list[list[pq.Program]]) evaluated_product:
+    Creates the function which evaluates a product of parameterized operators
     """
-    evaluated_product = []
-    for summand in differentiated_product:
-        evaluated_summand = []
-        assert len(summand) == len(parameters)
-        for factor, param in zip(summand, parameters):
-            evaluated_factor = factor(param)
-            for program_map in program_maps:
-                evaluated_factor = program_map(evaluated_factor)
-            evaluated_summand.append(evaluated_factor)
-        evaluated_product.append(evaluated_summand)
-    return evaluated_product
+    def evaluate_product(product):
+        assert len(product) == len(parameters)
+        evaluated_product = []
+        for factor, parameter in zip(product, parameters):
+            evaluated_factor = factor(parameter)
+            evaluated_product.append(evaluated_factor)
+        return evaluated_product
+    return evaluate_product
+
+def map_products(sum_of_products, product_map):
+    """
+    Map each product in the sum of products using the given map
+    :param (list[list[Abstract_1]]) sum_of_products:
+    :param (function: list[Abstract_1] -> Abstract_2) product_map:
+    :return (list[Abstract_2]) mapped_sum:
+    """
+    mapped_sum = []
+    for product in sum_of_products:
+        mapped_product = product_map(product)
+        mapped_sum.append(mapped_product)
+    return mapped_sum
+
+def map_factors(sum_of_products, factor_map):
+    """
+    Map each factor in each of the products using the given map
+    :param (list[list[Abstract_1]]) sum_of_products:
+    :param (function: Abstract_1 -> Abstract_2) factor_map:
+    :return (list[list[Abstract_2]) mapped_sum:
+    """
+    mapped_sum = []
+    for product in sum_of_differentiated_product:
+        mapped_product = []
+        for factor in product:
+            mapped_factor = factor_map(param)
+            mapped_product.append(mapped_factor)
+        mapped_sum.append(mapped_product)
+    return mapped_sum
 
 def generate_state_preparation(num_qubits):
     """
-    Adds the gates used for preparing the reference state
+    Generates function for prepending state preparation gates
+    :param (int) num_qubits:
+    :return (function) add_state_preparation:
     """
     def add_state_preparation(gradient_term):
+        """
+        Prepends state preparation gates to a given term in the gradient
+        """
         state_preparation = pq.Program()
-        for qubit_index in num_qubits:
+        for qubit_index in xrange(num_qubits):
             state_preparation.inst(H(qubit_index))
         prepared_term = state_preparation  + gradient_term
         return prepared_term
     return add_state_preparation
 
-#Based on the 2002 Ekert Paper
 def generate_phase_correction(ancilla_qubit_index):
     def add_phase_correction(gradient_term):
         """
@@ -180,8 +200,23 @@ def generate_phase_correction(ancilla_qubit_index):
         return phase_corrected_term
     return add_phase_correction
 
-#need to simplify the return type
-def generate_analytical_gradient(hamiltonians, steps, num_qubits):
+def get_gradient_cost_hamiltonian(cost_hamiltonian, num_qubits):
+    """
+    Extends the cost hamiltonian
+    """
+    ancilla_qubit_term = PauliTerm("Z", num_qubits)
+    full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
+    return full_cost_hamiltonian
+
+def generate_expectation_value(gradient_cost_hamiltonian, qvm_connection):
+    def get_expectation_value(gradient_term):
+        numerical_expectation_value = expectation_value.expectation(
+            gradient_term, gradient_cost_hamiltonian, qvm_connection)
+        return numerical_expectation_value
+    return get_expectation_value
+
+def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
+        qvm_connection, steps, num_qubits):
     """
     Generates the analytical gradient corresponding to a list of hamiltonians
     :param (list[pq.Program]) hamiltonians:
@@ -197,26 +232,24 @@ def generate_analytical_gradient(hamiltonians, steps, num_qubits):
         assert len(repeated_hamiltonians) == len(steps_parameters)
 
         make_controlled = generate_make_controlled(num_qubits)
-        add_state_preparation = generate_state_preperation(num_qubits)
+        evaluate_product = generate_evaluate_product(steps_parameters)
         add_phase_correction = generate_phase_correction(num_qubits)
+        add_state_preparation = generate_state_preparation(num_qubits)
+        gradient_cost_hamiltonian = get_gradient_cost_hamiltonian(
+            cost_hamiltonian, num_qubits)
+        get_expectation_value = generate_expectation_value(
+            gradient_cost_hamiltonian, qvm_connection)
 
-    	differentiated_product = differentiate_product_rule(repeated_p_unitaries,
-            repeated_hamiltonians, make_controlled)
-        evaluated_gradient = evaluate_differentiated_product(
-            differentiated_product, steps_parameters,
-            [add_phase_correction, add_state_preparation])
-        return evaluated_gradient
+    	sum_of_products = differentiate_product_rule(
+            repeated_p_unitaries, repeated_hamiltonians, make_controlled)
+
+        evaluated_products = map_products(sum_of_products, evaluate_product)
+        composed_products = map_products(sum_of_products, sum)
+        phase_corrected_products = map_products(sum_of_products,
+            add_phase_correction)
+        state_prepared_products = map_products(sum_of_products,
+            add_state_preparation)
+        gradient_values = map_prodicts(sum_of_products, get_expectation_value)
+
+        return gradient_values
     return gradient
-
-def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
-    """
-    """
-    ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)
-    full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
-    return full_cost_hamiltonian
-
-def compute_gradient_term_expectation_value(cost_hamiltonian, gradient_term,
-        qvm_connection):
-    numerical_expectation_value = expectation_value.expectation(gradient_term,
-        cost_hamiltonian, qvm_connection)
-    return numerical_expectation_value

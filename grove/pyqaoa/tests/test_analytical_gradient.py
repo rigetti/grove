@@ -112,11 +112,12 @@ def test_differentiate_product_rule_one_ham():
     p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
     p_unitaries = [p_unitary_0]
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    differentiated_product = analytical_gradient.differentiate_product_rule(
+    sum_of_products = analytical_gradient.differentiate_product_rule(
         p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1]
-    evaluated_product = analytical_gradient.evaluate_differentiated_product(
-        differentiated_product, parameters)
+    evaluate_product = analytical_gradient.generate_evaluate_product(parameters)
+    evaluated_product = analytical_gradient.map_products(
+        sum_of_products, evaluate_product)
     comparison_product = [
         [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
         [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
@@ -130,8 +131,6 @@ def test_differentiate_product_rule_one_ham():
             comparison_factor = comparison_product[summand_idx][factor_idx]
             utils.compare_progs(factor, comparison_factor)
 
-#Debugging here
-
 def test_differentiate_product_rule_two_hams():
     ######################
     #For Two Hamiltonians#
@@ -142,11 +141,12 @@ def test_differentiate_product_rule_two_hams():
     p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    differentiated_product = analytical_gradient.differentiate_product_rule(
+    sum_of_products = analytical_gradient.differentiate_product_rule(
         p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1, 0.7]
-    evaluated_product = analytical_gradient.evaluate_differentiated_product(
-        differentiated_product, parameters)
+    evaluate_product = analytical_gradient.generate_evaluate_product(parameters)
+    evaluated_product = analytical_gradient.map_products(
+        sum_of_products, evaluate_product)
     comparison_product = [
         [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
          p_unitaries[1](parameters[1])],
@@ -169,18 +169,16 @@ def test_generate_analytical_gradient():
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
     hamiltonians = [hamiltonian_0, hamiltonian_1]
-    steps = 2
-    ancilla_qubit_index = 2
-    gradient = analytical_gradient.generate_analytical_gradient(
-        hamiltonians, steps, ancilla_qubit_index)
-    steps_parameters = [0.1, 0.2, 0.5, 0.7]
-    evaluated_gradient = gradient(steps_parameters)
-
-def test_add_phase_correction():
-    pass
+    steps = 1
+    num_qubits = 2
+    qvm_connection = api.SyncConnection()
+    gradient = analytical_gradient.generate_analytical_gradient(hamiltonians,
+        hamiltonian_1, qvm_connection, steps, num_qubits)
+    steps_parameters = [0.1, 0.2]
+    gradient_values = gradient(steps_parameters)
+    print(gradient_values)
 
 def test_analytical_gradient_expectation_value():
-    graph_edges = [(0,1)]
     steps = 1
     beta = 1.3
     gamma = 1.2
@@ -189,23 +187,12 @@ def test_analytical_gradient_expectation_value():
     gamma_derivative = np.sin(2*beta)*np.cos(gamma)
     beta_derivative = 2*np.cos(2*beta)*np.sin(gamma)
 
-    graph = maxcut_qaoa_core.edges_to_graph(graph_edges)
-    num_qubits = len(graph.nodes())
-    ancilla_qubit_index = num_qubits
-    reference_state_program = \
-        maxcut_qaoa_core.construct_reference_state_program(num_qubits)
-    cost_hamiltonian = maxcut_qaoa_core.get_cost_hamiltonian(graph)
-    driver_hamiltonian = maxcut_qaoa_core.get_driver_hamiltonian(graph)
     make_controlled = analytical_gradient.generate_make_controlled(
         ancilla_qubit_index)
     analytical_gradient = analytical_gradient_generate_analytical_gradient(
         [cost_hamiltonian, driver_hamiltonian], make_controlled, steps)
     add_phase_correction(analytical_gradient, ancilla_qubit_index)
 
-    full_program = reference_state_program + maxcut_qaoa_unitary_program
-    qvm_connection = api.SyncConnection()
-    numerical_expectation_value = expectation_value.expectation(full_program,
-        cost_hamiltonian, qvm_connection)
 
     analytical_expectation_value = np.sin(2*betas[0])*np.sin(gammas[0])
     assert (round(analytical_expectation_value, 6) ==
@@ -220,4 +207,4 @@ if __name__ == "__main__":
     test_parallelize()
     test_differentiate_product_rule_one_ham()
     test_differentiate_product_rule_two_hams()
-    #test_generate_analytical_gradient()
+    test_generate_analytical_gradient()
