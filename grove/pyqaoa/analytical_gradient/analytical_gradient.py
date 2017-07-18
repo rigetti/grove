@@ -146,23 +146,25 @@ def evaluate_differentiated_product(differentiated_product, parameters,
         evaluated_product.append(evaluated_summand)
     return evaluated_product
 
-#There are multiple ways of doing this phase correction!
-def add_phase_correction(gradient_term, ancilla_qubit_index):
-    """
-    Adds the ancilla qubit phase correction operations
-    :param (pq.Program) gradient_term:
-    :param (int) ancilla_qubit_index:
-    :return (pq.Program) phase_corrected_term:
-    """
-    phase_corrected_term = pq.Program()
-    phase_corrected_term.inst(H(ancilla_qubit_index))
-    phase_corrected_term += gradient_term
-    phase_corrected_term.inst(S(ancilla_qubit_index))
-    phase_corrected_term.inst(H(ancilla_qubit_index))
-    return phase_corrected_term
+#Based on the 2002 Eckert Paper
+def generate_phase_correction(ancilla_qubit_index):
+    def add_phase_correction(gradient_term):
+        """
+        Adds the ancilla qubit phase correction operations
+        :param (pq.Program) gradient_term:
+        :param (int) ancilla_qubit_index:
+        :return (pq.Program) phase_corrected_term:
+        """
+        phase_corrected_term = pq.Program()
+        phase_corrected_term.inst(H(ancilla_qubit_index))
+        phase_corrected_term += gradient_term
+        phase_corrected_term.inst(S(ancilla_qubit_index))
+        phase_corrected_term.inst(H(ancilla_qubit_index))
+        return phase_corrected_term
+    return add_phase_correction
 
 #need to simplify the return type
-def generate_analytical_gradient(hamiltonians, make_controlled, steps):
+def generate_analytical_gradient(hamiltonians, steps, ancilla_qubit_index):
     """
     Generates the analytical gradient corresponding to a list of hamiltonians
     :param (list[pq.Program]) hamiltonians:
@@ -172,16 +174,20 @@ def generate_analytical_gradient(hamiltonians, make_controlled, steps):
     """
     p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
-    def analytical_gradient(steps_parameters):
+    def gradient(steps_parameters):
         repeated_p_unitaries = p_unitaries*steps
         repeated_hamiltonians = hamiltonians*steps
         assert len(repeated_hamiltonians) == len(steps_parameters)
+
+        make_controlled = generate_make_controlled(ancilla_qubit_index)
+        add_phase_correction = generate_phase_correction(ancilla_qubit_index)
+
     	differentiated_product = differentiate_product_rule(repeated_p_unitaries,
-            hamiltonians)
-        evaluated_product = evaluate_differentiated_product(
+            repeated_hamiltonians, make_controlled)
+        evaluated_gradient = evaluate_differentiated_product(
             differentiated_product, steps_parameters, add_phase_correction)
-        return evaluated_product
-    return analytical_gradient
+        return evaluated_gradient
+    return gradient
 
 def extend_cost_hamiltonian(cost_hamiltonian, ancilla_qubit_index):
     ancilla_qubit_term = PauliTerm("Z", ancilla_qubit_index)

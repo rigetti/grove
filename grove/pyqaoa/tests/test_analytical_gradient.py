@@ -153,15 +153,15 @@ def test_differentiate_product_rule_two_hams():
         differentiated_product, parameters)
     comparison_product = [
         [
-            [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0]),
-             p_unitary_1(parameters[1])],
-            [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0]),
-             p_unitary_1(parameters[1])]
+            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
+             p_unitaries[1](parameters[1])],
+            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
+             p_unitaries[1](parameters[1])]
         ],
         [
-            [p_unitary_0(parameters[0]),
+            [p_unitaries[0](parameters[0]),
              pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-             p_unitary_1(parameters[1])]
+             p_unitaries[1](parameters[1])]
         ],
     ]
     assert len(comparison_product) == len(evaluated_product)
@@ -183,15 +183,15 @@ def test_generate_analytical_gradient():
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
     hamiltonians = [hamiltonian_0, hamiltonian_1]
-    make_controlled = analytical_gradient.generate_make_controlled(2)
     steps = 2
-    analytical_gradient = analytical_gradient.generate_analytical_gradient(
-        hamiltonians, make_controlled, steps)
-
+    ancilla_qubit_index = 2
+    gradient = analytical_gradient.generate_analytical_gradient(
+        hamiltonians, steps, ancilla_qubit_index)
+    steps_parameters = [0.1, 0.2, 0.5, 0.7]
+    evaluated_gradient = gradient(steps_parameters)
 
 def test_add_phase_correction():
     pass
-
 
 def test_analytical_gradient_expectation_value():
     graph_edges = [(0,1)]
@@ -216,19 +216,6 @@ def test_analytical_gradient_expectation_value():
         [cost_hamiltonian, driver_hamiltonian], make_controlled, steps)
     add_phase_correction(analytical_gradient, ancilla_qubit_index)
 
-    for program in gradient_component_programs:
-	print(program)
-    full_cost_hamiltonian = extend_cost_hamiltonian(cost_hamiltonian,
-	num_qubits)
-    numerical_expectations = [expectation_value.expectation(
-	gradient_component_program, full_cost_hamiltonian, qvm_connection)
-	for gradient_component_program in gradient_component_programs]
-    numerical_expectation = -sum(numerical_expectations)
-    print(numerical_expectation)
-    #driver_expectation = 2*np.cos(2*beta)*np.sin(gamma)
-    #print(driver_expectation)
-    print(cost_expectation)
-
     full_program = reference_state_program + maxcut_qaoa_unitary_program
     qvm_connection = api.SyncConnection()
     numerical_expectation_value = expectation_value.expectation(full_program,
@@ -236,7 +223,6 @@ def test_analytical_gradient_expectation_value():
 
     analytical_expectation_value = np.sin(2*betas[0])*np.sin(gammas[0])
     assert round(analytical_expectation_value, 6) == round(numerical_expectation_value,6)
-
 
 if __name__ == "__main__":
     test_generate_make_controlled()
@@ -247,7 +233,4 @@ if __name__ == "__main__":
     test_parallelize()
     test_differentiate_product_rule_one_ham()
     test_differentiate_product_rule_two_hams()
-    #test_unitaries_list_to_analytical_derivatives_list_branches_sum()
-    #test_unitaries_list_to_analytical_derivatives_list_branches_product()
-    #test_zip_analytical_derivatives_list_branches()
-    #test_generate_step_analytical_gradient()
+    test_generate_analytical_gradient()
