@@ -159,10 +159,10 @@ def map_factors(sum_of_products, factor_map):
     :return (list[list[Abstract_2]) mapped_sum:
     """
     mapped_sum = []
-    for product in sum_of_differentiated_product:
+    for product in sum_of_products:
         mapped_product = []
         for factor in product:
-            mapped_factor = factor_map(param)
+            mapped_factor = factor_map(factor)
             mapped_product.append(mapped_factor)
         mapped_sum.append(mapped_product)
     return mapped_sum
@@ -250,11 +250,17 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
             repeated_p_unitaries, repeated_hamiltonians, make_controlled)
 
         evaluated_products = map_products(sum_of_products, evaluate_product)
+        def print_func(x):
+            print(x)
+        #map_factors(evaluated_products, print_func)
         composed_products = map_products(evaluated_products, compose_programs)
+        #map_products(composed_products, print_func)
         phase_corrected_products = map_products(composed_products,
             add_phase_correction)
+        #map_products(phase_corrected_products, print_func)
         state_prepared_products = map_products(phase_corrected_products,
             add_state_preparation)
+        map_products(state_prepared_products, print_func)
         gradient_values = map_products(state_prepared_products,
             get_expectation_value)
 

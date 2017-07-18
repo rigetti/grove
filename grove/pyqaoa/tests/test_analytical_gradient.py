@@ -166,14 +166,14 @@ def test_differentiate_product_rule_two_hams():
             utils.compare_progs(factor, comparison_factor)
 
 def test_generate_analytical_gradient():
-    hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
-    hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
-    hamiltonians = [hamiltonian_0, hamiltonian_1]
+    driver_hamiltonian = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
+    cost_hamiltonian = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
+    hamiltonians = [cost_hamiltonian, driver_hamiltonian]
     steps = 1
     num_qubits = 2
     qvm_connection = api.SyncConnection()
     gradient = analytical_gradient.generate_analytical_gradient(hamiltonians,
-        hamiltonian_1, qvm_connection, steps, num_qubits)
+        cost_hamiltonian, qvm_connection, steps, num_qubits)
     steps_parameters = [0.1, 0.2]
     gradient_values = gradient(steps_parameters)
     print(gradient_values)
