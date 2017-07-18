@@ -215,6 +215,12 @@ def generate_expectation_value(gradient_cost_hamiltonian, qvm_connection):
         return numerical_expectation_value
     return get_expectation_value
 
+def compose_programs(programs):
+    composed_program = pq.Program()
+    for program in programs:
+        composed_program += program
+    return composed_program
+
 def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         qvm_connection, steps, num_qubits):
     """
@@ -244,12 +250,13 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
             repeated_p_unitaries, repeated_hamiltonians, make_controlled)
 
         evaluated_products = map_products(sum_of_products, evaluate_product)
-        composed_products = map_products(sum_of_products, sum)
-        phase_corrected_products = map_products(sum_of_products,
+        composed_products = map_products(evaluated_products, compose_programs)
+        phase_corrected_products = map_products(composed_products,
             add_phase_correction)
-        state_prepared_products = map_products(sum_of_products,
+        state_prepared_products = map_products(phase_corrected_products,
             add_state_preparation)
-        gradient_values = map_prodicts(sum_of_products, get_expectation_value)
+        gradient_values = map_products(state_prepared_products,
+            get_expectation_value)
 
         return gradient_values
     return gradient
