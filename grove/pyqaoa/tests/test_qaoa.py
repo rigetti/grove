@@ -22,8 +22,15 @@ from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
 from pyquil.wavefunction import Wavefunction
+<<<<<<< HEAD
 from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
+=======
+
+from grove.pyqaoa.qaoa import QAOA
+from grove.pyqaoa.utils import compare_progs
+from grove.pyvqe.vqe import VQE
+>>>>>>> c89fd19... should now pass pytest
 
 
 def test_probabilities():
@@ -50,6 +57,7 @@ def test_probabilities():
     prob_true[2] = 0.5
     assert np.isclose(probs, prob_true).all()
 
+<<<<<<< HEAD
 
 def test_get_angles():
     p = 2
@@ -67,6 +75,8 @@ def test_get_angles():
         assert gammas == [3.4, 4.3]
 
 
+=======
+>>>>>>> c89fd19... should now pass pytest
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
     fakeQVM = Mock(spec=qvm_module.SyncConnection())
@@ -74,3 +84,10 @@ def test_ref_program_pass():
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
     compare_progs(ref_prog, test_prog)
+<<<<<<< HEAD
+=======
+
+if __name__ == "__main__":
+    test_probabilities()
+    test_ref_program_pass()
+>>>>>>> c89fd19... should now pass pytest

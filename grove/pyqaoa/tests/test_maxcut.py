@@ -14,7 +14,6 @@
 #    limitations under the License.
 ##############################################################################
 
-import pytest
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 from grove.pyqaoa.qaoa import QAOA
 from grove.pyqaoa.utils import compare_progs
@@ -24,6 +23,7 @@ from pyquil.gates import H, X, PHASE, CNOT, RZ
 import numpy as np
 from mock import Mock, patch
 import pyquil.api as qvm_mod
+import pytest
 
 
 def test_pass_hamiltonians():
@@ -49,7 +49,10 @@ def test_pass_hamiltonians():
              cost_ham=PauliTerm("X", 0, 1.0), ref_hamiltonian=ref_ham,
              rand_seed=42)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> c89fd19... should now pass pytest
 def test_hamiltonians():
     test_graph = [(0, 1)]
     p = 1
@@ -62,6 +65,7 @@ def test_hamiltonians():
 
     assert len(ref_func) == 2
     assert len(cost_ops) == 1
+<<<<<<< HEAD
 
 
 def test_param_prog_p1_barbell():
@@ -104,3 +108,5 @@ def test_psiref_bar_p2():
 
 if __name__ == "__main__":
     test_psiref_bar_p2()
+=======
+>>>>>>> c89fd19... should now pass pytest
