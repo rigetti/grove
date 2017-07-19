@@ -99,7 +99,7 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     return p
 
 
-def run(cxn, oracle, qubits, ancilla):
+def run_bernstein_vazirani(cxn, oracle, qubits, ancilla):
     """
     Runs the Bernstein-Vazirani algorithm.
 
@@ -107,7 +107,7 @@ def run(cxn, oracle, qubits, ancilla):
     find the :math:`\\mathbf{a}` and :math:`b` corresponding to the function
     represented by the oracle.
 
-    :param SyncConnection cxn: the QVM connection to use to run the programs
+    :param Connection cxn: the QVM connection to use to run the programs
     :param Program oracle: the oracle to query that represents
                            a function of the form
                            :math:`f(x)=\\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}`
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
     oracle = oracle_function(vec_a, b, qubits, ancilla)
 
-    a, b, bv_program = run(qvm, oracle, qubits, ancilla)
+    a, b, bv_program = run_bernstein_vazirani(qvm, oracle, qubits, ancilla)
     bitstring_a = "".join(map(str, a))
     print "-----------------------------------"
     print "The bitstring a is given by: ", bitstring
