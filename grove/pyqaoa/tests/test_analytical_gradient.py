@@ -119,8 +119,8 @@ def test_differentiate_product_rule_one_ham():
     evaluated_sum = analytical_gradient.map_products(
         sum_of_branches, evaluate_product)
     comparison_sum = [[
-        [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
-        [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
+        [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0]/2)],
+        [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0]/2)]
         ]]
     assert len(comparison_sum) == len(evaluated_sum)
     for summand_idx in xrange(len(evaluated_sum)):
@@ -153,15 +153,15 @@ def test_differentiate_product_rule_two_hams():
         sum_of_products, evaluate_product)
     comparison_sum = [
         [
-            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
-             p_unitaries[1](parameters[1])],
-            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
-             p_unitaries[1](parameters[1])]
+            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]/2),
+             p_unitaries[1](parameters[1]/2)],
+            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]/2),
+             p_unitaries[1](parameters[1]/2)]
         ],
         [
-            [p_unitaries[0](parameters[0]),
+            [p_unitaries[0](parameters[0]/2),
              pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-             p_unitaries[1](parameters[1])]
+             p_unitaries[1](parameters[1]/2)]
         ]
     ]
     assert len(comparison_sum) == len(evaluated_sum)
@@ -186,29 +186,14 @@ def test_generate_analytical_gradient():
     qvm_connection = api.SyncConnection()
     gradient = analytical_gradient.generate_analytical_gradient(hamiltonians,
         cost_hamiltonian, qvm_connection, steps, num_qubits)
-    steps_parameters = [0.1, 0.2]
+    beta = 0.1
+    gamma = 0.2
+    steps_parameters = [gamma, beta]
     gradient_values = gradient(steps_parameters)
+    comparison_gradient_values = [np.sin(2*beta)*np.cos(gamma),
+                                  2*np.cos(2*beta)*np.sin(gamma)]
     print(gradient_values)
-
-def test_analytical_gradient_expectation_value():
-    steps = 1
-    beta = 1.3
-    gamma = 1.2
-    parameters = [beta, gamma]
-
-    gamma_derivative = np.sin(2*beta)*np.cos(gamma)
-    beta_derivative = 2*np.cos(2*beta)*np.sin(gamma)
-
-    make_controlled = analytical_gradient.generate_make_controlled(
-        ancilla_qubit_index)
-    analytical_gradient = analytical_gradient_generate_analytical_gradient(
-        [cost_hamiltonian, driver_hamiltonian], make_controlled, steps)
-    add_phase_correction(analytical_gradient, ancilla_qubit_index)
-
-
-    analytical_expectation_value = np.sin(2*betas[0])*np.sin(gammas[0])
-    assert (round(analytical_expectation_value, 6) ==
-            round(numerical_expectation_value, 6))
+    print(comparison_gradient_values)
 
 if __name__ == "__main__":
     test_generate_make_controlled()
