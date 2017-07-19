@@ -19,16 +19,9 @@ This module implements the analytical gradient as defined in the paper:
 'Practical Optimization for hybrid quantum-classical algorithms'
 """
 
-
-import numpy as np
 import pyquil.quil as pq
-import pyquil.api as api
-from pyquil.gates import *
-from pyquil.paulis import *
-
-import maxcut_qaoa_core
-import expectation_value
-
+from pyquil.gates import * # pylint: disable=unused-wildcard-import,wildcard-import
+from pyquil.paulis import * # pylint: disable=unused-wildcard-import,wildcard-import
 
 def generate_make_controlled(ancilla_qubit_index):
     """
@@ -75,22 +68,28 @@ def hamiltonian_to_program_branches(hamiltonian, pauli_operator_mapping):
     :return (list[pq.Program]) program_branches: each branch is from a term
     """
     program_branches = [pauli_term_to_program(pauli_term, pauli_operator_mapping)
-        for pauli_term in hamiltonian]
+                        for pauli_term in hamiltonian]
     return program_branches
 
-def gen_p_analytical_derivative(program_branch, p_unitary):
+def gen_p_derivative(program_branch, p_unitary):
     """
     Creates one branch of an analytical derivative
     :param (pq.Program) program_branch: from one term of the generator
     :param (function) p_unitary: the differentiated unitary
-    :return (function) p_analytical_derivative_branch: for the program branch
+    :return (function) p_derivative_branch: for the program branch
     """
-    def p_analytical_derivative_branch(param):
-        return program_branch + p_unitary(param)
-    return p_analytical_derivative_branch
+    def p_derivative_branch(parameter):
+        """
+        Partial application
+        :param (float) parameter: to evaluate the parametric unitary
+        :return (pq.Program) derivative_branch: the evaluated branch
+        """
+        derivative_branch = program_branch + p_unitary(parameter)
+        return derivative_branch
+    return p_derivative_branch
 
 def differentiate_unitary(p_unitary, generator,
-        pauli_operator_mapping):
+                          pauli_operator_mapping):
     """
     Writes the parameterized analytical derivative of a unitary
     :param (function) p_unitary: the p_unitary to be differentiated
@@ -99,12 +98,12 @@ def differentiate_unitary(p_unitary, generator,
     :return (list[function]) p_analytical_derivative_branches: for each term
     """
     program_branches = hamiltonian_to_program_branches(generator,
-        pauli_operator_mapping)
-    p_analytical_derivative_branches = []
+                                                       pauli_operator_mapping)
+    p_derivative_branches = []
     for program_branch in program_branches:
-        p_analytical_derivative_branches.append(
-            gen_p_analytical_derivative(program_branch, p_unitary))
-    return p_analytical_derivative_branches
+        p_derivative_branch = gen_p_derivative(program_branch, p_unitary)
+        p_derivative_branches.append(p_derivative_branch)
+    return p_derivative_branches
 
 def parallelize(new_column, old_row, new_column_index):
     """
@@ -123,7 +122,7 @@ def parallelize(new_column, old_row, new_column_index):
     return matrix
 
 def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
-        make_controlled):
+                               make_controlled):
     """
     Differentiates a product of parametric unitariesusing the product rule
     :param (list[function]) p_unitaries_product: [uni] i.e. unitary_index
@@ -132,12 +131,12 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
     :return (list[list[list[function]]]) sum_of_branches: [summand][branch][uni]
     """
     sum_of_branches = []
-    for unitary_index in xrange(len(p_unitaries_product)):
-        p_analytical_derivative_branches = differentiate_unitary(
+    for unitary_index in range(len(p_unitaries_product)):
+        p_derivative_branches = differentiate_unitary(
             p_unitaries_product[unitary_index],
             hamiltonians_list[unitary_index], make_controlled)
-        branches_of_products = parallelize(p_analytical_derivative_branches,
-                p_unitaries_product, unitary_index)
+        branches_of_products = parallelize(p_derivative_branches,
+                                           p_unitaries_product, unitary_index)
         sum_of_branches.append(branches_of_products)
     return sum_of_branches
 
@@ -165,15 +164,15 @@ def generate_evaluate_product(parameters):
     :param (list[float]) parameters: for evaluating a product of factors
     :return (function) evaluate_product: contains the factor of two correction
     """
-    def evaluate_product(product):
+    def evaluate_product(product_term):
         """
         Evaluates each factor in the product on the corresponding parameter
         :param (list[function]) product: parameterized programs
         :return (list[pq.Program]) evaluated_product: programs
         """
-        assert len(product) == len(parameters)
+        assert len(product_term) == len(parameters)
         evaluated_product = []
-        for factor, parameter in zip(product, parameters):
+        for factor, parameter in zip(product_term, parameters):
             evaluated_factor = factor(-parameter/2)
             evaluated_product.append(evaluated_factor)
         return evaluated_product
@@ -202,13 +201,13 @@ def map_products(sum_of_branches, product_map):
     mapped_sum = []
     for branch in sum_of_branches:
         mapped_branch = []
-        for product in branch:
-            mapped_product = product_map(product)
+        for product_term in branch:
+            mapped_product = product_map(product_term)
             mapped_branch.append(mapped_product)
         mapped_sum.append(mapped_branch)
     return mapped_sum
 
-def map_factors(sum_of_products, factor_map):
+def map_factors(sum_of_branches, factor_map):
     """
     Map each factor in each of the products using the given map
     :param (list[list[list[Abstract_1]]]) sum_of_products:
@@ -218,9 +217,9 @@ def map_factors(sum_of_products, factor_map):
     mapped_sum = []
     for branch in sum_of_branches:
         mapped_branch = []
-        for product in branch:
+        for product_term in branch:
             mapped_product = []
-            for factor in product:
+            for factor in product_term:
                 mapped_factor = factor_map(factor)
                 mapped_product.append(mapped_factor)
             mapped_branch.append(mapped_product)
@@ -240,7 +239,7 @@ def generate_state_preparation(num_qubits):
         :return (pq.Program) prepared_term: program with state preparation
         """
         state_preparation = pq.Program()
-        for qubit_index in xrange(num_qubits):
+        for qubit_index in range(num_qubits):
             state_preparation.inst(H(qubit_index))
         prepared_term = state_preparation  + gradient_term
         return prepared_term
@@ -276,6 +275,36 @@ def get_gradient_cost_hamiltonian(cost_hamiltonian, num_qubits):
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
     return full_cost_hamiltonian
 
+def expectation_value(pyquil_program, cost_hamiltonian, qvm_connection):
+    """
+    Computes the expectation value of the pauli_sum over the distribution
+    generated from pyquil_prog.
+
+    :param pyquil_program: (pyquil program)
+    :param cost_hamiltonian: (PauliSum) PauliSum representing the operator of which
+		      to calculate the expectation value.
+    :param qvm_connection: (qvm connection)
+
+    :returns: (float) representing the expectation value of pauli_sum given
+	      the distribution generated from quil_prog.
+    """
+    operator_programs = []
+    operator_coefficients = []
+    for cost_term in cost_hamiltonian.terms:
+        operator_program = pq.Program()
+        for qubit_index, operator in cost_term:
+            operator_program.inst(STANDARD_GATES[operator](qubit_index))
+        operator_programs.append(operator_program)
+        operator_coefficients.append(cost_term.coefficient)
+    result_overlaps = qvm_connection.expectation(pyquil_program,
+                                                 operator_programs=operator_programs)
+    result_overlaps = list(result_overlaps)
+    assert len(result_overlaps) == len(operator_programs), """The incorrect
+	number of results were returned from the QVM"""
+    expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps,
+                                                   operator_coefficients)))
+    return expectation
+
 def generate_get_expectation_value(gradient_cost_hamiltonian, qvm_connection):
     """
     Creates the function which computes the expectation value of a gradient term
@@ -288,7 +317,7 @@ def generate_get_expectation_value(gradient_cost_hamiltonian, qvm_connection):
         :param (pq.Program) gradient_term: one program from the gradient
         :return (float) numerical_expectation_value: should be a real_value
         """
-        numerical_expectation_value = expectation_value.expectation(
+        numerical_expectation_value = expectation_value(
             gradient_term, gradient_cost_hamiltonian, qvm_connection)
         return numerical_expectation_value
     return get_expectation_value
@@ -313,8 +342,27 @@ def get_branch_expectation_value(product_expectation_values):
     branch_expectation_value = sum(product_expectation_values)
     return branch_expectation_value
 
+def exponential_map_hamiltonian(hamiltonian):
+    """
+    Generates a unitary operator from a hamiltonian
+    :param (PauliSum) hamiltonian: a hermitian hamiltonian
+    :param (float) parameter: the coefficient in the exponential
+    :return (function) p_unitary: the generated parameterized unitary
+    """
+    p_unitary_list = []
+    for term in hamiltonian:
+        p_unitary_term = exponential_map(term)
+        p_unitary_list.append(p_unitary_term)
+
+    def p_unitary(param):
+        p_unitary_program = pq.Program()
+        for p_unitary_term in p_unitary_list:
+            p_unitary_program += p_unitary_term(param)
+        return p_unitary_program
+    return p_unitary
+
 def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
-        qvm_connection, steps, num_qubits):
+                                 qvm_connection, steps, num_qubits):
     """
     Generates the analytical gradient corresponding to a list of hamiltonians
     :param (list[pq.Program]) hamiltonians: these must be in the correct order
@@ -323,7 +371,7 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
     :param (int) num_qubits: the number of qubits allocated
     :return (function) gradient: expectation value of the analytical_gradient
     """
-    p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
+    p_unitaries = [exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
     def gradient(steps_parameters):
         """
@@ -344,19 +392,19 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         get_product_expectation_value = generate_get_expectation_value(
             gradient_cost_hamiltonian, qvm_connection)
 
-    	sum_of_branches = differentiate_product_rule(
+        sum_of_branches = differentiate_product_rule(
             repeated_p_unitaries, repeated_hamiltonians, make_controlled)
 
         evaluated_products = map_products(sum_of_branches, evaluate_product)
         composed_products = map_products(evaluated_products, compose_programs)
         phase_corrected_products = map_products(composed_products,
-            add_phase_correction)
+                                                add_phase_correction)
         state_prepared_products = map_products(phase_corrected_products,
-            add_state_preparation)
+                                               add_state_preparation)
         products_expectation_values = map_products(state_prepared_products,
-            get_product_expectation_value)
+                                                   get_product_expectation_value)
         branches_expectation_values = map_branches(products_expectation_values,
-            get_branch_expectation_value)
+                                                   get_branch_expectation_value)
 
         return branches_expectation_values
     return gradient
