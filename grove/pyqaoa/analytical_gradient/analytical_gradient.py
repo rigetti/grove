@@ -110,24 +110,27 @@ def parallelize(new_column, old_row, new_column_index):
 def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         make_controlled):
     """
+    Differentiates a product of parametric unitariesusing the product rule
     :param (list[function]) p_unitaries_product: [uni] i.e. unitary_index
     :param (list[PauliSum]) hamiltonians_list: for each factor in the product
     :param (function) make_controlled: e.g. X -> CNOT
-    :return (list[list[function]]) differentiated_product: [summand*branch][uni]
+    :return (list[list[list[function]]]) sum_of_branches: [summand][branch][uni]
     """
-    sum_of_differentiated_products = []
+    sum_of_branches = []
     for unitary_index in xrange(len(p_unitaries_product)):
         p_analytical_derivative_branches = differentiate_unitary(
             p_unitaries_product[unitary_index],
             hamiltonians_list[unitary_index], make_controlled)
-        summand = parallelize(p_analytical_derivative_branches,
+        branches_of_products = parallelize(p_analytical_derivative_branches,
                 p_unitaries_product, unitary_index)
-        sum_of_differentiated_products += summand
-    return sum_of_differentiated_products
+        sum_of_branches.append(branches_of_products)
+    return sum_of_branches
 
 def generate_evaluate_product(parameters):
     """
     Creates the function which evaluates a product of parameterized operators
+    :param (list[float]) parameters: for evaluating a product of factors
+    :return
     """
     def evaluate_product(product):
         assert len(product) == len(parameters)
@@ -138,33 +141,55 @@ def generate_evaluate_product(parameters):
         return evaluated_product
     return evaluate_product
 
-def map_products(sum_of_products, product_map):
+def map_branches(sum_of_branches, branch_map):
     """
     Map each product in the sum of products using the given map
-    :param (list[list[Abstract_1]]) sum_of_products:
-    :param (function: list[Abstract_1] -> Abstract_2) product_map:
+    :param (list[list[list[Abstract_1]]]) sum_of_branches:
+    :param (function: list[list[Abstract_1]] -> Abstract_2) product_map:
     :return (list[Abstract_2]) mapped_sum:
     """
     mapped_sum = []
-    for product in sum_of_products:
-        mapped_product = product_map(product)
-        mapped_sum.append(mapped_product)
+    for branch in sum_of_branches:
+        mapped_branch = []
+        for product in branch:
+            mapped_product = product_map(product)
+            mapped_branch.append(mapped_product)
+        mapped_sum.append(mapped_branch)
+    return mapped_sum
+
+def map_products(sum_of_branches, product_map):
+    """
+    Map each product in the sum of products using the given map
+    :param (list[list[list[Abstract_1]]]) sum_of_branches:
+    :param (function: list[Abstract_1] -> Abstract_2) product_map:
+    :return (list[list[Abstract_2]]) mapped_sum:
+    """
+    mapped_sum = []
+    for branch in sum_of_branches:
+        mapped_branch = []
+        for product in branch:
+            mapped_product = product_map(product)
+            mapped_branch.append(mapped_product)
+        mapped_sum.append(mapped_branch)
     return mapped_sum
 
 def map_factors(sum_of_products, factor_map):
     """
     Map each factor in each of the products using the given map
-    :param (list[list[Abstract_1]]) sum_of_products:
+    :param (list[list[list[Abstract_1]]]) sum_of_products:
     :param (function: Abstract_1 -> Abstract_2) factor_map:
-    :return (list[list[Abstract_2]) mapped_sum:
+    :return (list[list[list[Abstract_2]]) mapped_sum:
     """
     mapped_sum = []
-    for product in sum_of_products:
-        mapped_product = []
-        for factor in product:
-            mapped_factor = factor_map(factor)
-            mapped_product.append(mapped_factor)
-        mapped_sum.append(mapped_product)
+    for branch in sum_of_branches:
+        mapped_branch = []
+        for product in branch:
+            mapped_product = []
+            for factor in product:
+                mapped_factor = factor_map(factor)
+                mapped_product.append(mapped_factor)
+            mapped_branch.append(mapped_product)
+        mapped_sum.append(mapped_branch)
     return mapped_sum
 
 def generate_state_preparation(num_qubits):
@@ -209,7 +234,7 @@ def get_gradient_cost_hamiltonian(cost_hamiltonian, num_qubits):
     return full_cost_hamiltonian
 
 def generate_expectation_value(gradient_cost_hamiltonian, qvm_connection):
-    def get_expectation_value(gradient_term):
+    def get_product_expectation_value(gradient_term):
         numerical_expectation_value = expectation_value.expectation(
             gradient_term, gradient_cost_hamiltonian, qvm_connection)
         return numerical_expectation_value
@@ -220,6 +245,10 @@ def compose_programs(programs):
     for program in programs:
         composed_program += program
     return composed_program
+
+def get_branch_expectation_value(product_expectation_values):
+    branch_expectation_value = sum(product_expectation_values)
+    return branch_expectation_value
 
 def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         qvm_connection, steps, num_qubits):
@@ -243,13 +272,13 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         add_state_preparation = generate_state_preparation(num_qubits)
         gradient_cost_hamiltonian = get_gradient_cost_hamiltonian(
             cost_hamiltonian, num_qubits)
-        get_expectation_value = generate_expectation_value(
+        get_product_expectation_value = generate_expectation_value(
             gradient_cost_hamiltonian, qvm_connection)
 
-    	sum_of_products = differentiate_product_rule(
+    	sum_of_branches = differentiate_product_rule(
             repeated_p_unitaries, repeated_hamiltonians, make_controlled)
 
-        evaluated_products = map_products(sum_of_products, evaluate_product)
+        evaluated_products = map_products(sum_of_branches, evaluate_product)
         def print_func(x):
             print(x)
         #map_factors(evaluated_products, print_func)
@@ -261,8 +290,10 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         state_prepared_products = map_products(phase_corrected_products,
             add_state_preparation)
         map_products(state_prepared_products, print_func)
-        gradient_values = map_products(state_prepared_products,
-            get_expectation_value)
+        products_expectation_values = map_products(state_prepared_products,
+            get_product_expectation_value)
+        branches_expectation_values = map_branches(products_expectation_values,
+            get_branch_expectation_value)
 
-        return gradient_values
+        return branches_expectation_values
     return gradient
