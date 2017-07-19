@@ -14,14 +14,22 @@
 #    limitations under the License.
 ##############################################################################
 
+import sys, os
+#Add the local qaoa and vqe directories
+dirname = os.path.dirname(os.path.abspath(__file__))
+vqe_dir = os.path.join(dirname, '../../pyvqe')
+sys.path.append(vqe_dir)
+
 from collections import Counter
 from scipy import optimize
 import numpy as np
-from grove.pyvqe.vqe import VQE
+
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
 
+#from grove.pyvqe.vqe import VQE
+import vqe
 
 class QAOA(object):
     def __init__(self, qvm, n_qubits, steps=1, init_betas=None,
@@ -59,8 +67,6 @@ class QAOA(object):
                                  the minimizer.  Default={}.
         :param minimizer_args: (Optional) (list) of additional arguments to pass to the
                                minimizer. Default=[].
-        :param minimizer_args: (Optional) (list) of additional arguments to pass to the
-                               minimizer. Default=[].
         :param vqe_options: (optinal) arguents for VQE run.
         :param store_basis: (optional) boolean flag for storing basis states.
                             Default=False.
@@ -85,7 +91,7 @@ class QAOA(object):
         else:
             ref_prog = pq.Program()
             for i in xrange(self.n_qubits):
-                ref_prog.inst(H(i))
+                ref_prog.inst(H(i)) #Creates the standard reference state "s"
             self.ref_state_prep = ref_prog
 
         if not isinstance(cost_ham, (list, tuple)):
@@ -187,13 +193,14 @@ class QAOA(object):
                   angles for the optimal solution.
         """
         stacked_params = np.hstack((self.betas, self.gammas))
-        vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
+        vqe_inst = vqe.VQE(self.minimizer, minimizer_args=self.minimizer_args,
                   minimizer_kwargs=self.minimizer_kwargs)
         cost_ham = reduce(lambda x, y: x + y, self.cost_ham)
         # maximizing the cost function!
         param_prog = self.get_parameterized_program()
-        result = vqe.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
-                             **self.vqe_options)
+        result = vqe_inst.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
+                                  **self.vqe_options)
+        self.repetition_cost = vqe_inst.repetition_cost
         self.result = result
         betas = result.x[:self.steps]
         gammas = result.x[self.steps:]
@@ -234,7 +241,7 @@ class QAOA(object):
         :returns: tuple representing the bitstring, Counter object from
                   collections holding all output bitstrings and their frequency.
         """
-        if samples <= 0 and not isinstance(samples, int):
+        if samples <= 0 or not isinstance(samples, int):
             raise ValueError("samples variable must be positive integer")
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
@@ -242,8 +249,10 @@ class QAOA(object):
         for i in xrange(self.n_qubits):
             sampling_prog.measure(i, [i])
 
-        bitstring_samples = self.qvm.run_and_measure(sampling_prog, range(self.n_qubits), trials=samples)
+        bitstring_samples = self.qvm.run_and_measure(sampling_prog,
+            range(self.n_qubits), trials=samples)
         bitstring_tuples = map(tuple, bitstring_samples)
         freq = Counter(bitstring_tuples)
         most_frequent_bit_string = max(freq, key=lambda x: freq[x])
         return most_frequent_bit_string, freq
+

@@ -22,6 +22,7 @@ from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
 
+
 class OptResults(dict):
     """
     Object for holding optimization results from VQE.
@@ -49,7 +50,7 @@ class VQE(object):
     Using this object:
 
         1) initialize with `inst = VQE(minimizer)` where `minimizer` is a
-        function that performs a gradient free minization--i.e
+        function that performs a gradient free minimization--i.e
         scipy.optimize.minimize(. , ., method='Nelder-Mead')
 
         2) call `inst.vqe_run(variational_state_evolve, hamiltonian,
@@ -117,10 +118,16 @@ class VQE(object):
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.
         """
-        self._disp_fun = disp if disp is not None else lambda x: None
+        if disp:
+            def print_fun(x):
+                print(x)
+            self._disp_fun = print_fun
+        else:
+            self._disp_fun = lambda x: None
         iteration_params = []
         expectation_vals = []
         self._current_expectation = None
+        self.repetition_cost = 0
         if samples is None:
             print """WARNING: Fast method for expectation will be used. Noise
                      models will be ineffective"""
@@ -143,16 +150,18 @@ class VQE(object):
             pyquil_prog = variational_state_evolve(params)
             mean_value = self.expectation(pyquil_prog, hamiltonian, samples, qvm)
             self._current_expectation = mean_value  # store for printing
+            self.repetition_cost += 1
             return mean_value
 
         def print_current_iter(iter_vars):
+
             self._disp_fun("\tParameters: {} ".format(iter_vars))
             if jacobian is not None:
                 grad = jacobian(iter_vars)
                 self._disp_fun("\tGrad-L1-Norm: {}".format(np.max(np.abs(grad))))
                 self._disp_fun("\tGrad-L2-Norm: {} ".format(np.linalg.norm(grad)))
 
-            self._disp_fun("\tE => {}".format(self._current_expectation))
+            self._disp_fun("\tExpectation Value => {}".format(self._current_expectation))
             if return_all:
                 iteration_params.append(iter_vars)
                 expectation_vals.append(self._current_expectation)
@@ -172,7 +181,8 @@ class VQE(object):
 
         if hasattr(result, 'status'):
             if result.status != 0:
-                self._disp_fun("Classical optimization exited with an error index: %i" % result.status)
+                self._disp_fun("Classical optimization exited \
+                    with an error index: %i" % result.status)
 
         results = OptResults()
         if hasattr(result, 'x'):
@@ -204,7 +214,7 @@ class VQE(object):
         :param qvm: (qvm connection)
 
         :returns: (float) representing the expectation value of pauli_sum given
-                  given the distribution generated from quil_prog.
+                  the distribution generated from quil_prog.
         """
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
@@ -244,7 +254,11 @@ class VQE(object):
                     raise ValueError("samples variable must be a postive integer")
 
                 # normal execution via fake sampling
-                expectation = 0.0  # stores the sum of contributions to the energy from each operator term
+
+                # stores the sum of contributions to
+                # the energy from each operator term
+                expectation = 0.0
+
                 for j, term in enumerate(pauli_sum.terms):
                     meas_basis_change = pq.Program()
                     qubits_to_measure = []
@@ -254,13 +268,13 @@ class VQE(object):
                         for index, gate in term:
                             qubits_to_measure.append(index)
                             if gate == 'X':
-                                meas_basis_change.inst(RY(-np.pi / 2, index))
+                                meas_basis_change.inst(RY(-np.pi/ 2, index))
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                                     qubits_to_measure,
-                                                                     qvm, samples)
+                            meas_outcome = expectation_from_sampling(
+                                pyquil_prog + meas_basis_change,
+                                qubits_to_measure, qvm, samples)
 
                     expectation += term.coefficient * meas_outcome
 
@@ -290,7 +304,7 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     """
     Calculation of Z_{i} at marked_qubits
 
-    Given a wavefunctions, this calculates the expectation value of the Zi
+    Given a wavefunction, this calculates the expectation value of the Z_i
     operator where i ranges over all the qubits given in marked_qubits.
 
     :param pyquil_program: pyQuil program generating some state
