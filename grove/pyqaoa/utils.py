@@ -49,3 +49,17 @@ def compare_progs(test, reference):
         assert len(tinstr[idx][1].arguments) == len(rinstr[idx][1].arguments)
         for aa in xrange(len(tinstr[idx][1].arguments)):
             assert tinstr[idx][1].arguments[aa] == rinstr[idx][1].arguments[aa]
+
+def compare_paulisums(test_paulisum, reference_paulisum):
+    """
+    Compares two paulisums term by term, coefficient by coefficient:
+    :param (PauliSum) test_paulisum: Test PauliSum
+    :param (PauliSum) reference_paulisum: Reference PauliSum
+    """
+    test_terms = test_paulisum.terms
+    reference_terms = reference_paulisum.terms
+    assert len(test_terms) == len(reference_terms)
+    for idx in xrange(len(test_terms)):
+        test_term = test_terms[idx]
+        reference_term = reference_terms[idx]
+        assert test_term == reference_term
