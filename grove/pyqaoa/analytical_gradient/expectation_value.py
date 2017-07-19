@@ -3,8 +3,6 @@ This module computes the expectation value of a cost_hamiltonian (paulisum)
 with respect to a state prepared by a pyquil program
 """
 
-import numpy as np
-import networkx as nx
 import pyquil.quil as pq
 import pyquil.api as api
 from pyquil.gates import *
@@ -39,8 +37,4 @@ def expectation(pyquil_program, cost_hamiltonian, qvm_connection):
     expectation = sum(map(lambda x: x[0]*x[1],
                           zip(result_overlaps, operator_coefficients)))
     return expectation
-
-def get_analytic_expectation_p1(beta, gamma):
-    #See Mathematica Notebook for derivation
-    return np.sin(2*beta)*np.sin(gamma)
 
