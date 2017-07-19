@@ -22,6 +22,10 @@ import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
 
+<<<<<<< HEAD
+=======
+from grove.pyvqe.vqe import VQE
+>>>>>>> c89fd19... should now pass pytest
 
 class QAOA(object):
     def __init__(self, qvm, n_qubits, steps=1, init_betas=None,
@@ -187,7 +191,11 @@ class QAOA(object):
                   angles for the optimal solution.
         """
         stacked_params = np.hstack((self.betas, self.gammas))
+<<<<<<< HEAD
         vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
+=======
+        vqe_inst = VQE(self.minimizer, minimizer_args=self.minimizer_args,
+>>>>>>> c89fd19... should now pass pytest
                   minimizer_kwargs=self.minimizer_kwargs)
         cost_ham = reduce(lambda x, y: x + y, self.cost_ham)
         # maximizing the cost function!
