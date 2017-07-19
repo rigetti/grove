@@ -16,7 +16,6 @@
 
 import sys, os
 #Redesign the relative import system
-#Add the analytical gradient directory
 dirname = os.path.dirname(os.path.abspath(__file__))
 analytical_gradient_dir = os.path.join(dirname, '../analytical_gradient')
 qaoa_dir = os.path.join(dirname, '..')

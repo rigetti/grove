@@ -126,6 +126,24 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
         sum_of_branches.append(branches_of_products)
     return sum_of_branches
 
+###########################################
+#An aside on the sum_of_branches structure#
+###########################################
+#The original program is of the form e^{-ia/2(G_1 + G_2)} e^{-ib/2(G_3)}
+#where the G_i are the Hermitian generators of the Unitaries
+#This structure is a list of parametric unitaries, with one index
+#Taking the derivaative of this original program results in:
+#D(e^{-ia/2(G_1 + G_2)} e^{-ib/2(G_3)})
+#Which by the product rule can be simplified as:
+#D(e^{-ia/2(G_1 + G_2)}) e^{-ib/2(G_3)} + e^{-ia/2(G_1 + G_2)} D(e^{-ib/2(G_3)})
+#Now we have gained an additional index, over the summands
+#and so our structure is now of the form (list[summand_idx][unitary_idx])
+#Now we further simplify to find:
+#(-i/2)[(G_1 + G_2)e^{-ia/2(G_1 + G_2)}) e^{-ib/2(G_3)} +
+#        e^{-ia/2(G_1 + G_2)} e^{-ib/2(G_3)}]
+#So now we must index over each generator in each summand
+#and the structure is of the form (list[summand_idx][branch_idx][unitary_idx])
+
 def generate_evaluate_product(parameters):
     """
     Creates the function which evaluates a product of parameterized programs
@@ -236,26 +254,47 @@ def generate_phase_correction(ancilla_qubit_index):
 def get_gradient_cost_hamiltonian(cost_hamiltonian, num_qubits):
     """
     Measuring the Ancilla in the Z-basis cancels terms without the desired phase
-    :param (PauliSum) cost_hamiltonian: the hamiltonian
+    :param (PauliSum) cost_hamiltonian: for the expectation value
+    :param (int) num_qubits:
     """
     ancilla_qubit_term = PauliTerm("Z", num_qubits)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
     return full_cost_hamiltonian
 
-def generate_expectation_value(gradient_cost_hamiltonian, qvm_connection):
-    def get_product_expectation_value(gradient_term):
+def generate_get_expectation_value(gradient_cost_hamiltonian, qvm_connection):
+    """
+    Creates the function which computes the expectation value of a gradient term
+    :param (PauliSum) gradient_cost_hamiltonian: the expectation value of this
+    :param (api.SyncConnection) qvm_connection: sends programs to the qvm
+    """
+    def get_expectation_value(gradient_term):
+        """
+        Computes the expectation value of a given program from the gradient
+        :param (pq.Program) gradient_term: one program from the gradient
+        :return (float) numerical_expectation_value: should be a real_value
+        """
         numerical_expectation_value = expectation_value.expectation(
             gradient_term, gradient_cost_hamiltonian, qvm_connection)
         return numerical_expectation_value
-    return get_product_expectation_value
+    return get_expectation_value
 
 def compose_programs(programs):
+    """
+    Compose a list of programs
+    :param (list[pq.Program]) programs: compose these
+    :return (pq.Program) composed_program: composed
+    """
     composed_program = pq.Program()
     for program in programs:
         composed_program += program
     return composed_program
 
 def get_branch_expectation_value(product_expectation_values):
+    """
+    Get the expectation value of a branch from its constituent products
+    :param (list[float]) product_expectation_values: from the product programs
+    :reutrn (float) branch_expectation_value: add the product expectation values
+    """
     branch_expectation_value = sum(product_expectation_values)
     return branch_expectation_value
 
@@ -263,15 +302,17 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         qvm_connection, steps, num_qubits):
     """
     Generates the analytical gradient corresponding to a list of hamiltonians
-    :param (list[pq.Program]) hamiltonians:
-    :param (function) make_controlled:
-    :param (int) steps:
-    :return (function) :
+    :param (list[pq.Program]) hamiltonians: these must be in the correct order
+    :param (PauliSum) cost_hamiltonian: for the expectation values
+    :param (int) steps: the number of levels in the trotterization
+    :param (int) num_qubits: the number of qubits allocated
+    :return (function) gradient: expectation value of the analytical_gradient
     """
     p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
     def gradient(steps_parameters):
         """
+        Computes the expectation values of the gradient on the cost hamiltonian
         :param (list[float]) steps_parameters: for each unitary for each step
         :return (list[float]) branches_expectation_values: gradient entries
         """
@@ -285,7 +326,7 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
         add_state_preparation = generate_state_preparation(num_qubits)
         gradient_cost_hamiltonian = get_gradient_cost_hamiltonian(
             cost_hamiltonian, num_qubits)
-        get_product_expectation_value = generate_expectation_value(
+        get_product_expectation_value = generate_get_expectation_value(
             gradient_cost_hamiltonian, qvm_connection)
 
     	sum_of_branches = differentiate_product_rule(
