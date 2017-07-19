@@ -116,8 +116,8 @@ def test_differentiate_product_rule_one_ham():
     evaluated_sum = analytical_gradient.map_products(
         sum_of_branches, evaluate_product)
     comparison_sum = [[
-        [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0]/2)],
-        [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0]/2)]
+        [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(-parameters[0]/2)],
+        [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(-parameters[0]/2)]
         ]]
     assert len(comparison_sum) == len(evaluated_sum)
     for summand_idx in xrange(len(evaluated_sum)):
@@ -147,15 +147,15 @@ def test_differentiate_product_rule_two_hams():
         sum_of_products, evaluate_product)
     comparison_sum = [
         [
-            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]/2),
-             p_unitaries[1](parameters[1]/2)],
-            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]/2),
-             p_unitaries[1](parameters[1]/2)]
+            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](-parameters[0]/2),
+             p_unitaries[1](-parameters[1]/2)],
+            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](-parameters[0]/2),
+             p_unitaries[1](-parameters[1]/2)]
         ],
         [
-            [p_unitaries[0](parameters[0]/2),
+            [p_unitaries[0](-parameters[0]/2),
              pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-             p_unitaries[1](parameters[1]/2)]
+             p_unitaries[1](-parameters[1]/2)]
         ]
     ]
     assert len(comparison_sum) == len(evaluated_sum)
@@ -186,8 +186,9 @@ def test_generate_analytical_gradient():
     gradient_values = gradient(steps_parameters)
     comparison_gradient_values = [np.sin(2*beta)*np.cos(gamma),
                                   2*np.cos(2*beta)*np.sin(gamma)]
-    print(gradient_values)
-    print(comparison_gradient_values)
+    for gradient_idx in xrange(len(gradient_values)):
+        assert utils.isclose(gradient_values[gradient_idx],
+                             comparison_gradient_values[gradient_idx])
 
 if __name__ == "__main__":
     test_generate_make_controlled()

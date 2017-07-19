@@ -141,7 +141,7 @@ def generate_evaluate_product(parameters):
         assert len(product) == len(parameters)
         evaluated_product = []
         for factor, parameter in zip(product, parameters):
-            evaluated_factor = factor(parameter/2)
+            evaluated_factor = factor(-parameter/2)
             evaluated_product.append(evaluated_factor)
         return evaluated_product
     return evaluate_product
