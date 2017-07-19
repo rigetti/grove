@@ -21,7 +21,7 @@ This module implements the analytical gradient as defined in the paper:
 
 import pyquil.quil as pq
 from pyquil.gates import * # pylint: disable=unused-wildcard-import,wildcard-import
-from pyquil.paulis import * # pylint: disable=unused-wildcard-import,wildcard-import
+from pyquil.paulis import * # pylint: disable=unused-wildcard-import,wildcard-import,redefined-builtin
 
 def generate_make_controlled(ancilla_qubit_index):
     """
@@ -131,10 +131,9 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
     :return (list[list[list[function]]]) sum_of_branches: [summand][branch][uni]
     """
     sum_of_branches = []
-    for unitary_index in range(len(p_unitaries_product)):
+    for unitary_index, p_unitary in enumerate(p_unitaries_product):
         p_derivative_branches = differentiate_unitary(
-            p_unitaries_product[unitary_index],
-            hamiltonians_list[unitary_index], make_controlled)
+            p_unitary, hamiltonians_list[unitary_index], make_controlled)
         branches_of_products = parallelize(p_derivative_branches,
                                            p_unitaries_product, unitary_index)
         sum_of_branches.append(branches_of_products)
@@ -354,11 +353,16 @@ def exponential_map_hamiltonian(hamiltonian):
         p_unitary_term = exponential_map(term)
         p_unitary_list.append(p_unitary_term)
 
-    def p_unitary(param):
-        p_unitary_program = pq.Program()
+    def p_unitary(parameter):
+        """
+        A Parametric Unitary
+        :param (float) parameter
+        :return (pq.Program) unitary_program
+        """
+        unitary_program = pq.Program()
         for p_unitary_term in p_unitary_list:
-            p_unitary_program += p_unitary_term(param)
-        return p_unitary_program
+            unitary_program += p_unitary_term(parameter)
+        return unitary_program
     return p_unitary
 
 def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
@@ -373,7 +377,7 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
     """
     p_unitaries = [exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
-    def gradient(steps_parameters):
+    def gradient(steps_parameters): # pylint: disable=too-many-locals
         """
         Computes the expectation values of the gradient on the cost hamiltonian
         :param (list[float]) steps_parameters: for each unitary for each step
