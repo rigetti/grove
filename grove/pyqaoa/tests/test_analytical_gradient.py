@@ -104,9 +104,6 @@ def test_parallelize():
     assert matrix == comparison_matrix
 
 def test_differentiate_product_rule_one_ham():
-    #####################
-    #For One Hamiltonian#
-    #####################
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonians = [hamiltonian_0]
     p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
@@ -136,9 +133,6 @@ def test_differentiate_product_rule_one_ham():
                 utils.compare_progs(factor, comparison_factor)
 
 def test_differentiate_product_rule_two_hams():
-    ######################
-    #For Two Hamiltonians#
-    ######################
     hamiltonian_0 = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
     hamiltonian_1 = PauliSum([PauliTerm("Z", 0, 1.0)*PauliTerm("Z", 1, 1.0)])
     hamiltonians = [hamiltonian_0, hamiltonian_1]

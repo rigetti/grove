@@ -14,7 +14,7 @@ from pyquil.paulis import *
 import maxcut_qaoa_core
 import expectation_value
 
-#Need to generalize this to make arbitrary one qubit ops controlled
+#Currently only supports the qaoa operators X and Z
 def generate_make_controlled(ancilla_qubit_index):
     """
     Creates a function which maps operators to controlled operators
@@ -128,11 +128,16 @@ def differentiate_product_rule(p_unitaries_product, hamiltonians_list,
 
 def generate_evaluate_product(parameters):
     """
-    Creates the function which evaluates a product of parameterized operators
+    Creates the function which evaluates a product of parameterized programs
     :param (list[float]) parameters: for evaluating a product of factors
-    :return
+    :return (function) evaluate_product: contains the factor of two correction
     """
     def evaluate_product(product):
+        """
+        Evaluates each factor in the product on the corresponding parameter
+        :param (list[function]) product: parameterized programs
+        :return (list[pq.Program]) evaluated_product: programs
+        """
         assert len(product) == len(parameters)
         evaluated_product = []
         for factor, parameter in zip(product, parameters):
@@ -144,7 +149,7 @@ def generate_evaluate_product(parameters):
 def map_branches(sum_of_branches, branch_map):
     """
     Map each product in the sum of products using the given map
-    :param (list[list[list[Abstract_1]]]) sum_of_branches:
+    :param (list[list[list[Abstract_1]]]) sum_of_branches: see below
     :param (function: list[list[Abstract_1]] -> Abstract_2) product_map:
     :return (list[Abstract_2]) mapped_sum:
     """
@@ -192,12 +197,14 @@ def map_factors(sum_of_products, factor_map):
 def generate_state_preparation(num_qubits):
     """
     Generates function for prepending state preparation gates
-    :param (int) num_qubits:
-    :return (function) add_state_preparation:
+    :param (int) num_qubits: Hadamard each qubit
+    :return (function) add_state_preparation: superposition of all bitstrings
     """
     def add_state_preparation(gradient_term):
         """
         Prepends state preparation gates to a given term in the gradient
+        :param (pq.Program) gradient_term: Add hadamard gates before the program
+        :return (pq.Program) prepared_term: program with state preparation
         """
         state_preparation = pq.Program()
         for qubit_index in xrange(num_qubits):
@@ -207,11 +214,15 @@ def generate_state_preparation(num_qubits):
     return add_state_preparation
 
 def generate_phase_correction(ancilla_qubit_index):
+    """
+    See Ekert (2002) for the original idea behind this circuit
+    :param (int) ancilla_qubit_index: the qubit used as control
+    :return (function) add_phase_correction: its like interferometry
+    """
     def add_phase_correction(gradient_term):
         """
         Adds the ancilla qubit phase correction operations
         :param (pq.Program) gradient_term: original uncorrected term
-        :param (int) ancilla_qubit_index: the qubit used as control
         :return (pq.Program) phase_corrected_term: with the ancilla operations
         """
         phase_corrected_term = pq.Program()
@@ -224,7 +235,8 @@ def generate_phase_correction(ancilla_qubit_index):
 
 def get_gradient_cost_hamiltonian(cost_hamiltonian, num_qubits):
     """
-    Extends the cost hamiltonian
+    Measuring the Ancilla in the Z-basis cancels terms without the desired phase
+    :param (PauliSum) cost_hamiltonian: the hamiltonian
     """
     ancilla_qubit_term = PauliTerm("Z", num_qubits)
     full_cost_hamiltonian = cost_hamiltonian*ancilla_qubit_term
@@ -254,11 +266,15 @@ def generate_analytical_gradient(hamiltonians, cost_hamiltonian,
     :param (list[pq.Program]) hamiltonians:
     :param (function) make_controlled:
     :param (int) steps:
-    :return ? :
+    :return (function) :
     """
     p_unitaries = [maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian)
                    for hamiltonian in hamiltonians]
     def gradient(steps_parameters):
+        """
+        :param (list[float]) steps_parameters: for each unitary for each step
+        :return (list[float]) branches_expectation_values: gradient entries
+        """
         repeated_p_unitaries = p_unitaries*steps
         repeated_hamiltonians = hamiltonians*steps
         assert len(repeated_hamiltonians) == len(steps_parameters)
