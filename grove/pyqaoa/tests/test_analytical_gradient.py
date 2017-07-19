@@ -112,24 +112,28 @@ def test_differentiate_product_rule_one_ham():
     p_unitary_0 = maxcut_qaoa_core.exponential_map_hamiltonian(hamiltonian_0)
     p_unitaries = [p_unitary_0]
     make_controlled = analytical_gradient.generate_make_controlled(2)
-    sum_of_products = analytical_gradient.differentiate_product_rule(
+    sum_of_branches = analytical_gradient.differentiate_product_rule(
         p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1]
     evaluate_product = analytical_gradient.generate_evaluate_product(parameters)
-    evaluated_product = analytical_gradient.map_products(
-        sum_of_products, evaluate_product)
-    comparison_product = [
+    evaluated_sum = analytical_gradient.map_products(
+        sum_of_branches, evaluate_product)
+    comparison_sum = [[
         [pq.Program().inst(CNOT(2, 0)) + p_unitary_0(parameters[0])],
         [pq.Program().inst(CNOT(2, 1)) + p_unitary_0(parameters[0])]
-        ]
-    assert len(comparison_product) == len(evaluated_product)
-    for summand_idx in xrange(len(evaluated_product)):
-        assert (len(comparison_product[summand_idx]) ==
-                len(evaluated_product[summand_idx]))
-        for factor_idx in xrange(len(evaluated_product[summand_idx])):
-            factor = evaluated_product[summand_idx][factor_idx]
-            comparison_factor = comparison_product[summand_idx][factor_idx]
-            utils.compare_progs(factor, comparison_factor)
+        ]]
+    assert len(comparison_sum) == len(evaluated_sum)
+    for summand_idx in xrange(len(evaluated_sum)):
+        assert (len(comparison_sum[summand_idx]) ==
+                len(evaluated_sum[summand_idx]))
+        for product_idx in xrange(len(evaluated_sum[summand_idx])):
+            assert (len(comparison_sum[summand_idx][product_idx]) ==
+                    len(evaluated_sum[summand_idx][product_idx]))
+            for factor_idx in xrange(len(
+                evaluated_sum[summand_idx][product_idx])):
+                factor = evaluated_sum[summand_idx][product_idx][factor_idx]
+                comparison_factor = comparison_sum[summand_idx][product_idx][factor_idx]
+                utils.compare_progs(factor, comparison_factor)
 
 def test_differentiate_product_rule_two_hams():
     ######################
@@ -145,25 +149,33 @@ def test_differentiate_product_rule_two_hams():
         p_unitaries, hamiltonians, make_controlled)
     parameters = [0.1, 0.7]
     evaluate_product = analytical_gradient.generate_evaluate_product(parameters)
-    evaluated_product = analytical_gradient.map_products(
+    evaluated_sum = analytical_gradient.map_products(
         sum_of_products, evaluate_product)
-    comparison_product = [
-        [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
-         p_unitaries[1](parameters[1])],
-        [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
-         p_unitaries[1](parameters[1])],
-        [p_unitaries[0](parameters[0]),
-         pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
-         p_unitaries[1](parameters[1])]
+    comparison_sum = [
+        [
+            [pq.Program().inst(CNOT(2, 0)) + p_unitaries[0](parameters[0]),
+             p_unitaries[1](parameters[1])],
+            [pq.Program().inst(CNOT(2, 1)) + p_unitaries[0](parameters[0]),
+             p_unitaries[1](parameters[1])]
+        ],
+        [
+            [p_unitaries[0](parameters[0]),
+             pq.Program().inst(CPHASE(np.pi)(2, 0), CPHASE(np.pi)(2, 1)) +
+             p_unitaries[1](parameters[1])]
+        ]
     ]
-    assert len(comparison_product) == len(evaluated_product)
-    for summand_idx in xrange(len(evaluated_product)):
-        assert (len(comparison_product[summand_idx]) ==
-                len(evaluated_product[summand_idx]))
-        for factor_idx in xrange(len(evaluated_product[summand_idx])):
-            factor = evaluated_product[summand_idx][factor_idx]
-            comparison_factor = comparison_product[summand_idx][factor_idx]
-            utils.compare_progs(factor, comparison_factor)
+    assert len(comparison_sum) == len(evaluated_sum)
+    for summand_idx in xrange(len(evaluated_sum)):
+        assert (len(comparison_sum[summand_idx]) ==
+                len(evaluated_sum[summand_idx]))
+        for product_idx in xrange(len(evaluated_sum[summand_idx])):
+            assert (len(comparison_sum[summand_idx][product_idx]) ==
+                    len(evaluated_sum[summand_idx][product_idx]))
+            for factor_idx in xrange(len(
+                evaluated_sum[summand_idx][product_idx])):
+                factor = evaluated_sum[summand_idx][product_idx][factor_idx]
+                comparison_factor = comparison_sum[summand_idx][product_idx][factor_idx]
+                utils.compare_progs(factor, comparison_factor)
 
 def test_generate_analytical_gradient():
     driver_hamiltonian = PauliTerm("X", 0, 1.0) + PauliTerm("X", 1, 1.0)
