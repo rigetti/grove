@@ -132,4 +132,3 @@ class BKTransform(object):
 
         result = 0.5 * (c_maj + 1j * conj * d_maj)
         return result.simplify()
-    

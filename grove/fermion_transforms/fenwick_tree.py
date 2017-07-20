@@ -11,9 +11,6 @@
 #   limitations under the License.
 """
 Class to represent a Fenwick tree.
-
-Implementation drawn from ProjectQ FermiLib:
-https://github.com/ProjectQ-Framework/FermiLib/
 """
 
 
