@@ -28,7 +28,8 @@ setup(
     packages=["grove", "grove.pyqaoa", "grove.pyvqe", "grove.qft",
               "grove.phaseestimation", "grove.teleport", "grove.grover",
               "grove.deutsch_jozsa", "grove.arbitrary_state",
-              "grove.bernstein_vazirani", "grove.simon"],
+              "grove.bernstein_vazirani", "grove.simon",
+              "grove.amplification"],
     install_requires=[
         'numpy',
         'scipy',
