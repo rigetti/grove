@@ -76,6 +76,7 @@ def basis_selector_oracle(bitstring, qubits):
             prog.inst(X(qubit))
     return prog
 
+
 if __name__ == "__main__":
     from pyquil.api import SyncConnection
     import sys
@@ -90,7 +91,6 @@ if __name__ == "__main__":
     oracle = basis_selector_oracle(target, qubits)
     grover_program += grover(oracle, qubits)
 
-    print grover_program
     cxn = SyncConnection()
     mem = cxn.run_and_measure(grover_program, qubits)
     print mem

@@ -14,38 +14,42 @@
 #    limitations under the License.
 ##############################################################################
 
-import pytest
 import numpy as np
-from pyquil.gates import *
-from grove.amplification.amplification import amplify, n_qubit_control, diffusion_operator
 import pyquil.quil as pq
-from grove.pyqaoa.utils import compare_progs # This would be nice to have in
-                                             # general purpose Util module
+import pytest
+from pyquil.gates import *
+
+from grove.amplification.amplification import amplify, n_qubit_control, \
+    diffusion_operator
+from grove.pyqaoa.utils import compare_progs
 
 # Normal operation
 
 # Setup some variables to reuse
 A = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
 A_inv = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
-cz_gate = n_qubit_control([1], 2, np.array([[1,0],[0,-1]]), "CZ")
+cz_gate = n_qubit_control([1], 2, np.array([[1, 0], [0, -1]]), "CZ")
 oracle = pq.Program().inst()
 qubits = [0, 1, 2]
 iters = 2
 
+
 def test_qubit_control():
-    '''
+    """
     Tests the n_qubit_control on a generic number of qubits
-    '''
+    """
 
     # Creates a controlled Z gate from index 0 to index 1
-    created = n_qubit_control([0], 1, np.array([[1,0],[0,-1]]), "CZ")
+    created = n_qubit_control([0], 1, np.array([[1, 0], [0, -1]]), "CZ")
     assert np.array_equal(np.array(created.defined_gates[0].matrix),
-                    np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]]))
+                          np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
+                                    [0, 0, 0, -1]]))
+
 
 def test_diffusion_operator():
-    '''
+    """
     Checks that the diffusion operator outputs the correct operation
-    '''
+    """
 
     created = diffusion_operator([0, 1])
     desired = pq.Program()
@@ -61,27 +65,30 @@ def test_diffusion_operator():
 
     assert desired.out() == created.out()
 
+
 test_diffusion_operator()
 
 
 def test_amplify():
-    '''
+    """
     Test the generic usage of amplify
-    '''
+    """
 
     # Essentially Grover's to select 011 or 111
-    desired = A + cz_gate + A_inv + diffusion_operator(qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
+    desired = A + cz_gate + A_inv + diffusion_operator(
+        qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
     created = amplify(A, A_inv, cz_gate, qubits, iters)
 
     compare_progs(desired, created)
 
 
 def test_amplify_init():
-    '''
+    """
     Test the usage of amplify without init
-    '''
+    """
     # Essentially Grover's to select 011 or 111
-    desired = cz_gate + A_inv + diffusion_operator(qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
+    desired = cz_gate + A_inv + diffusion_operator(
+        qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
     created = amplify(A, A_inv, cz_gate, qubits, iters, init=False)
 
     compare_progs(desired, created)
@@ -90,77 +97,86 @@ def test_amplify_init():
 # Edge Cases
 
 def test_edge_case_amplify_0_iters():
-    '''
+    """
     Checks that the number of iterations needed to be greater than 0
-    '''
+    """
     with pytest.raises(AssertionError):
         amplify(A, A_inv, oracle, qubits, 0)
 
+
 def test_edge_case_A_none():
-    '''
+    """
     Checks that A cannot be None
-    '''
+    """
     with pytest.raises(AssertionError):
         amplify(None, A_inv, oracle, qubits, iters)
 
+
 def test_edge_case_A_inv_none():
-    '''
+    """
     Checks that A_inv cannot be None
-    '''
+    """
     with pytest.raises(AssertionError):
         amplify(A, None, oracle, qubits, iters)
 
+
 def test_edge_case_oracle_none():
-    '''
+    """
     Checks that U_w cannot be None
-    '''
+    """
     with pytest.raises(AssertionError):
         amplify(A, A_inv, None, qubits, iters)
 
+
 def test_edge_case_qubits_empty():
-    '''
+    """
     Checks that the list of qubits to apply the grover
     diffusion operator to must be non-empty
-    '''
+    """
     with pytest.raises(AssertionError):
         amplify(A, A_inv, oracle, [], iters)
 
+
 def test_diffusion_operator_empty():
-    '''
+    """
     Checks that the list of qubits to apply the grover
     diffusion operator to must be non-empty
-    '''
+    """
     with pytest.raises(AssertionError):
         diffusion_operator([])
 
+
 def test_n_qubit_control_unitary_none():
-    '''
+    """
     Checks that the n qubit control object needs a
     unitary as a numpy matrix
-    '''
+    """
     with pytest.raises(AssertionError):
         n_qubit_control([0, 1, 2], 3, "not an array", "BAD")
 
+
 def test_n_qubit_control_controls_none():
-    '''
+    """
     Checks that the n qubit control object needs a
     list of control qubits
-    '''
+    """
     with pytest.raises(AssertionError):
-        n_qubit_control([], 3, np.array([[1,0],[0,1]]), "IDENT")
+        n_qubit_control([], 3, np.array([[1, 0], [0, 1]]), "IDENT")
+
 
 def test_n_qubit_control_target_none():
-    '''
+    """
     Checks that the n qubit control object needs a
     list of control qubits
-    '''
+    """
     with pytest.raises(AssertionError):
-        n_qubit_control([0,1,2], -1, np.array([[1,0],[0,1]]), "IDENT")
+        n_qubit_control([0, 1, 2], -1, np.array([[1, 0], [0, 1]]), "IDENT")
+
 
 def test_n_qubit_control_name_bad():
-    '''
+    """
     Checks that the n qubit control object needs a
     list of control qubits
-    '''
+    """
     with pytest.raises(AssertionError):
-        n_qubit_control([0,1,2], 4, np.array([[1,0],[0,1]]), "")
+        n_qubit_control([0, 1, 2], 4, np.array([[1, 0], [0, 1]]), "")

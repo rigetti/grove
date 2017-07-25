@@ -80,6 +80,8 @@ def n_qubit_control(controls, target, u, gate_name):
     Uses a number of gates quadratic in the number of qubits,
     and defines a linear number of new gates. (Roots and adjoints of u.)
 
+    See arXiv:quant-ph/9503016 for more information.
+
     :param controls: The indices of the qubits to condition the gate on.
     :param target: The index of the target of the gate.
     :param u: The unitary gate to be controlled, given as a numpy array.
@@ -158,6 +160,8 @@ def diffusion_operator(qubits):
 
     The diffusion operator is the diagonal operator given
     by (1, -1, -1, ..., -1).
+
+    See arXiv:quant-ph/0301079 for more information.
 
     :param qubits: A list of ints corresponding to the qubits to operate on.
                    The operator operates on bistrings of the form
