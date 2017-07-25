@@ -45,6 +45,7 @@ class BKTransform(object):
 
         # Build the Fenwick tree
         self.tree = FenwickTree(n_qubits)
+        self.n_qubits = n_qubits
 
 
     def create(self, index):
@@ -102,6 +103,9 @@ class BKTransform(object):
         """
         if conj != -1 and conj != +1:
             raise ValueError("Improper conjugate coefficient")
+        if index >= self.n_qubits or index < 0:
+            raise IndexError("Operator index outside number of qubits for "
+                             "current Bravyi-Kitaev transform.")
 
         # parity set P(j). apply Z to, for parity sign.
         parity_set = [node.index for node in self.tree.get_parity_set(index)]
