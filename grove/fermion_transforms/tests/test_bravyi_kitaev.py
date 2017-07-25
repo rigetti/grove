@@ -2,6 +2,10 @@ import pytest
 from grove.fermion_transforms.bktransform import BKTransform
 from grove.fermion_transforms.jwtransform import JWTransform
 import numpy as np
+"""
+Some tests inspired by:
+https://github.com/ProjectQ-Framework/FermiLib/blob/develop/src/fermilib/transforms/_bravyi_kitaev_test.py
+"""
 
 
 def test_hardcoded_transform():
