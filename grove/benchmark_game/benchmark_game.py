@@ -1,3 +1,8 @@
+"""A version of a quantum benchmark game, written for PyQuil.
+
+Inspired by https://github.com/decodoku/A_Game_to_Benchmark_Quantum_Computers,
+which in turn was inspired by arXiv/1608.00263.
+"""
 import numpy as np
 from networkx import Graph
 from networkx.algorithms.matching import max_weight_matching
@@ -65,21 +70,26 @@ def get_one_probs(p, cxn, shots=None):
     :return: a dictionary that is keyed by the qubit with corresponding
              value the measured proportion that the qubit was in the
              excited state
-    :rtype: list
+    :rtype: dict
     """
-    one_probs = {}
-    qubits = p.get_qubits()
+    qubits = list(p.get_qubits())
+    one_probs_dict = {q: 0 for q in qubits}
 
     if shots is None:
-        wf, _ = cxn.wavefunction(p)
-        for i, q in enumerate(qubits):
-            one_probs[q] = np.abs(wf[i]) ** 2
+        wvf, _ = cxn.wavefunction(p)
+        outcome_probs = wvf.get_outcome_probs()
+        for bitstring, prob in outcome_probs.items():
+            for idx, outcome in enumerate(bitstring):
+                if outcome == '1':
+                    one_probs_dict[qubits[idx]] += prob
+        return one_probs_dict
 
     if not isinstance(shots, integer_types):
         raise TypeError("Shots must be an integer.")
     if shots <= 0:
         raise TypeError("Shots must be a positve integer.")
+
     for q in qubits:
         res = cxn.run_and_measure(p, [q], shots)
-        one_probs[q] = 1.0 * sum([m[0] for m in res]) / shots
-    return one_probs
+        one_probs_dict[q] = 1.0 * sum([m[0] for m in res]) / shots
+    return one_probs_dict
