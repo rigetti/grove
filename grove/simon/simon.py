@@ -154,7 +154,6 @@ def oracle_function(unitary_funct, qubits, ancillas, gate_name='FUNCT'):
     bits_for_funct = [scratch_bit] + qubits
 
     p.defgate(gate_name, unitary_funct)
-    print unitary_funct.shape
     p.defgate(inverse_gate_name, np.linalg.inv(unitary_funct))
     p.inst(tuple([gate_name] + bits_for_funct))
     p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
@@ -365,7 +364,6 @@ def find_mask(cxn, oracle, qubits):
     while True:
         if len(W) == n - 1:
             break
-        print simon_program
         z = np.array(cxn.run_and_measure(simon_program, qubits)[0], dtype=int)
         # attempt to insert z in such a way that
         # W remains row-echelon
