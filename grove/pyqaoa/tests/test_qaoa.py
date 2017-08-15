@@ -22,8 +22,11 @@ from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
 from pyquil.quil import Program
 from pyquil.wavefunction import Wavefunction
-from grove.pyvqe.vqe import VQE
 from mock import Mock, patch
+
+from grove.pyqaoa.qaoa import QAOA
+from grove.pyqaoa.utils import compare_progs
+from grove.pyvqe.vqe import VQE
 
 
 def test_probabilities():
@@ -50,23 +53,6 @@ def test_probabilities():
     prob_true[2] = 0.5
     assert np.isclose(probs, prob_true).all()
 
-
-def test_get_angles():
-    p = 2
-    n_qubits = 2
-    fakeQVM = Mock()
-    with patch('grove.pyqaoa.qaoa.VQE', spec=VQE) as mockVQEClass:
-        inst = mockVQEClass.return_value
-        result = Mock()
-        result.x = [1.2, 2.1, 3.4, 4.3]
-        inst.vqe_run.return_value = result
-        MCinst = QAOA(fakeQVM, n_qubits, steps=p,
-                      cost_ham=[PauliSum([PauliTerm("X", 0)])])
-        betas, gammas = MCinst.get_angles()
-        assert betas == [1.2, 2.1]
-        assert gammas == [3.4, 4.3]
-
-
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
     fakeQVM = Mock(spec=qvm_module.SyncConnection())
@@ -74,3 +60,7 @@ def test_ref_program_pass():
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
     compare_progs(ref_prog, test_prog)
+
+if __name__ == "__main__":
+    test_probabilities()
+    test_ref_program_pass()
