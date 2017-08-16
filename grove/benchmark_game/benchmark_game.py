@@ -3,15 +3,20 @@
 Inspired by https://github.com/decodoku/A_Game_to_Benchmark_Quantum_Computers,
 which in turn was inspired by arXiv/1608.00263.
 """
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
-from networkx import Graph
+from networkx import Graph, convert_node_labels_to_integers
 from networkx.algorithms.matching import max_weight_matching
 from pyquil.api import JobConnection, SyncConnection
+from pyquil.gates import CNOT, RY
 from pyquil.quil import Program
 from six import integer_types
 
 
 class AbstractBenchmarkGame(object):
+    __metaclass__ = ABCMeta
+
     def __init__(self, G, cxn=None, shots=None):
         """
         Initialize a Game object with a particular graph architecture.
@@ -27,19 +32,21 @@ class AbstractBenchmarkGame(object):
         """
         if len(G) % 2 != 0:
             raise ValueError("Graph G must have an even number of nodes")
-        self.G = G
-        self.one_probs = {node: 0 for node in G}
-        self.hidden = [False] * len(self.one_probs)
+        self.G = convert_node_labels_to_integers(G)
+        self.one_probs_dict = {node: 0 for node in G}
+        self.hidden = {node: False for node in G}
         self.prog = Program()
         self.cxn = cxn or SyncConnection()
         self.shots = shots
         self.pair_layers = []
         self.rotation_layers = []
+        self.rounds = 0
 
     @property
     def fuzz(self):
         """
         Calculate the amount of "fuzz" present in the current puzzle.
+        Updates self.one_probs_dict as needed.
 
         :return: The expression
 
@@ -51,11 +58,12 @@ class AbstractBenchmarkGame(object):
             in the excited state.
         :rtype: float
         """
-        return 2. / len(self.one_probs) * sum([0.5 - abs(prob - 0.5)
-                                               for prob in
-                                               self.one_probs.values()])
+        self._update_one_probs()
+        return 2. / len(self.one_probs_dict) * \
+               sum([0.5 - abs(prob - 0.5) for prob
+                    in self.one_probs_dict.values()])
 
-    def generate_disjoint_pairs(self):
+    def _generate_disjoint_pairs(self):
         """
         Randomly partition nodes into disjoint sets of two connected nodes each.
 
@@ -78,7 +86,7 @@ class AbstractBenchmarkGame(object):
                 nodes.remove(mate[node])
         return pairs
 
-    def update_one_probs(self):
+    def _update_one_probs(self):
         """
         For every qubit, get the probability of measuring
         that qubit in the excited state, given that the program p
@@ -91,14 +99,16 @@ class AbstractBenchmarkGame(object):
         """
         qubits = list(self.prog.get_qubits())
         one_probs_dict = {q: 0 for q in qubits}
-
+        n = len(qubits)
         if self.shots is None:
             wvf, _ = self.cxn.wavefunction(self.prog)
             outcome_probs = wvf.get_outcome_probs()
             for bitstring, prob in outcome_probs.items():
+                if prob == 0:
+                    continue
                 for idx, outcome in enumerate(bitstring):
                     if outcome == '1':
-                        one_probs_dict[qubits[idx]] += prob
+                        one_probs_dict[qubits[n - 1 - idx]] += prob
         else:
             if not isinstance(self.shots, integer_types):
                 raise TypeError("Shots must be an integer.")
@@ -110,3 +120,196 @@ class AbstractBenchmarkGame(object):
                 one_probs_dict[q] = 1.0 * sum([m[0] for m in res]) / self.shots
 
         self.one_probs_dict = one_probs_dict
+
+    def advance_round(self):
+        pairs = self._generate_disjoint_pairs()
+        self.pair_layers.append((pairs,))
+        self.hidden = {node: False for node in self.G}
+        rotations_fracs = []
+        for i, j in pairs:
+            self.prog.inst(CNOT(i, j))
+            frac = np.random.rand()
+            rotations_fracs.append(frac)
+            self.prog.inst(RY(frac * np.pi, i))
+            self.prog.inst(CNOT(i, j))
+        self.rotation_layers.append((rotations_fracs,))
+        self.rounds += 1
+
+    def choose_pair(self, pair, frac=None):
+        i, j = pair
+        if self.hidden.get(i, True) or self.hidden.get(j, True):
+            return False
+        if i not in self.G[j]:
+            return False
+        print self.one_probs_dict
+        print pair
+        self.hidden[i] = True
+        self.hidden[j] = True
+        if frac is None:
+            approximate_one_prob = (self.one_probs_dict[i]
+                                    + self.one_probs_dict[j]) / 2.0
+            frac = np.arcsin(np.sqrt(approximate_one_prob)) * 2 / np.pi
+
+        self.prog.inst(CNOT(i, j))
+        self.prog.inst(RY(-frac * np.pi, i))
+        self.prog.inst(CNOT(i, j))
+
+        return True
+
+    def run(self, upper_fuzz_bound=0.9):
+        self.advance_round()
+        fuzz = self.fuzz
+        print "Round ", self.rounds
+        print "Current fuzz: ", fuzz
+        target_num_edges = len(self.G) / 2
+        edges_chosen = 0
+        while True:
+            print self
+            while True:
+                pair_label = raw_input("Choose a pair > ")
+                pair = self.get_pair(pair_label)
+                valid_pair = self.choose_pair(pair)
+                if not valid_pair:
+                    print "Invalid pair!"
+                else:
+                    edges_chosen += 1
+                    break
+            if edges_chosen == target_num_edges:
+                edges_chosen = 0
+                fuzz = self.fuzz
+                print "You got the fuzz down to: ", fuzz
+                if fuzz < 1.0e-5:
+                    print "You got rid of the fuzz! Rounds played: ", \
+                        self.rounds
+                    break
+                self.advance_round()
+                fuzz = self.fuzz
+                print "Round ", self.rounds
+                print "Current fuzz: ", fuzz
+                if fuzz >= upper_fuzz_bound:
+                    print "Too much fuzz: game Over! Rounds played: ", \
+                        self.rounds - 1
+                    break
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def get_pair(self, pair_label):
+        """
+        :param pair_label: Some edge label that determined uniquely a pair
+                           of nodes/qubits.
+        :return: The tuple (i, j) of nodes/qubits connected by the edge
+                 labeled by pair_label; it is up to the inheriting class
+                 to decide what that mapping is.
+        :rtype: tuple
+        """
+        pass
+
+
+class RingBenchmarkGame(AbstractBenchmarkGame):
+    def __init__(self, n):
+        if n % 2 != 0 or n < 2:
+            raise ValueError("Must have positive even number of qubits")
+        G = Graph()
+        G.add_cycle(range(n))
+        super(RingBenchmarkGame, self).__init__(G)
+        self.format_str = ""
+        self.edge_label_to_pair = {}
+        self.init_helper()
+
+    def init_helper(self):
+        n = len(self.G)
+        for i in range(n):
+            j = (i + 1) % n
+            self.edge_label_to_pair[i] = (i, j)
+            self.G[i][j]["label"] = i
+        height = n / 4
+        width = (n - 2 * height) / 2
+
+        node_width = 4
+        label_width = int(np.ceil(np.log10(n))) + 2
+        edge_str = "---()---"
+        edge_width = node_width + len(edge_str)
+        # layer one
+        # manually put in first node
+        self.format_str += "{0: ^" + str(node_width) + "}"
+        # set rest of row
+        for i in range(width):
+            self.format_str += \
+                "({0})".format(self.G[i][i + 1]["label"]) \
+                    .center(edge_width, "-")
+            self.format_str += "{" + str(i + 1) + ":^" + str(node_width) + "}"
+
+        self.format_str += "\n"
+        vertical_separators = "|".center(node_width)
+        horizontal_spaces_separators = \
+            (width + 1) * node_width \
+            + edge_width * width \
+            - 2 * len(vertical_separators)
+        horizontal_spaces_labels = \
+            (width + 1) * node_width \
+            + edge_width * width \
+            - 2 * label_width - 1
+        intermediate_rows = vertical_separators + \
+                            " " * horizontal_spaces_separators + \
+                            vertical_separators + "\n"
+
+        il = (-1 % n)
+        jl = 0
+        ir = width + 1
+        jr = width
+
+        self.format_str += intermediate_rows
+        self.format_str += \
+            "({0})".format(self.G[il][jl]["label"]) \
+                .ljust(label_width) + \
+            " " * horizontal_spaces_labels + \
+            "({0})".format(self.G[ir][jr]["label"]) \
+                .rjust(label_width) + \
+            "\n"
+        self.format_str += intermediate_rows
+        for j in range(height - 1):
+            il = (-2 - j) % n
+            jl = (-1 - j) % n
+            ir = width + 2 + j
+            jr = width + 1 + j
+
+            self.format_str += \
+                "{" + str(jl) + ":^" + str(node_width) + "}" + \
+                " " * horizontal_spaces_labels + \
+                "{" + str(jr) + ":^" + str(node_width) + "}" \
+                + "\n"
+
+            self.format_str += intermediate_rows
+            self.format_str += \
+                "({0})".format(self.G[il][jl]["label"]) \
+                    .ljust(label_width) + \
+                " " * horizontal_spaces_labels + \
+                "({0})".format(self.G[ir][jr]["label"]) \
+                    .rjust(label_width) + \
+                "\n"
+            self.format_str += intermediate_rows
+
+        # layer the last
+        # manually put in first node
+        self.format_str += "{" + str((-height) % n) + ":^" + str(node_width) + "}"
+        # set rest of row
+        for i in range(width):
+            il = (-height - i) % n
+            jl = il - 1
+            self.format_str += \
+                "({0})".format(self.G[il][jl]["label"]) \
+                    .center(edge_width, "-")
+            self.format_str += "{" + str(jl) + ":^" + str(node_width) + "}"
+
+    def __str__(self):
+        vertex_labels = ["*" if self.hidden[node]
+                         else str(
+            int(100*self.one_probs_dict[node])) + "%"
+                         for node in range(len(self.G))]
+        return self.format_str.format(*vertex_labels)
+
+    def get_pair(self, pair_label):
+        return self.edge_label_to_pair[int(pair_label)]
