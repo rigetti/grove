@@ -273,7 +273,7 @@ class PlanarGridBenchmarkGame(AbstractBenchmarkGame):
                 rows = [""] * 3
                 for j, c in enumerate(line):
                     if (j % 2) == 0 and c == "|":
-                        node_number = puzzle_width * i // 2 + j / 2
+                        node_number = puzzle_width * (i // 2) + j / 2
                         G.add_edge(node_number,
                                    node_number + puzzle_width,
                                    label=edges_found)
