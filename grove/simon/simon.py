@@ -151,7 +151,9 @@ def oracle_function(unitary_funct, qubits, ancillas, gate_name='FUNCT'):
 
     inverse_gate_name = gate_name + '-INV'
     scratch_bit = p.alloc()
-    bits_for_funct = [scratch_bit] + qubits
+
+    # qubits order reversal necessary due to defgate convention
+    bits_for_funct = [scratch_bit] + qubits[::-1]
 
     p.defgate(gate_name, unitary_funct)
     p.defgate(inverse_gate_name, np.linalg.inv(unitary_funct))
@@ -381,7 +383,8 @@ def find_mask(cxn, oracle, qubits):
 
     s = binary_back_substitute(W, s)
 
-    s_str = ''.join(str(x) for x in s)
+    # s goes in order from qubit 0 to qubit n-1, thus requiring a reversal
+    s_str = ''.join(str(x) for x in s)[::-1]
 
     return s_str, iterations, simon_program
 
@@ -407,7 +410,7 @@ def check_two_to_one(cxn, oracle, ancillas, s):
     zero_program = oracle
     mask_program = pq.Program()
     for i in xrange(len(s)):
-        if s[i] == '1':
+        if s[-1 - i] == '1':
             mask_program.inst(X(i))
     mask_program += oracle
 
