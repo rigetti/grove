@@ -115,9 +115,9 @@ class AbstractBenchmarkGame(object):
             if self.shots <= 0:
                 raise TypeError("Shots must be a positve integer.")
 
+            res = self.cxn.run_and_measure(self.prog, qubits, self.shots)
             for q in qubits:
-                res = self.cxn.run_and_measure(self.prog, [q], self.shots)
-                one_probs_dict[q] = 1.0 * sum([m[0] for m in res]) / self.shots
+                one_probs_dict[q] = 1.0 * sum([m[q] for m in res]) / self.shots
 
         self.one_probs_dict = one_probs_dict
 
