@@ -32,7 +32,7 @@ class AbstractBenchmarkGame(object):
         """
         if len(G) % 2 != 0:
             raise ValueError("Graph G must have an even number of nodes")
-        self.G = convert_node_labels_to_integers(G)
+        self.G = convert_node_labels_to_integers(G, ordering="sorted")
         self.one_probs_dict = {node: 0 for node in G}
         self.hidden = {node: False for node in G}
         self.prog = Program()
@@ -136,13 +136,13 @@ class AbstractBenchmarkGame(object):
         self.rounds += 1
 
     def choose_pair(self, pair, frac=None):
+        if (not isinstance(pair, tuple)) or (len(pair) != 2):
+            return False
         i, j = pair
         if self.hidden.get(i, True) or self.hidden.get(j, True):
             return False
         if i not in self.G[j]:
             return False
-        print self.one_probs_dict
-        print pair
         self.hidden[i] = True
         self.hidden[j] = True
         if frac is None:
@@ -157,6 +157,18 @@ class AbstractBenchmarkGame(object):
         return True
 
     def run(self, upper_fuzz_bound=0.9):
+        while True:
+            x = raw_input("Select how many shots to take: ")
+            if len(x) > 0:
+                try:
+                    x = int(x)
+                    break
+                except ValueError:
+                    continue
+
+            x = None
+            break
+        self.shots = x
         self.advance_round()
         fuzz = self.fuzz
         print "Round ", self.rounds
@@ -208,6 +220,103 @@ class AbstractBenchmarkGame(object):
         pass
 
 
+class PlanarGridBenchmarkGame(AbstractBenchmarkGame):
+    def __init__(self, path):
+        self.format_str = ""
+        G = self.parse(path)
+        super(PlanarGridBenchmarkGame, self).__init__(G)
+        self.edge_label_to_pair = {}
+        for edge in self.G.edges():
+            i, j = edge
+            label = self.G[i][j]["label"]
+            if label not in self.edge_label_to_pair:
+                self.edge_label_to_pair[str(label)] = edge
+
+    def parse(self, path):
+        with open(path) as f:
+            lines = f.readlines()
+            lines = [line.rstrip() for line in lines]
+        if len(lines) % 2 == 0:
+            raise ValueError("There must be an odd number of lines!")
+        puzzle_width = (max([len(line) for line in lines]) + 1) / 2
+        G = Graph()
+        nodes_found = 0
+        edges_found = 0
+        node_width = 4
+        edge_format = "---()---"
+        max_edge_label_size = 2  # assume at most 99 edges --> 2 char labels
+        edge_width = len(edge_format) + max_edge_label_size
+        for i, line in enumerate(lines):
+            if (i % 2) == 0:
+                for j, c in enumerate(line):
+                    node_number = puzzle_width * i / 2 + j // 2
+                    if (j % 2) == 0 and c == "*":
+                        G.add_node(node_number)
+                        self.format_str += "{" + str(nodes_found) + ":^" \
+                                           + str(node_width) + "}"
+                        nodes_found += 1
+                    elif (j % 2) == 1 and c == "-":
+                        G.add_edge(node_number,
+                                   node_number + 1,
+                                   label=edges_found)
+                        self.format_str += \
+                            "({0})".format(G[node_number]
+                                           [node_number + 1]["label"]) \
+                                .center(edge_width, "-")
+                        edges_found += 1
+                    elif c == " ":
+                        self.format_str += " " * edge_width
+                    else:
+                        raise ValueError("Should not have been "
+                                         "this character: " + c)
+            else:
+                rows = [""] * 3
+                for j, c in enumerate(line):
+                    if (j % 2) == 0 and c == "|":
+                        node_number = puzzle_width * i // 2 + j / 2
+                        G.add_edge(node_number,
+                                   node_number + puzzle_width,
+                                   label=edges_found)
+                        rows[0] += \
+                            "|".center(max_edge_label_size + 2)
+                        rows[1] += \
+                            "({0})".format(G[node_number]
+                                           [node_number
+                                            + puzzle_width]["label"]) \
+                                .center(max_edge_label_size + 2)
+                        rows[2] += \
+                            "|".center(max_edge_label_size + 2)
+                        edges_found += 1
+                    elif c == " ":
+                        if (j % 2) == 0:
+                            spaces = max_edge_label_size + 2
+                        else:
+                            spaces = edge_width
+                        rows[0] += \
+                            " " * spaces
+                        rows[1] += \
+                            " " * spaces
+                        rows[2] += \
+                            " " * spaces
+                    else:
+                        raise ValueError("Should not have been "
+                                         "this character: " + c)
+                self.format_str += "\n".join(rows)
+
+            self.format_str += "\n"
+
+        return G
+
+    def __str__(self):
+        vertex_labels = ["*" if self.hidden[node]
+                         else str(int(100 * self.one_probs_dict[node])) + "%"
+                         for node in range(len(self.G))]
+        return self.format_str.format(*vertex_labels)
+
+    def get_pair(self, pair_label):
+        return self.edge_label_to_pair.get(pair_label, None)
+
+
 class RingBenchmarkGame(AbstractBenchmarkGame):
     def __init__(self, n):
         if n % 2 != 0 or n < 2:
@@ -223,7 +332,7 @@ class RingBenchmarkGame(AbstractBenchmarkGame):
         n = len(self.G)
         for i in range(n):
             j = (i + 1) % n
-            self.edge_label_to_pair[i] = (i, j)
+            self.edge_label_to_pair[str(i)] = (i, j)
             self.G[i][j]["label"] = i
         height = n / 4
         width = (n - 2 * height) / 2
@@ -234,7 +343,7 @@ class RingBenchmarkGame(AbstractBenchmarkGame):
         edge_width = node_width + len(edge_str)
         # layer one
         # manually put in first node
-        self.format_str += "{0: ^" + str(node_width) + "}"
+        self.format_str += "{0:^" + str(node_width) + "}"
         # set rest of row
         for i in range(width):
             self.format_str += \
@@ -294,7 +403,8 @@ class RingBenchmarkGame(AbstractBenchmarkGame):
 
         # layer the last
         # manually put in first node
-        self.format_str += "{" + str((-height) % n) + ":^" + str(node_width) + "}"
+        self.format_str += "{" + str((-height) % n) + ":^" + str(
+            node_width) + "}"
         # set rest of row
         for i in range(width):
             il = (-height - i) % n
@@ -306,10 +416,9 @@ class RingBenchmarkGame(AbstractBenchmarkGame):
 
     def __str__(self):
         vertex_labels = ["*" if self.hidden[node]
-                         else str(
-            int(100*self.one_probs_dict[node])) + "%"
+                         else str(int(100 * self.one_probs_dict[node])) + "%"
                          for node in range(len(self.G))]
         return self.format_str.format(*vertex_labels)
 
     def get_pair(self, pair_label):
-        return self.edge_label_to_pair[int(pair_label)]
+        return self.edge_label_to_pair.get(pair_label, None)
