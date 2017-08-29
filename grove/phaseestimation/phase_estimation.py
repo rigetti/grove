@@ -50,8 +50,8 @@ def phase_estimation(U, accuracy, reg_offset=0):
     assert isinstance(accuracy, int)
     rows, cols = U.shape
     m = int(log(rows, 2))
-    output_qubits = range(0, accuracy)
-    U_qubits = range(accuracy, accuracy + m)
+    output_qubits = list(range(0, accuracy))
+    U_qubits = list(range(accuracy, accuracy + m))
     p = pq.Program()
 
     # Hadamard initialization
@@ -85,6 +85,6 @@ if __name__ == '__main__':
     Ry = np.exp(Y * np.pi / 16)
     U = np.kron(Rx, Ry)
     p = phase_estimation(U, 3)
-    print p
-    print qvm.run(p, range(3+2),10)
-    print qvm.wavefunction(p)
+    print(p)
+    print(qvm.run(p, list(range(3+2)),10))
+    print(qvm.wavefunction(p))

@@ -49,8 +49,8 @@ def _find_mask_test_helper(mappings, mask=None):
     n = int(np.log2(len(mappings)))
     qvm = api.SyncConnection()
 
-    qubits = range(n)
-    ancillas = range(n, 2 * n)
+    qubits = list(range(n))
+    ancillas = list(range(n, 2 * n))
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas)

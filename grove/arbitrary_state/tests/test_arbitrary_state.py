@@ -21,7 +21,7 @@ class TestCreateArbitraryState(object):
             [1 + 2j, 3 + 4j, -1 - 5j, 6 - 8j, 7, 2, 0.5j, 2])
 
     def test_state_generation_complex_length_huge(self):
-        _state_generation_test_helper(np.array(range(50)) * 1j)
+        _state_generation_test_helper(np.array(list(range(50))) * 1j)
 
     def test_padded_zeros(self):
         _state_generation_test_helper([1, 0, 0])
@@ -31,7 +31,7 @@ class TestCreateArbitraryState(object):
 
     def test_long_padded_zeros(self):
         _state_generation_test_helper([0.5j, 0.5, 0, 1, 0, 0, 0, 0, 0],
-                                      range(3, 7))
+                                      list(range(3, 7)))
 
     def test_forward_padded_zeros(self):
         _state_generation_test_helper([0, 0, 1])

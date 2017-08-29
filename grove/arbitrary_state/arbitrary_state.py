@@ -27,9 +27,9 @@ def get_uniformly_controlled_rotation_matrix(k):
     :rtype: 2darray
     """
     M = np.full((2 ** k, 2 ** k), 2 ** -k)
-    for i in xrange(2 ** k):
+    for i in range(2 ** k):
         g_i = i ^ (i >> 1)  # Gray code for i
-        for j in xrange(2 ** k):
+        for j in range(2 ** k):
             M[i, j] *= (-1) ** (bin(j & g_i).count("1"))
     return M
 
@@ -52,7 +52,7 @@ def get_cnot_control_positions(k):
     :rtype: list
     """
     rotation_cnots = [1, 1]
-    for i in xrange(2, k + 1):
+    for i in range(2, k + 1):
         # algorithm described is to replace the last control
         # with a control to the new qubit
         # and then repeat the sequence twice
@@ -93,7 +93,7 @@ def get_rotation_parameters(phases, magnitudes):
     new_phases = []
     new_magnitudes = []
 
-    for i in xrange(0, len(phases), 2):
+    for i in range(0, len(phases), 2):
         # find z rotation angles
         phi = phases[i]
         psi = phases[i + 1]
@@ -154,7 +154,7 @@ def get_reversed_unification_program(angles, control_indices,
 
     reversed_gates = []
 
-    for j in xrange(len(angles)):
+    for j in range(len(angles)):
         if angles[j] != 0:
             # angle is negated in conjugated/reversed circuit
             reversed_gates.append(gate(-angles[j], target))
@@ -200,14 +200,14 @@ def create_arbitrary_state(vector, qubits=None):
     n = max(1, int(np.ceil(np.log2(len(vec_norm)))))  # number of qubits needed
 
     if qubits is None:
-        qubits = range(n)
+        qubits = list(range(n))
 
     N = 2 ** n  # number of coefficients
     while len(vec_norm) < N:
         vec_norm = np.append(vec_norm, 0)  # pad with zeros
 
-    magnitudes = map(np.abs, vec_norm)
-    phases = map(np.angle, vec_norm)
+    magnitudes = list(map(np.abs, vec_norm))
+    phases = list(map(np.angle, vec_norm))
 
     # matrix that converts angles of uniformly controlled rotation
     # to angles of uncontrolled rotations
@@ -224,7 +224,7 @@ def create_arbitrary_state(vector, qubits=None):
     # from the circuit given in the paper
     reversed_prog = pq.Program()
 
-    for step in xrange(n):
+    for step in range(n):
         # Will hold reversed program corresponding to this particular step.
         reversed_step_prog = pq.Program()
 
@@ -278,7 +278,7 @@ def create_arbitrary_state(vector, qubits=None):
         reversed_prog = reversed_step_prog + reversed_prog
 
     # Add Hadamard gates to remove superposition
-    reversed_prog = pq.Program().inst(map(H, qubits)) + reversed_prog
+    reversed_prog = pq.Program().inst(list(map(H, qubits))) + reversed_prog
 
     # Correct the overall phase
     reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0])) \
@@ -289,8 +289,8 @@ def create_arbitrary_state(vector, qubits=None):
 
 
 if __name__ == "__main__":
-    print "Example list: -3.2+1j, -7, -0.293j, 1, 0, 0"
-    v = input("Input a comma separated list of complex numbers:\n")
+    print("Example list: -3.2+1j, -7, -0.293j, 1, 0, 0")
+    v = eval(input("Input a comma separated list of complex numbers:\n"))
     if isinstance(v, int):
         v = [v]
     else:
@@ -298,8 +298,8 @@ if __name__ == "__main__":
     p = create_arbitrary_state(v)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
-    print "Normalized Vector: ", list(v / np.linalg.norm(v))
-    print "Generated Wavefunction: ", wf
-    if raw_input("Show Program? (y/n): ") == 'y':
-        print "----------Quil Code Used----------"
-        print p.out()
+    print("Normalized Vector: ", list(v / np.linalg.norm(v)))
+    print("Generated Wavefunction: ", wf)
+    if input("Show Program? (y/n): ") == 'y':
+        print("----------Quil Code Used----------")
+        print(p.out())

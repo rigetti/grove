@@ -38,14 +38,14 @@ def compare_progs(test, reference):
     tinstr = test.actions
     rinstr = reference.actions
     assert len(tinstr) == len(rinstr)
-    for idx in xrange(len(tinstr)):
+    for idx in range(len(tinstr)):
         # check each field of the instruction object
         assert tinstr[idx][1].operator_name == rinstr[idx][1].operator_name
         assert len(tinstr[idx][1].parameters) == len(rinstr[idx][1].parameters)
-        for pp in xrange(len(tinstr[idx][1].parameters)):
+        for pp in range(len(tinstr[idx][1].parameters)):
             cmp_val = isclose(tinstr[idx][1].parameters[pp], rinstr[idx][1].parameters[pp])
             assert cmp_val
 
         assert len(tinstr[idx][1].arguments) == len(rinstr[idx][1].arguments)
-        for aa in xrange(len(tinstr[idx][1].arguments)):
+        for aa in range(len(tinstr[idx][1].arguments)):
             assert tinstr[idx][1].arguments[aa] == rinstr[idx][1].arguments[aa]
