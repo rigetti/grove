@@ -122,8 +122,8 @@ class VQE(object):
         expectation_vals = []
         self._current_expectation = None
         if samples is None:
-            print """WARNING: Fast method for expectation will be used. Noise
-                     models will be ineffective"""
+            print("""WARNING: Fast method for expectation will be used. Noise
+                     models will be ineffective""")
 
         if qvm is None:
             qvm = api.SyncConnection(
