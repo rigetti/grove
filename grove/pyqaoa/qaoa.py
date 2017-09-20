@@ -13,7 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
+from __future__ import print_function
 from collections import Counter
 from scipy import optimize
 import numpy as np
@@ -21,7 +21,11 @@ from grove.pyvqe.vqe import VQE
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
-
+try:
+  xrange(1)
+except NameError:
+  xrange = range
+  from functools import reduce
 
 class QAOA(object):
     def __init__(self, qvm, n_qubits, steps=1, init_betas=None,

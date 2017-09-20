@@ -13,7 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
+from __future__ import print_function
 import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
@@ -122,8 +122,8 @@ class VQE(object):
         expectation_vals = []
         self._current_expectation = None
         if samples is None:
-            print """WARNING: Fast method for expectation will be used. Noise
-                     models will be ineffective"""
+            print("""WARNING: Fast method for expectation will be used. Noise
+                     models will be ineffective""")
 
         if qvm is None:
             qvm = api.SyncConnection(
@@ -305,7 +305,7 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     for qindex in marked_qubits:
         pyquil_program.measure(qindex, qindex)
 
-    bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
+    bitstring_samples = qvm.run(pyquil_program, list(range(max(marked_qubits) + 1)), trials=samples)
     bitstring_tuples = map(tuple, bitstring_samples)
 
     freq = Counter(bitstring_tuples)

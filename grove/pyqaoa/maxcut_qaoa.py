@@ -17,6 +17,7 @@
 """
 Finding a maximum cut by QAOA.
 """
+from __future__ import print_function
 import numpy as np
 import pyquil.api as api
 from pyquil.paulis import PauliTerm, PauliSum
@@ -27,7 +28,7 @@ CXN = api.SyncConnection()
 
 
 def print_fun(x):
-    print x
+    print(x)
 
 
 def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
@@ -104,9 +105,9 @@ if __name__ == "__main__":
     betas, gammas = inst.get_angles()
     probs = inst.probabilities(np.hstack((betas, gammas)))
     for state, prob in zip(inst.states, probs):
-        print state, prob
+        print(state, prob)
 
-    print "Most frequent bitstring from sampling"
+    print("Most frequent bitstring from sampling")
     most_freq_string, sampling_results = inst.get_string(
             betas, gammas)
-    print most_freq_string
+    print(most_freq_string)
