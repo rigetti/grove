@@ -1,0 +1,13 @@
+numpy
+scipy
+pyquil >= 1.0.0
+mock
+networkx
+matplotlib
+
+# test dependencies
+tox
+pytest >= 3.0.0
+mock
+pytest-cov
+codeclimate-test-reporter

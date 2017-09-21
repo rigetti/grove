@@ -37,6 +37,11 @@ setup(
         'networkx',
         'matplotlib'
     ],
+    setup_requires=['pytest-runner'],
+    tests_require=[
+        'pytest >= 3.0.0',
+        'mock'
+    ],
     license='LICENSE',
     keywords='quantum quil programming hybrid'
 )
