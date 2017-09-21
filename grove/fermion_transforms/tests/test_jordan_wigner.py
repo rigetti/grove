@@ -36,13 +36,13 @@ def test_multi_ops():
     """
     jw = JWTransform()
     # test on one particle density matrix
-    for p, q, in product(range(6), repeat=2):
+    for p, q, in product(list(range(6)), repeat=2):
         truth = jw.create(p)*jw.kill(q)
         prod_ops_out = jw.product_ops([p, q], [-1, 1])
         assert truth.__str__() == prod_ops_out.__str__()
 
     # test on two particle density matrix
-    for p, q, r, s in product(range(4), repeat=4):
+    for p, q, r, s in product(list(range(4)), repeat=4):
         truth = jw.create(p)*jw.create(q)*jw.kill(s)*jw.kill(r)
         prod_ops_out = jw.product_ops([p, q, s, r], [-1, -1, 1, 1])
         assert truth.__str__() == prod_ops_out.__str__()

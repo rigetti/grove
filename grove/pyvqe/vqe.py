@@ -122,8 +122,8 @@ class VQE(object):
         expectation_vals = []
         self._current_expectation = None
         if samples is None:
-            print """WARNING: Fast method for expectation will be used. Noise
-                     models will be ineffective"""
+            print("""WARNING: Fast method for expectation will be used. Noise
+                     models will be ineffective""")
 
         if qvm is None:
             qvm = api.SyncConnection(
@@ -235,7 +235,7 @@ class VQE(object):
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
                 didn't get the correct number of results back from the QVM"""
-                expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs)))
+                expectation = sum([x[0]*x[1] for x in zip(result_overlaps, operator_coeffs)])
                 return expectation.real
             else:
                 if not isinstance(samples, int):
@@ -305,14 +305,14 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     for qindex in marked_qubits:
         pyquil_program.measure(qindex, qindex)
 
-    bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
-    bitstring_tuples = map(tuple, bitstring_samples)
+    bitstring_samples = qvm.run(pyquil_program, list(range(max(marked_qubits) + 1)), trials=samples)
+    bitstring_tuples = list(map(tuple, bitstring_samples))
 
     freq = Counter(bitstring_tuples)
 
     # perform weighted average
     expectation = 0
-    for bitstring, count in freq.items():
+    for bitstring, count in list(freq.items()):
         bitstring_int = int("".join([str(x) for x in bitstring[::-1]]), 2)
         if parity_even_p(bitstring_int, marked_qubits):
             expectation += float(count)/samples

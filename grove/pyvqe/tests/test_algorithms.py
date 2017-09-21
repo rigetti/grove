@@ -35,7 +35,7 @@ def test_vqe_run():
     hamiltonian = np.array([[1, 0], [0, -1]])
     initial_param = 0.0
 
-    minimizer = Mock(spec=minimize, func_code=minimize.func_code)
+    minimizer = Mock(spec=minimize, func_code=minimize.__code__)
     fake_result = Mock()
     fake_result.fun = 1.0
     fake_result.x = [0.0]

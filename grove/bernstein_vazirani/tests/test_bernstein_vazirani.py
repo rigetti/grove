@@ -13,25 +13,25 @@ class TestOracleFunction(object):
     def test_one_qubit(self):
         vec_a = np.array([1])
         b = 0
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_two_qubits(self):
         vec_a = np.array([1, 0])
         b = 1
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_three_qubits(self):
         vec_a = np.array([0, 0, 0])
         b = 0
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_four_qubits(self):
         vec_a = np.array([1, 1, 1, 1])
         b = 1
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
 
@@ -51,7 +51,7 @@ class TestBernsteinVazirani(object):
 
 
 def _bv_test_helper(vec_a, b, trials=1):
-    qubits = range(len(vec_a))
+    qubits = list(range(len(vec_a)))
     ancilla = len(vec_a)
     oracle = oracle_function(vec_a, b, qubits, ancilla)
     bv_program = bernstein_vazirani(oracle, qubits, ancilla)
@@ -63,14 +63,14 @@ def _bv_test_helper(vec_a, b, trials=1):
 
 
 def _oracle_test_helper(vec_a, b, x, trials=1):
-    qubits = range(len(vec_a))
+    qubits = list(range(len(vec_a)))
     ancilla = len(vec_a)
 
     cxn = api.SyncConnection()
     bitstring = np.binary_repr(x, len(qubits))
     p = pq.Program()
 
-    for i in xrange(len(bitstring)):
+    for i in range(len(bitstring)):
         if bitstring[-1 - i] == '1':
             p.inst(X(i))
 
