@@ -1,5 +1,6 @@
 from grove.fermion_transforms.fenwick_tree import FenwickTree
 
+
 def test_sets():
     # tests from 8-qubit example in https://arxiv.org/pdf/1208.5986.pdf
     n_qubits = 8

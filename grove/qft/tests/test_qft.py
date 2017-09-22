@@ -20,6 +20,7 @@ import pyquil.quil as pq
 from grove.pyqaoa.utils import compare_progs # This would be nice to have in
                                              # general purpose Util module
 
+
 def test_simple_inverse_qft():
     
     trial_prog = pq.Program()
@@ -29,7 +30,8 @@ def test_simple_inverse_qft():
     result_prog = pq.Program().inst([X(0), H(0)])
     
     compare_progs(trial_prog, result_prog)
-    
+
+
 def test_multi_qubit_qft():
     
     trial_prog = pq.Program()

@@ -10,6 +10,7 @@ into the wavefunction of a quantum state. For example, the input vector
 
 """
 import numpy as np
+from six.moves import input
 
 
 def unitary_operator(state_vector):
@@ -91,12 +92,12 @@ def get_bits_needed(n):
 
 
 if __name__ == "__main__":
-    num_entries = int(raw_input("How long is the input vector? "))
+    num_entries = int(input("How long is the input vector? "))
     num_bits = int(np.ceil(np.log2(num_entries)))
     print("Begin entering vector elements below.")
     vector = []
     for i in range(num_entries):
-        vector.append(complex(raw_input("Element {0}: ".format(i))))
+        vector.append(complex(input("Element {0}: ".format(i))))
     print("You entered the following vector: ", vector)
     state_vector = fix_norm_and_length(vector)
     print("The following vector will be encoded: ", state_vector)

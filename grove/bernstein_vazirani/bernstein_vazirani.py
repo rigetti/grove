@@ -6,6 +6,7 @@ http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
+from six.moves import input
 
 
 def oracle_function(vec_a, b, qubits, ancilla):
@@ -137,18 +138,18 @@ if __name__ == "__main__":
     import pyquil.api as api
 
     # ask user to input the value for a
-    bitstring = raw_input("Give a bitstring representation for the vector a: ")
+    bitstring = input("Give a bitstring representation for the vector a: ")
     while not (all([num in ('0', '1') for num in bitstring])):
         print("The bitstring must be a string of ones and zeros.")
-        bitstring = raw_input(
+        bitstring = input(
             "Give a bitstring representation for the vector a: ")
     vec_a = np.array(list(map(int, bitstring)))
 
     # ask user to input the value for b
-    b = int(raw_input("Give a single bit for b: "))
+    b = int(input("Give a single bit for b: "))
     while b not in {0, 1}:
         print("b must be either 0 or 1")
-        b = int(raw_input("Give a single bit for b: "))
+        b = int(input("Give a single bit for b: "))
 
     qvm = api.SyncConnection()
     qubits = range(len(vec_a))
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     print("The bitstring a is given by: ", bitstring)
     print("b is given by: ", b)
     print("-----------------------------------")
-    if raw_input("Show Program? (y/n): ") == 'y':
+    if input("Show Program? (y/n): ") == 'y':
         print("----------Quantum Programs Used----------")
         print("Program to find a given by: ")
         print(bv_program)

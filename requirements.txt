@@ -5,6 +5,7 @@ mock
 networkx
 matplotlib
 funcsigs
+six
 
 # test dependencies
 tox

@@ -7,6 +7,7 @@ and Quantum Information" by Neilson and Chuang.
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
+from six.moves import input
 
 
 def oracle_function(unitary_funct, qubits, ancilla):
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     from pyquil.api import SyncConnection
 
     # Read function mappings from user
-    n = int(raw_input("How many bits? "))
+    n = int(input("How many bits? "))
     assert n > 0, "The number of bits must be positive."
     print("Enter f(x) for the following n-bit inputs:")
     mappings = []

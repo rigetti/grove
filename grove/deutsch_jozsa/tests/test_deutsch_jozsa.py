@@ -2,6 +2,7 @@ from grove.deutsch_jozsa.deutsch_jozsa import *
 from pyquil.api import SyncConnection
 import pytest
 
+
 def run(n, mappings):
     deutsch_program = pq.Program()
     qubits = [deutsch_program.alloc() for _ in range(n)]
@@ -14,11 +15,13 @@ def run(n, mappings):
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
     return "balanced" if 1 in results[0] else "constant"
 
+
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def test_balanced():
     n = 3
     mappings = [0, 1, 1, 0, 1, 0, 0, 1]
     assert run(n, mappings) == "balanced"
+
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
 def test_constant():

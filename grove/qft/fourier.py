@@ -32,6 +32,7 @@ def bit_reversal(qubits):
         p.inst(SWAP(qubits[i], qubits[-i - 1]))
     return p
 
+
 def _core_qft(qubits, coeff):
     """
     Generates the core program to perform the quantum Fourier transform
@@ -54,6 +55,7 @@ def _core_qft(qubits, coeff):
             angle = math.pi / 2 ** (n - i)
             cR.append(CPHASE(coeff * angle)(q, q_idx))
         return _core_qft(qs, coeff) + list(reversed(cR)) + [H(q)]
+
 
 def qft(qubits):
     """

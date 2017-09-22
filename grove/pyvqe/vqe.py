@@ -17,11 +17,11 @@
 import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
-import inspect
 from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
 import funcsigs
+
 
 class OptResults(dict):
     """
@@ -239,7 +239,8 @@ class VQE(object):
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
                 didn't get the correct number of results back from the QVM"""
-                expectation = sum(list(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs))))
+                expectation = sum(list(map(lambda x: x[0]*x[1],
+                                           zip(result_overlaps, operator_coeffs))))
                 return expectation.real
             else:
                 if not isinstance(samples, int):
@@ -263,9 +264,11 @@ class VQE(object):
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                                     qubits_to_measure,
-                                                                     qvm, samples)
+                            meas_outcome = \
+                                expectation_from_sampling(pyquil_prog + meas_basis_change,
+                                                          qubits_to_measure,
+                                                          qvm,
+                                                          samples)
 
                     expectation += term.coefficient * meas_outcome
 

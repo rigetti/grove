@@ -25,6 +25,7 @@ Intro_to_QC_Vol_1_Loceff.pdf
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
+from six.moves import input
 
 
 def unitary_function(mappings):
@@ -425,7 +426,7 @@ if __name__ == "__main__":
     print("Enter f(x) for the following n-bit inputs:")
     mappings = []
     for i in range(2 ** n):
-        val = raw_input(np.binary_repr(i, n) + ': ')
+        val = input(np.binary_repr(i, n) + ': ')
         assert all(list(map(lambda x: x in {'0', '1'}, val))), \
             "f(x) must return only 0 and 1"
         mappings.append(int(val, 2))
@@ -447,6 +448,6 @@ if __name__ == "__main__":
         print("The function is one-to-one")
     print("Iterations of the algorithm: ", iterations)
 
-    if raw_input("Show Program? (y/n): ") == 'y':
+    if input("Show Program? (y/n): ") == 'y':
         print("----------Quantum Program Used----------")
         print(simon_program)

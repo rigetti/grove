@@ -13,6 +13,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.api import SyncConnection
 from pyquil.gates import *
+from six.moves import input
 
 
 def get_uniformly_controlled_rotation_matrix(k):
@@ -300,6 +301,6 @@ if __name__ == "__main__":
     wf, _ = qvm.wavefunction(p)
     print("Normalized Vector: ", list(v / np.linalg.norm(v)))
     print("Generated Wavefunction: ", wf)
-    if raw_input("Show Program? (y/n): ") == 'y':
+    if input("Show Program? (y/n): ") == 'y':
         print("----------Quil Code Used----------")
         print(p.out())
