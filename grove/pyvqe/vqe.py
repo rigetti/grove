@@ -21,6 +21,7 @@ import inspect
 from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
+import funcsigs
 
 class OptResults(dict):
     """
@@ -159,7 +160,7 @@ class VQE(object):
 
         # using self.minimizer
         # Need to keep deprecated method for py2.7 compatibility
-        arguments, _, _, _ = inspect.getargspec(self.minimizer)
+        arguments, _, _, _ = funcsigs.signature(self.minimizer)
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter

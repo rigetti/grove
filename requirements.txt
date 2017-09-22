@@ -4,6 +4,7 @@ pyquil >= 1.0.0
 mock
 networkx
 matplotlib
+funcsigs
 
 # test dependencies
 tox

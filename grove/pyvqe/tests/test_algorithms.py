@@ -19,7 +19,7 @@ from pyquil.quil import Program
 from pyquil.wavefunction import Wavefunction
 from pyquil.gates import RX, H, RZ
 from pyquil.paulis import PauliSum, PauliTerm
-from mock import Mock, MagicMock
+from mock import Mock, MagicMock, patch
 import numpy as np
 from scipy.linalg import expm
 from scipy.optimize import minimize
@@ -35,7 +35,7 @@ def test_vqe_run():
     hamiltonian = np.array([[1, 0], [0, -1]])
     initial_param = 0.0
 
-    minimizer = Mock(spec=minimize, func_code=minimize.func_code)
+    minimizer = MagicMock(spec=minimize, func_code=minimize.__code__)
     fake_result = Mock()
     fake_result.fun = 1.0
     fake_result.x = [0.0]
@@ -46,11 +46,12 @@ def test_vqe_run():
     # return a value. Still need this so I don't try to call the QVM server.
     fake_qvm = Mock(spec=['wavefunction'])
 
-    inst = VQE(minimizer)
+    with patch("funcsigs.signature") as patch_signature:
+        patch_signature.return_value = {}, None, None, None
+        inst = VQE(minimizer)
 
-    t_result = inst.vqe_run(param_prog, hamiltonian, initial_param,
-                            qvm=fake_qvm)
-    assert np.isclose(t_result.fun, 1.0)
+        t_result = inst.vqe_run(param_prog, hamiltonian, initial_param, qvm=fake_qvm)
+        assert np.isclose(t_result.fun, 1.0)
 
 
 def test_expectation():
