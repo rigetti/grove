@@ -87,10 +87,12 @@ our documentation, so this may need to be installed using `pip install sphinx_rt
 Development and Testing
 -----------------------
 
-We use pytest for testing. Tests can be run from the top-level directory using:
+We use tox and pytest for testing. Tests can be executed from the top-level directory by simply
+running:
 ```
-py.test
+tox
 ```
+The setup is currently testing Python 2.7 and Python 3.6.
 
 
 ## How to cite Grove and Forest
