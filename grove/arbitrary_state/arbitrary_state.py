@@ -206,8 +206,8 @@ def create_arbitrary_state(vector, qubits=None):
     while len(vec_norm) < N:
         vec_norm = np.append(vec_norm, 0)  # pad with zeros
 
-    magnitudes = map(np.abs, vec_norm)
-    phases = map(np.angle, vec_norm)
+    magnitudes = list(map(np.abs, vec_norm))
+    phases = list(map(np.angle, vec_norm))
 
     # matrix that converts angles of uniformly controlled rotation
     # to angles of uncontrolled rotations
@@ -278,7 +278,7 @@ def create_arbitrary_state(vector, qubits=None):
         reversed_prog = reversed_step_prog + reversed_prog
 
     # Add Hadamard gates to remove superposition
-    reversed_prog = pq.Program().inst(map(H, qubits)) + reversed_prog
+    reversed_prog = pq.Program().inst(list(map(H, qubits))) + reversed_prog
 
     # Correct the overall phase
     reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0])) \

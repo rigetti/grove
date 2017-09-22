@@ -54,7 +54,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
     """
     assert len(vec_a) == len(qubits), \
         "vec_a must be the same length as the number of input qubits"
-    assert all(map(lambda x: x in {0, 1}, vec_a)), \
+    assert all(list(map(lambda x: x in {0, 1}, vec_a))), \
         "vec_a must be a list of 0s and 1s"
     assert b in {0, 1}, "b must be a 0 or 1"
 
@@ -93,9 +93,9 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     p.inst(X(ancilla), H(ancilla))
 
     # Apply Hadamard, Unitary function, and Hadamard again
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     p += oracle
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     return p
 
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         print("The bitstring must be a string of ones and zeros.")
         bitstring = raw_input(
             "Give a bitstring representation for the vector a: ")
-    vec_a = np.array(map(int, bitstring))
+    vec_a = np.array(list(map(int, bitstring)))
 
     # ask user to input the value for b
     b = int(raw_input("Give a single bit for b: "))
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     oracle = oracle_function(vec_a, b, qubits, ancilla)
 
     a, b, bv_program = run_bernstein_vazirani(qvm, oracle, qubits, ancilla)
-    bitstring_a = "".join(map(str, a))
+    bitstring_a = "".join(list(map(str, a)))
     print("-----------------------------------")
     print("The bitstring a is given by: ", bitstring)
     print("b is given by: ", b)

@@ -35,7 +35,7 @@ def grover(oracle, qubits, num_iter=None):
     if num_iter is None:
         num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
 
-    many_hadamard = pq.Program().inst(map(H, qubits))
+    many_hadamard = pq.Program().inst(list(map(H, qubits)))
     amp_prog = amp.amplify(many_hadamard, many_hadamard,
                            oracle, qubits, num_iter)
 

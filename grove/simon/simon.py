@@ -156,7 +156,7 @@ def oracle_function(unitary_funct, qubits, ancillas, gate_name='FUNCT'):
     p.defgate(gate_name, unitary_funct)
     p.defgate(inverse_gate_name, np.linalg.inv(unitary_funct))
     p.inst(tuple([gate_name] + bits_for_funct))
-    p.inst(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas)))
+    p.inst(list(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas))))
     p.inst(tuple([inverse_gate_name] + bits_for_funct))
 
     p.free(scratch_bit)
@@ -182,9 +182,9 @@ def simon(oracle, qubits):
     p = pq.Program()
 
     # Apply Hadamard, Unitary function, and Hadamard again
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     p += oracle
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     return p
 
 
@@ -426,7 +426,7 @@ if __name__ == "__main__":
     mappings = []
     for i in range(2 ** n):
         val = raw_input(np.binary_repr(i, n) + ': ')
-        assert all(map(lambda x: x in {'0', '1'}, val)), \
+        assert all(list(map(lambda x: x in {'0', '1'}, val))), \
             "f(x) must return only 0 and 1"
         mappings.append(int(val, 2))
 

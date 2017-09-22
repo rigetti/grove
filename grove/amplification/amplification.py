@@ -26,7 +26,7 @@ import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 from scipy.linalg import sqrtm
 
-STANDARD_GATE_NAMES = STANDARD_GATES.keys()
+STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
 
 # Start with A|0>
@@ -179,12 +179,12 @@ def diffusion_operator(qubits):
         p.inst(H(qubits[0]))
 
     else:
-        p.inst(map(X, qubits))
+        p.inst(list(map(X, qubits)))
         p.inst(H(qubits[-1]))
         p.inst(RZ(-np.pi)(qubits[0]))
         p += n_qubit_control(qubits[:-1], qubits[-1],
                              np.array([[0, 1], [1, 0]]), "NOT")
         p.inst(RZ(-np.pi)(qubits[0]))
         p.inst(H(qubits[-1]))
-        p.inst(map(X, qubits))
+        p.inst(list(map(X, qubits)))
     return p

@@ -238,7 +238,7 @@ class VQE(object):
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
                 didn't get the correct number of results back from the QVM"""
-                expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs)))
+                expectation = sum(list(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs))))
                 return expectation.real
             else:
                 if not isinstance(samples, int):
@@ -310,7 +310,7 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
         pyquil_program.measure(qindex, qindex)
 
     bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
-    bitstring_tuples = map(tuple, bitstring_samples)
+    bitstring_tuples = list(map(tuple, bitstring_samples))
 
     freq = Counter(bitstring_tuples)
 

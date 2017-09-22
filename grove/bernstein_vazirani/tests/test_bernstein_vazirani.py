@@ -77,7 +77,7 @@ def _oracle_test_helper(vec_a, b, x, trials=1):
     oracle = oracle_function(vec_a, b, qubits, ancilla)
     p += oracle
     results = cxn.run_and_measure(p, [ancilla], trials)
-    a_dot_x = np.binary_repr(int(''.join(map(str, vec_a)), 2) & x).count("1")
+    a_dot_x = np.binary_repr(int(''.join(list(map(str, vec_a))), 2) & x).count("1")
     expected = (a_dot_x + b) % 2
     for result in results:
         y = result[0]
