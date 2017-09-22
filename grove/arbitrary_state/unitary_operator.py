@@ -95,7 +95,7 @@ if __name__ == "__main__":
     num_bits = int(np.ceil(np.log2(num_entries)))
     print("Begin entering vector elements below.")
     vector = []
-    for i in xrange(num_entries):
+    for i in range(num_entries):
         vector.append(complex(raw_input("Element {0}: ".format(i))))
     print("You entered the following vector: ", vector)
     state_vector = fix_norm_and_length(vector)

@@ -27,9 +27,9 @@ def get_uniformly_controlled_rotation_matrix(k):
     :rtype: 2darray
     """
     M = np.full((2 ** k, 2 ** k), 2 ** -k)
-    for i in xrange(2 ** k):
+    for i in range(2 ** k):
         g_i = i ^ (i >> 1)  # Gray code for i
-        for j in xrange(2 ** k):
+        for j in range(2 ** k):
             M[i, j] *= (-1) ** (bin(j & g_i).count("1"))
     return M
 
@@ -52,7 +52,7 @@ def get_cnot_control_positions(k):
     :rtype: list
     """
     rotation_cnots = [1, 1]
-    for i in xrange(2, k + 1):
+    for i in range(2, k + 1):
         # algorithm described is to replace the last control
         # with a control to the new qubit
         # and then repeat the sequence twice
@@ -93,7 +93,7 @@ def get_rotation_parameters(phases, magnitudes):
     new_phases = []
     new_magnitudes = []
 
-    for i in xrange(0, len(phases), 2):
+    for i in range(0, len(phases), 2):
         # find z rotation angles
         phi = phases[i]
         psi = phases[i + 1]
@@ -154,7 +154,7 @@ def get_reversed_unification_program(angles, control_indices,
 
     reversed_gates = []
 
-    for j in xrange(len(angles)):
+    for j in range(len(angles)):
         if angles[j] != 0:
             # angle is negated in conjugated/reversed circuit
             reversed_gates.append(gate(-angles[j], target))
@@ -224,7 +224,7 @@ def create_arbitrary_state(vector, qubits=None):
     # from the circuit given in the paper
     reversed_prog = pq.Program()
 
-    for step in xrange(n):
+    for step in range(n):
         # Will hold reversed program corresponding to this particular step.
         reversed_step_prog = pq.Program()
 

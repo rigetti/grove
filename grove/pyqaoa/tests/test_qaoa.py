@@ -41,7 +41,7 @@ def test_probabilities():
                 rand_seed=42)
 
     true_probs = np.zeros_like(wf)
-    for xx in xrange(wf.shape[0]):
+    for xx in range(wf.shape[0]):
         true_probs[xx] = np.conj(wf[xx]) * wf[xx]
     probs = inst.probabilities(angles)
     assert isinstance(probs, np.ndarray)

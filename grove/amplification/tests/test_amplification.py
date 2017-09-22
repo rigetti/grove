@@ -66,9 +66,6 @@ def test_diffusion_operator():
     assert desired.out() == created.out()
 
 
-test_diffusion_operator()
-
-
 def test_amplify():
     """
     Test the generic usage of amplify

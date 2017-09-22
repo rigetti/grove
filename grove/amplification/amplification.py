@@ -65,7 +65,7 @@ def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
 
     p = A if init else pq.Program()
 
-    for _ in xrange(num_iter):
+    for _ in range(num_iter):
         # A (2|0><0| - I) A^-1 (I - 2|w><w|) n times
         p += U_w + A_inv + diffusion_operator(qubits) + A
 

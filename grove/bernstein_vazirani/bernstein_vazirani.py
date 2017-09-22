@@ -62,7 +62,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
     p = pq.Program()
     if b == 1:
         p.inst(X(ancilla))
-    for i in xrange(n):
+    for i in range(n):
         if vec_a[i] == 1:
             p.inst(CNOT(qubits[n - 1 - i], ancilla))
     return p

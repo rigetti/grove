@@ -65,13 +65,13 @@ def unitary_function(mappings):
 
     # Strategy: add an extra qubit by default
     # and force the function to be one-to-one
-    reverse_mapping = {x: list() for x in xrange(2 ** n)}
+    reverse_mapping = {x: list() for x in range(2 ** n)}
 
     unitary_funct = np.zeros(shape=(2 ** (n + 1), 2 ** (n + 1)))
 
     # Fill in what is known so far
     prospective_mask = None
-    for j in xrange(2 ** n):
+    for j in range(2 ** n):
         i = mappings[j]
         reverse_mapping[i].append(j)
         num_mappings_to_i = len(reverse_mapping[i])
@@ -253,14 +253,14 @@ def insert_into_row_echelon_binary_matrix(W, z):
         # so that it has an earlier significant bit than the row below
         # and a later one than the row above (when reading left-to-right)
         got_to_end = True
-        for row_num in xrange(len(W)):
+        for row_num in range(len(W)):
             row = W[row_num]
             msb_row = most_significant_bit(row)
             # if the row as the same msb as z,
             # set z to the bitwise xor of z and the current row
             # as it will be guaranteed to still be orthogonal to s
             if msb_row == msb_z:
-                z = np.array([z[i] ^ row[i] for i in xrange(n)])
+                z = np.array([z[i] ^ row[i] for i in range(n)])
                 got_to_end = False
                 break
             # if the row has a greater msb than z,
@@ -328,9 +328,9 @@ def binary_back_substitute(W, s):
     # iterate backwards, starting from second to last row for back-substitution
     s_copy = np.array(s)
     n = len(s)
-    for row_num in xrange(n - 2, -1, -1):
+    for row_num in range(n - 2, -1, -1):
         row = W[row_num]
-        for col_num in xrange(row_num + 1, n):
+        for col_num in range(row_num + 1, n):
             if row[col_num] == 1:
                 s_copy[row_num] = (s_copy[row_num] + s_copy[col_num]) % 2
 
@@ -405,7 +405,7 @@ def check_two_to_one(cxn, oracle, ancillas, s):
     """
     zero_program = oracle
     mask_program = pq.Program()
-    for i in xrange(len(s)):
+    for i in range(len(s)):
         if s[i] == '1':
             mask_program.inst(X(i))
     mask_program += oracle
@@ -424,7 +424,7 @@ if __name__ == "__main__":
     assert n > 0, "The number of bits must be positive."
     print("Enter f(x) for the following n-bit inputs:")
     mappings = []
-    for i in xrange(2 ** n):
+    for i in range(2 ** n):
         val = raw_input(np.binary_repr(i, n) + ': ')
         assert all(map(lambda x: x in {'0', '1'}, val)), \
             "f(x) must return only 0 and 1"

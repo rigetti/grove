@@ -84,7 +84,7 @@ class QAOA(object):
                 self.ref_state_prep = driver_ref
         else:
             ref_prog = pq.Program()
-            for i in xrange(self.n_qubits):
+            for i in range(self.n_qubits):
                 ref_prog.inst(H(i))
             self.ref_state_prep = ref_prog
 
@@ -138,7 +138,7 @@ class QAOA(object):
         cost_para_programs = []
         driver_para_programs = []
 
-        for idx in xrange(self.steps):
+        for idx in range(self.steps):
             cost_list = []
             driver_list = []
             for cost_pauli_sum in self.cost_ham:
@@ -166,7 +166,7 @@ class QAOA(object):
 
             prog = pq.Program()
             prog += self.ref_state_prep
-            for idx in xrange(self.steps):
+            for idx in range(self.steps):
                 for fprog in cost_para_programs[idx]:
                     prog += fprog(gammas[idx])
 
@@ -216,7 +216,7 @@ class QAOA(object):
         wf, _ = self.qvm.wavefunction(prog)
         wf = wf.amplitudes.reshape((-1, 1))
         probs = np.zeros_like(wf)
-        for xx in xrange(2 ** self.n_qubits):
+        for xx in range(2 ** self.n_qubits):
             probs[xx] = np.conj(wf[xx]) * wf[xx]
         return probs
 
@@ -241,7 +241,7 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
         sampling_prog = param_prog(stacked_params)
-        for i in xrange(self.n_qubits):
+        for i in range(self.n_qubits):
             sampling_prog.measure(i, [i])
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog, range(self.n_qubits), trials=samples)

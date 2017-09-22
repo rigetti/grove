@@ -33,8 +33,8 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
     """
     cost_operators = []
     ref_operators = []
-    for ii in xrange(len(asset_list)):
-        for jj in xrange(ii + 1, len(asset_list)):
+    for ii in range(len(asset_list)):
+        for jj in range(ii + 1, len(asset_list)):
             cost_operators.append(PauliSum([PauliTerm("Z", ii, 2*asset_list[ii]) *
                                             PauliTerm("Z", jj, A*asset_list[jj])]))
         ref_operators.append(PauliSum([PauliTerm("X", ii, -1.0)]))
