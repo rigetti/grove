@@ -264,10 +264,10 @@ def create_arbitrary_state(vector, qubits=None):
 
             # just retain upper left square
             # for the next iteration (one less control)
-            M = M[0:len(M) / 2, 0:len(M) / 2] * 2
+            M = M[0:int(len(M) / 2), 0:int(len(M) / 2)] * 2
 
             # update next set of controls (one less control)
-            rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
+            rotation_cnots = rotation_cnots[:int(len(rotation_cnots) / 2)]
             rotation_cnots[-1] -= 1
 
         reversed_step_prog += prob_prog
