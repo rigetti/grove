@@ -28,7 +28,7 @@ def bit_reversal(qubits):
     """
     p = pq.Program()
     n = len(qubits)
-    for i in range(n / 2):
+    for i in range(int(n / 2)):
         p.inst(SWAP(qubits[i], qubits[-i - 1]))
     return p
 
