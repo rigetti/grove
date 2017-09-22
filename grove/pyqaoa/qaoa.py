@@ -21,6 +21,7 @@ from grove.pyvqe.vqe import VQE
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
+from functools import reduce
 
 
 class QAOA(object):
