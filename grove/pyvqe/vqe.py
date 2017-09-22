@@ -158,7 +158,8 @@ class VQE(object):
                 expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
-        arguments, _, _, _ = inspect.getfullargspec(self.minimizer)
+        # Need to keep deprecated method for py2.7 compatibility
+        arguments, _, _, _ = inspect.getargspec(self.minimizer)
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter
