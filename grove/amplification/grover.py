@@ -93,4 +93,4 @@ if __name__ == "__main__":
 
     cxn = SyncConnection()
     mem = cxn.run_and_measure(grover_program, qubits)
-    print mem
+    print(mem)

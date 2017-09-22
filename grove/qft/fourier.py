@@ -87,4 +87,4 @@ def inverse_qft(qubits):
     return inverse_qft
 
 if __name__ == '__main__':
-    print qft([0, 1, 2, 3])
+    print(qft([0, 1, 2, 3]))

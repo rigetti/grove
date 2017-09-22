@@ -229,6 +229,8 @@ class QAOA(object):
         angles.  If you have not done this you will be returning the output for
         a random set of angles.
 
+        :param betas: List of beta angles
+        :param gammas: List of gamma angles
         :param samples: (int, Optional) number of samples to get back from the
                         QVM.
         :returns: tuple representing the bitstring, Counter object from

@@ -28,7 +28,7 @@ class JWTransform(object):
         """
         Fermion creation operator at orbital 'n'
 
-        :param Int n: creation index
+        :param Int index: creation index
         """
         return self._operator_generator(index, -1.0)
 
@@ -36,7 +36,7 @@ class JWTransform(object):
         """
         Fermion annihilation operator at orbital 'n'
 
-        :param Int n: annihilation index
+        :param Int index: annihilation index
         """
         return self._operator_generator(index, 1.0)
 
@@ -58,7 +58,8 @@ class JWTransform(object):
         pterm = pterm.simplify()
         return pterm
 
-    def _operator_generator(self, index, conj):
+    @staticmethod
+    def _operator_generator(index, conj):
         """
         Internal method to generate the appropriate operator
         """

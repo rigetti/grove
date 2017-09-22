@@ -85,6 +85,6 @@ if __name__ == '__main__':
     Ry = np.exp(Y * np.pi / 16)
     U = np.kron(Rx, Ry)
     p = phase_estimation(U, 3)
-    print p
-    print qvm.run(p, range(3+2),10)
-    print qvm.wavefunction(p)
+    print(p)
+    print(qvm.run(p, range(3+2), 10))
+    print(qvm.wavefunction(p))

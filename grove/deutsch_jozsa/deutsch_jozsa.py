@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # Read function mappings from user
     n = int(raw_input("How many bits? "))
     assert n > 0, "The number of bits must be positive."
-    print "Enter f(x) for the following n-bit inputs:"
+    print("Enter f(x) for the following n-bit inputs:")
     mappings = []
     for i in range(2 ** n):
         val = int(input(integer_to_bitstring(i, n) + ': '))
@@ -163,9 +163,9 @@ if __name__ == "__main__":
     deutsch_program += deutsch_jozsa(oracle, qubits, ancilla)
     deutsch_program.out()
 
-    print deutsch_program
+    print(deutsch_program)
     qvm = SyncConnection()
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
-    print "Results:", results
-    print "f(x) is", "balanced" if 1 in results[0] else "constant"
+    print("Results:", results)
+    print("f(x) is", "balanced" if 1 in results[0] else "constant")
 

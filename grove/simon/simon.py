@@ -396,7 +396,6 @@ def check_two_to_one(cxn, oracle, ancillas, s):
     :param Program oracle: the oracle to query;
                            emulates a classical :math:`f(x)`
                            function as a blackbox.
-    :param list(int) qubits: the input qubits
     :param list(int) ancillas: the ancillary qubits, where :math:`f(x)`
                                 is written to by the oracle
     :param str s: the proposed mask of the function, found by Simon's algorithm
@@ -423,7 +422,7 @@ if __name__ == "__main__":
     # Read function mappings from user
     n = int(input("How many bits? "))
     assert n > 0, "The number of bits must be positive."
-    print "Enter f(x) for the following n-bit inputs:"
+    print("Enter f(x) for the following n-bit inputs:")
     mappings = []
     for i in xrange(2 ** n):
         val = raw_input(np.binary_repr(i, n) + ': ')
@@ -443,11 +442,11 @@ if __name__ == "__main__":
     two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
 
     if two_to_one:
-        print "The function is two-to-one with mask s = ", s
+        print("The function is two-to-one with mask s = ", s)
     else:
-        print "The function is one-to-one"
-    print "Iterations of the algorithm: ", iterations
+        print("The function is one-to-one")
+    print("Iterations of the algorithm: ", iterations)
 
     if raw_input("Show Program? (y/n): ") == 'y':
-        print "----------Quantum Program Used----------"
-        print simon_program
+        print("----------Quantum Program Used----------")
+        print(simon_program)

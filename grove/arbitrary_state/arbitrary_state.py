@@ -289,7 +289,7 @@ def create_arbitrary_state(vector, qubits=None):
 
 
 if __name__ == "__main__":
-    print "Example list: -3.2+1j, -7, -0.293j, 1, 0, 0"
+    print("Example list: -3.2+1j, -7, -0.293j, 1, 0, 0")
     v = input("Input a comma separated list of complex numbers:\n")
     if isinstance(v, int):
         v = [v]
@@ -298,8 +298,8 @@ if __name__ == "__main__":
     p = create_arbitrary_state(v)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
-    print "Normalized Vector: ", list(v / np.linalg.norm(v))
-    print "Generated Wavefunction: ", wf
+    print("Normalized Vector: ", list(v / np.linalg.norm(v)))
+    print("Generated Wavefunction: ", wf)
     if raw_input("Show Program? (y/n): ") == 'y':
-        print "----------Quil Code Used----------"
-        print p.out()
+        print("----------Quil Code Used----------")
+        print(p.out())

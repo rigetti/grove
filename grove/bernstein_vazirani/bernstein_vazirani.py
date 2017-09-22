@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # ask user to input the value for a
     bitstring = raw_input("Give a bitstring representation for the vector a: ")
     while not (all([num in ('0', '1') for num in bitstring])):
-        print "The bitstring must be a string of ones and zeros."
+        print("The bitstring must be a string of ones and zeros.")
         bitstring = raw_input(
             "Give a bitstring representation for the vector a: ")
     vec_a = np.array(map(int, bitstring))
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # ask user to input the value for b
     b = int(raw_input("Give a single bit for b: "))
     while b not in {0, 1}:
-        print "b must be either 0 or 1"
+        print("b must be either 0 or 1")
         b = int(raw_input("Give a single bit for b: "))
 
     qvm = api.SyncConnection()
@@ -158,13 +158,13 @@ if __name__ == "__main__":
 
     a, b, bv_program = run_bernstein_vazirani(qvm, oracle, qubits, ancilla)
     bitstring_a = "".join(map(str, a))
-    print "-----------------------------------"
-    print "The bitstring a is given by: ", bitstring
-    print "b is given by: ", b
-    print "-----------------------------------"
+    print("-----------------------------------")
+    print("The bitstring a is given by: ", bitstring)
+    print("b is given by: ", b)
+    print("-----------------------------------")
     if raw_input("Show Program? (y/n): ") == 'y':
-        print "----------Quantum Programs Used----------"
-        print "Program to find a given by: "
-        print bv_program
-        print "Program to find b given by: "
-        print oracle
+        print("----------Quantum Programs Used----------")
+        print("Program to find a given by: ")
+        print(bv_program)
+        print("Program to find b given by: ")
+        print(oracle)
