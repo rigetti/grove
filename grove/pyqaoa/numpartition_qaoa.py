@@ -28,12 +28,13 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
 
     :param asset_list: list to binary parition
     :param A: (float) optional constant for level separation. Default=1.
+    :param minimizer_kwargs: Arguments for the QAOA minimizer
     :param steps: (int) number of steps approximating the solution.
     """
     cost_operators = []
     ref_operators = []
-    for ii in xrange(len(asset_list)):
-        for jj in xrange(ii + 1, len(asset_list)):
+    for ii in range(len(asset_list)):
+        for jj in range(ii + 1, len(asset_list)):
             cost_operators.append(PauliSum([PauliTerm("Z", ii, 2*asset_list[ii]) *
                                             PauliTerm("Z", jj, A*asset_list[jj])]))
         ref_operators.append(PauliSum([PauliTerm("X", ii, -1.0)]))
@@ -59,13 +60,13 @@ if __name__ == "__main__":
     # result should be an even partition of nodes
     inst = numpart_qaoa([1, 1, 1, 1, 1, 1], A=1.0, steps=1)
     betas, gammas = inst.get_angles()
-    print betas
-    print gammas
+    print(betas)
+    print(gammas)
     probs = inst.probabilities(np.hstack((betas, gammas)))
     for state, prob in zip(inst.states, probs):
-        print state, prob
+        print(state, prob)
 
-    print "Most frequent bitstring from sampling"
+    print("Most frequent bitstring from sampling")
     most_freq_string, sampling_results = inst.get_string(
             betas, gammas, samples=100)
-    print most_freq_string
+    print(most_freq_string)

@@ -24,7 +24,6 @@ https://arxiv.org/abs/1208.5986
 (Fenwick generalization for arbitrary n_qubits):
 https://journals.aps.org/pra/abstract/10.1103/PhysRevA.95.032332
 """
-import numpy as np
 from pyquil.paulis import PauliTerm
 from .fenwick_tree import FenwickTree
 
@@ -47,7 +46,6 @@ class BKTransform(object):
         self.tree = FenwickTree(n_qubits)
         self.n_qubits = n_qubits
 
-
     def create(self, index):
         """
         Fermion creation operator at orbital 'index'
@@ -59,7 +57,6 @@ class BKTransform(object):
         """
         return self._operator_generator(index, -1.0)
 
-
     def kill(self, index):
         """
         Fermion annihilation operator at orbital 'index'
@@ -70,7 +67,6 @@ class BKTransform(object):
         :rtype: PauliSum
         """
         return self._operator_generator(index, +1.0)
-
 
     def product_ops(self, indices, conjugate):
         """
@@ -89,7 +85,6 @@ class BKTransform(object):
 
         pterm = pterm.simplify()
         return pterm
-
 
     def _operator_generator(self, index, conj):
         """
@@ -114,8 +109,7 @@ class BKTransform(object):
         ancestors = [node.index for node in self.tree.get_update_set(index)]
 
         # remainder set C(j) = P(j) \ F(j)
-        ancestor_children = [node.index for node in \
-                                        self.tree.get_remainder_set(index)]
+        ancestor_children = [node.index for node in self.tree.get_remainder_set(index)]
 
         # Under Majorana basis, creation/annihilation operators given by
         # a^{\pm} = (c \mp id) / 2

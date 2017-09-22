@@ -28,9 +28,10 @@ def bit_reversal(qubits):
     """
     p = pq.Program()
     n = len(qubits)
-    for i in xrange(n / 2):
+    for i in range(int(n / 2)):
         p.inst(SWAP(qubits[i], qubits[-i - 1]))
     return p
+
 
 def _core_qft(qubits, coeff):
     """
@@ -49,11 +50,12 @@ def _core_qft(qubits, coeff):
     else:
         n = 1 + len(qs)
         cR = []
-        for idx, i in enumerate(xrange(n - 1, 0, -1)):
+        for idx, i in enumerate(range(n - 1, 0, -1)):
             q_idx = qs[idx]
             angle = math.pi / 2 ** (n - i)
             cR.append(CPHASE(coeff * angle)(q, q_idx))
         return _core_qft(qs, coeff) + list(reversed(cR)) + [H(q)]
+
 
 def qft(qubits):
     """
@@ -87,4 +89,4 @@ def inverse_qft(qubits):
     return inverse_qft
 
 if __name__ == '__main__':
-    print qft([0, 1, 2, 3])
+    print(qft([0, 1, 2, 3]))

@@ -6,6 +6,7 @@ http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
+from six.moves import input
 
 
 def oracle_function(vec_a, b, qubits, ancilla):
@@ -54,7 +55,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
     """
     assert len(vec_a) == len(qubits), \
         "vec_a must be the same length as the number of input qubits"
-    assert all(map(lambda x: x in {0, 1}, vec_a)), \
+    assert all(list(map(lambda x: x in {0, 1}, vec_a))), \
         "vec_a must be a list of 0s and 1s"
     assert b in {0, 1}, "b must be a 0 or 1"
 
@@ -62,7 +63,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
     p = pq.Program()
     if b == 1:
         p.inst(X(ancilla))
-    for i in xrange(n):
+    for i in range(n):
         if vec_a[i] == 1:
             p.inst(CNOT(qubits[n - 1 - i], ancilla))
     return p
@@ -93,9 +94,9 @@ def bernstein_vazirani(oracle, qubits, ancilla):
     p.inst(X(ancilla), H(ancilla))
 
     # Apply Hadamard, Unitary function, and Hadamard again
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     p += oracle
-    p.inst(map(H, qubits))
+    p.inst(list(map(H, qubits)))
     return p
 
 
@@ -137,18 +138,18 @@ if __name__ == "__main__":
     import pyquil.api as api
 
     # ask user to input the value for a
-    bitstring = raw_input("Give a bitstring representation for the vector a: ")
+    bitstring = input("Give a bitstring representation for the vector a: ")
     while not (all([num in ('0', '1') for num in bitstring])):
-        print "The bitstring must be a string of ones and zeros."
-        bitstring = raw_input(
+        print("The bitstring must be a string of ones and zeros.")
+        bitstring = input(
             "Give a bitstring representation for the vector a: ")
-    vec_a = np.array(map(int, bitstring))
+    vec_a = np.array(list(map(int, bitstring)))
 
     # ask user to input the value for b
-    b = int(raw_input("Give a single bit for b: "))
+    b = int(input("Give a single bit for b: "))
     while b not in {0, 1}:
-        print "b must be either 0 or 1"
-        b = int(raw_input("Give a single bit for b: "))
+        print("b must be either 0 or 1")
+        b = int(input("Give a single bit for b: "))
 
     qvm = api.SyncConnection()
     qubits = range(len(vec_a))
@@ -157,14 +158,14 @@ if __name__ == "__main__":
     oracle = oracle_function(vec_a, b, qubits, ancilla)
 
     a, b, bv_program = run_bernstein_vazirani(qvm, oracle, qubits, ancilla)
-    bitstring_a = "".join(map(str, a))
-    print "-----------------------------------"
-    print "The bitstring a is given by: ", bitstring
-    print "b is given by: ", b
-    print "-----------------------------------"
-    if raw_input("Show Program? (y/n): ") == 'y':
-        print "----------Quantum Programs Used----------"
-        print "Program to find a given by: "
-        print bv_program
-        print "Program to find b given by: "
-        print oracle
+    bitstring_a = "".join(list(map(str, a)))
+    print("-----------------------------------")
+    print("The bitstring a is given by: ", bitstring)
+    print("b is given by: ", b)
+    print("-----------------------------------")
+    if input("Show Program? (y/n): ") == 'y':
+        print("----------Quantum Programs Used----------")
+        print("Program to find a given by: ")
+        print(bv_program)
+        print("Program to find b given by: ")
+        print(oracle)

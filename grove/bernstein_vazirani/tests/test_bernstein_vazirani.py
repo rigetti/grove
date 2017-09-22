@@ -13,25 +13,25 @@ class TestOracleFunction(object):
     def test_one_qubit(self):
         vec_a = np.array([1])
         b = 0
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_two_qubits(self):
         vec_a = np.array([1, 0])
         b = 1
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_three_qubits(self):
         vec_a = np.array([0, 0, 0])
         b = 0
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
     def test_four_qubits(self):
         vec_a = np.array([1, 1, 1, 1])
         b = 1
-        for x in xrange(2 ** len(vec_a)):
+        for x in range(2 ** len(vec_a)):
             _oracle_test_helper(vec_a, b, x)
 
 
@@ -70,14 +70,14 @@ def _oracle_test_helper(vec_a, b, x, trials=1):
     bitstring = np.binary_repr(x, len(qubits))
     p = pq.Program()
 
-    for i in xrange(len(bitstring)):
+    for i in range(len(bitstring)):
         if bitstring[-1 - i] == '1':
             p.inst(X(i))
 
     oracle = oracle_function(vec_a, b, qubits, ancilla)
     p += oracle
     results = cxn.run_and_measure(p, [ancilla], trials)
-    a_dot_x = np.binary_repr(int(''.join(map(str, vec_a)), 2) & x).count("1")
+    a_dot_x = np.binary_repr(int(''.join(list(map(str, vec_a))), 2) & x).count("1")
     expected = (a_dot_x + b) % 2
     for result in results:
         y = result[0]

@@ -6,7 +6,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X, STANDARD_GATES
 
-import amplification as amp
+import grove.amplification.amplification as amp
 
 STANDARD_GATE_NAMES = STANDARD_GATES.keys()
 
@@ -35,7 +35,7 @@ def grover(oracle, qubits, num_iter=None):
     if num_iter is None:
         num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
 
-    many_hadamard = pq.Program().inst(map(H, qubits))
+    many_hadamard = pq.Program().inst(list(map(H, qubits)))
     amp_prog = amp.amplify(many_hadamard, many_hadamard,
                            oracle, qubits, num_iter)
 
@@ -93,4 +93,4 @@ if __name__ == "__main__":
 
     cxn = SyncConnection()
     mem = cxn.run_and_measure(grover_program, qubits)
-    print mem
+    print(mem)

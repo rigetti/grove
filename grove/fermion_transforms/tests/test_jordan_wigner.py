@@ -30,6 +30,7 @@ def test_hopping():
     hopping = jw.create(2)*jw.kill(0) + jw.create(0)*jw.kill(2)
     assert '(0.5+0j)*X0*Z1*X2 + (0.5+0j)*Y0*Z1*Y2' == hopping.__str__()
 
+
 def test_multi_ops():
     """
     test construction of Paulis for product of second quantized operators

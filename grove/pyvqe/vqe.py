@@ -17,10 +17,11 @@
 import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
-import inspect
 from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
+import funcsigs
+
 
 class OptResults(dict):
     """
@@ -122,8 +123,8 @@ class VQE(object):
         expectation_vals = []
         self._current_expectation = None
         if samples is None:
-            print """WARNING: Fast method for expectation will be used. Noise
-                     models will be ineffective"""
+            print("""WARNING: Fast method for expectation will be used. Noise
+                     models will be ineffective""")
 
         if qvm is None:
             qvm = api.SyncConnection(
@@ -158,7 +159,8 @@ class VQE(object):
                 expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
-        arguments, _, _, _ = inspect.getargspec(self.minimizer)
+        # Need to keep deprecated method for py2.7 compatibility
+        arguments, _, _, _ = funcsigs.signature(self.minimizer)
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter
@@ -172,7 +174,8 @@ class VQE(object):
 
         if hasattr(result, 'status'):
             if result.status != 0:
-                self._disp_fun("Classical optimization exited with an error index: %i" % result.status)
+                self._disp_fun("Classical optimization exited with an error index: %i"
+                               % result.status)
 
         results = OptResults()
         if hasattr(result, 'x'):
@@ -186,7 +189,8 @@ class VQE(object):
             results.expectation_vals = expectation_vals
         return results
 
-    def expectation(self, pyquil_prog, pauli_sum, samples, qvm):
+    @staticmethod
+    def expectation(pyquil_prog, pauli_sum, samples, qvm):
         """
         Computes the expectation value of pauli_sum over the distribution
         generated from pyquil_prog.
@@ -235,7 +239,8 @@ class VQE(object):
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
                 didn't get the correct number of results back from the QVM"""
-                expectation = sum(map(lambda x: x[0]*x[1], zip(result_overlaps, operator_coeffs)))
+                expectation = sum(list(map(lambda x: x[0]*x[1],
+                                           zip(result_overlaps, operator_coeffs))))
                 return expectation.real
             else:
                 if not isinstance(samples, int):
@@ -244,7 +249,8 @@ class VQE(object):
                     raise ValueError("samples variable must be a postive integer")
 
                 # normal execution via fake sampling
-                expectation = 0.0  # stores the sum of contributions to the energy from each operator term
+                # stores the sum of contributions to the energy from each operator term
+                expectation = 0.0
                 for j, term in enumerate(pauli_sum.terms):
                     meas_basis_change = pq.Program()
                     qubits_to_measure = []
@@ -258,9 +264,11 @@ class VQE(object):
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                                     qubits_to_measure,
-                                                                     qvm, samples)
+                            meas_outcome = \
+                                expectation_from_sampling(pyquil_prog + meas_basis_change,
+                                                          qubits_to_measure,
+                                                          qvm,
+                                                          samples)
 
                     expectation += term.coefficient * meas_outcome
 
@@ -306,7 +314,7 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
         pyquil_program.measure(qindex, qindex)
 
     bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
-    bitstring_tuples = map(tuple, bitstring_samples)
+    bitstring_tuples = list(map(tuple, bitstring_samples))
 
     freq = Counter(bitstring_tuples)
 

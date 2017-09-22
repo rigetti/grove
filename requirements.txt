@@ -4,6 +4,8 @@ pyquil >= 1.0.0
 mock
 networkx
 matplotlib
+funcsigs
+six
 
 # test dependencies
 tox
@@ -11,3 +13,6 @@ pytest >= 3.0.0
 mock
 pytest-cov
 codeclimate-test-reporter
+
+# docs
+sphinx_rtd_theme
