@@ -160,7 +160,7 @@ class VQE(object):
 
         # using self.minimizer
         # Need to keep deprecated method for py2.7 compatibility
-        arguments, _, _, _ = funcsigs.signature(self.minimizer)
+        arguments = funcsigs.signature(self.minimizer).parameters.keys()
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter
