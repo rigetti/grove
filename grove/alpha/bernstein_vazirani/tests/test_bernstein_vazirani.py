@@ -4,8 +4,7 @@ import pyquil.quil as pq
 import pytest
 from pyquil.gates import X
 
-from grove.bernstein_vazirani.bernstein_vazirani import bernstein_vazirani, \
-    oracle_function
+from grove.alpha.bernstein_vazirani.bernstein_vazirani import bernstein_vazirani, oracle_function
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")

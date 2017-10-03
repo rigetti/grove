@@ -1,6 +1,7 @@
-from grove.deutsch_jozsa.deutsch_jozsa import *
-from pyquil.api import SyncConnection
 import pytest
+from pyquil.api import SyncConnection
+
+from grove.alpha.deutsch_jozsa.deutsch_jozsa import *
 
 
 def run(n, mappings):

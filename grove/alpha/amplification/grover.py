@@ -6,7 +6,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X, STANDARD_GATES
 
-import grove.amplification.amplification as amp
+import grove.alpha.amplification.amplification as amp
 
 STANDARD_GATE_NAMES = STANDARD_GATES.keys()
 
