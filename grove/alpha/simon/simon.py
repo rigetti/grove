@@ -94,8 +94,8 @@ def unitary_function(mappings):
         unitary_funct[i, j] = 1
 
     # if one to one, just ignore the scratch bit as it's already unitary
-    unmapped_range_values = filter(lambda i: len(reverse_mapping[i]) == 0,
-                                   reverse_mapping.keys())
+    unmapped_range_values = list(filter(lambda i: len(reverse_mapping[i]) == 0,
+                                   reverse_mapping.keys()))
     if len(unmapped_range_values) == 0:
         return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
 

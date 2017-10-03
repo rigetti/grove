@@ -13,8 +13,24 @@ from grove.alpha.simon.simon import (
     check_two_to_one,
     insert_into_row_echelon_binary_matrix,
     make_square_row_echelon,
-    binary_back_substitute
+    binary_back_substitute,
+    simon
 )
+
+from pyquil.quil import Program
+from mock import patch, MagicMock
+
+
+expected_return = [
+        [1., 0., 0., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 1., 0., 0., 0.],
+        [0., 1., 0., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 0., 1., 0.],
+        [0., 0., 0., 1., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 1., 0., 0.],
+        [0., 0., 1., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 0., 0., 1.]
+    ]
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -70,6 +86,82 @@ def _find_mask_test_helper(mappings, mask=None):
 
     if two_to_one:
         assert found_mask == mask
+
+
+def test_unitary_function_return():
+    actual_return = unitary_function([0, 2, 2, 0])
+    np.testing.assert_equal(actual_return, expected_return)
+
+
+def test_oracle_program():
+    func = unitary_function([0, 2, 2, 0])
+    actual_prog = oracle_function(func, [0, 1], [2, 3])
+    expected_prog = Program()
+    expected_prog.defgate("FUNCT", expected_return)
+    expected_prog.defgate("FUNCT-INV", np.linalg.inv(expected_return))
+    expected_prog.inst("FUNCT 4 0 1")
+    expected_prog.inst("CNOT 0 2")
+    expected_prog.inst("CNOT 1 3")
+    expected_prog.inst("FUNCT-INV 4 0 1")
+    assert expected_prog.__str__() == actual_prog.__str__()
+
+
+def test_oracle_program():
+    func = unitary_function([0, 2, 2, 0])
+    actual_prog = simon(oracle_function(func, [0, 1], [2, 3]), [0, 1])
+    expected_prog = Program()
+    expected_prog.defgate("FUNCT", expected_return)
+    expected_prog.defgate("FUNCT-INV", np.linalg.inv(expected_return))
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+
+    expected_prog.inst("FUNCT 4 0 1")
+    expected_prog.inst("CNOT 0 2")
+    expected_prog.inst("CNOT 1 3")
+    expected_prog.inst("FUNCT-INV 4 0 1")
+
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+    assert expected_prog.__str__() == actual_prog.__str__()
+
+
+def test_find_mask():
+    func = unitary_function([0, 2, 2, 0])
+    orc_func = oracle_function(func, [0, 1], [2, 3])
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.return_value = [[1, 1], [0, 1]]
+    s_str, n_iter, pr = find_mask(qvm, orc_func, [0, 1])
+    assert s_str == '11'
+    assert n_iter == 1
+
+    expected_prog = Program()
+    expected_prog.defgate("FUNCT", expected_return)
+    expected_prog.defgate("FUNCT-INV", np.linalg.inv(expected_return))
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+
+    expected_prog.inst("FUNCT 4 0 1")
+    expected_prog.inst("CNOT 0 2")
+    expected_prog.inst("CNOT 1 3")
+    expected_prog.inst("FUNCT-INV 4 0 1")
+
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+
+    assert pr.__str__() == expected_prog.__str__()
+
+
+def test_check_two_to_one():
+    func = unitary_function([0, 2, 2, 0])
+    orc_func = oracle_function(func, [0, 1], [2, 3])
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.return_value = [[1, 1], [0, 1]]
+    assert check_two_to_one(qvm, orc_func, [2, 3], "11")
+
 
 
 def test_unitary_two_by_two():
@@ -171,6 +263,7 @@ def test_add_row_at_top():
     assert insert_row_num == 0
 
     assert np.allclose(W, W_expected)
+
 
 def test_add_row_at_bottom():
     W = np.array([[1, 0, 0, 0],
