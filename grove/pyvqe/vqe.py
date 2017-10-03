@@ -158,7 +158,11 @@ class VQE(object):
                 expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
+<<<<<<< HEAD
         arguments, _, _, _ = inspect.getfullargspec(self.minimizer)
+=======
+        arguments = funcsigs.signature(self.minimizer).parameters.keys()
+>>>>>>> upstream/master
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter

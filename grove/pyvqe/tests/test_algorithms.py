@@ -23,6 +23,8 @@ from unittest.mock import Mock, MagicMock, patch
 import numpy as np
 from scipy.linalg import expm
 from scipy.optimize import minimize
+import funcsigs
+from collections import OrderedDict
 import pytest
 
 
@@ -47,7 +49,24 @@ def test_vqe_run():
     fake_qvm = Mock(spec=['wavefunction'])
 
     with patch("funcsigs.signature") as patch_signature:
-        patch_signature.return_value = {}, None, None, None
+        func_sigs_fake = MagicMock(spec=funcsigs.Signature)
+        func_sigs_fake.parameters.return_value = \
+            OrderedDict({
+                'fun': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'x0': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'args': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'method': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'jac': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'hess': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'hessp': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'bounds': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'constraints': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'tol': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'callback': funcsigs.Parameter.POSITIONAL_OR_KEYWORD,
+                'options': funcsigs.Parameter.POSITIONAL_OR_KEYWORD
+            })
+
+        patch_signature.return_value = func_sigs_fake
         inst = VQE(minimizer)
 
         t_result = inst.vqe_run(param_prog, hamiltonian, initial_param, qvm=fake_qvm)

@@ -15,6 +15,8 @@ Grove currently includes:
 * [The Quantum Fourier Transform (QFT)](http://grove-docs.readthedocs.io/en/latest/qft.html)
 * [Phase Estimation Algorithm](http://grove-docs.readthedocs.io/en/latest/phaseestimation.html)
 
+Features in the `alpha` package are considered experimental.
+
 Documentation
 -------------
 

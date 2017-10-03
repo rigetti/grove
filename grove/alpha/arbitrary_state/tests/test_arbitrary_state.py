@@ -1,7 +1,8 @@
 """Tests for utils"""
 
 import pytest
-from grove.arbitrary_state.arbitrary_state import *
+
+from grove.alpha.arbitrary_state.arbitrary_state import *
 from grove.pyqaoa.utils import compare_progs
 
 
