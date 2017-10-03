@@ -17,11 +17,10 @@
 import pyquil.api as api
 import pyquil.quil as pq
 import numpy as np
+import inspect
 from collections import Counter
 from pyquil.gates import STANDARD_GATES, RX, RY
 from pyquil.paulis import PauliTerm, PauliSum
-import funcsigs
-
 
 class OptResults(dict):
     """
@@ -159,8 +158,7 @@ class VQE(object):
                 expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
-        # Need to keep deprecated method for py2.7 compatibility
-        arguments, _, _, _ = funcsigs.signature(self.minimizer)
+        arguments, _, _, _ = inspect.getfullargspec(self.minimizer)
 
         if disp is not None and 'callback' in arguments:
             self.minimizer_kwargs['callback'] = print_current_iter
@@ -174,8 +172,7 @@ class VQE(object):
 
         if hasattr(result, 'status'):
             if result.status != 0:
-                self._disp_fun("Classical optimization exited with an error index: %i"
-                               % result.status)
+                self._disp_fun("Classical optimization exited with an error index: %i" % result.status)
 
         results = OptResults()
         if hasattr(result, 'x'):
@@ -189,8 +186,7 @@ class VQE(object):
             results.expectation_vals = expectation_vals
         return results
 
-    @staticmethod
-    def expectation(pyquil_prog, pauli_sum, samples, qvm):
+    def expectation(self, pyquil_prog, pauli_sum, samples, qvm):
         """
         Computes the expectation value of pauli_sum over the distribution
         generated from pyquil_prog.
@@ -239,8 +235,7 @@ class VQE(object):
                 result_overlaps = list(result_overlaps)
                 assert len(result_overlaps) == len(operator_progs), """Somehow we
                 didn't get the correct number of results back from the QVM"""
-                expectation = sum(list(map(lambda x: x[0]*x[1],
-                                           zip(result_overlaps, operator_coeffs))))
+                expectation = sum([x[0]*x[1] for x in zip(result_overlaps, operator_coeffs)])
                 return expectation.real
             else:
                 if not isinstance(samples, int):
@@ -249,8 +244,7 @@ class VQE(object):
                     raise ValueError("samples variable must be a postive integer")
 
                 # normal execution via fake sampling
-                # stores the sum of contributions to the energy from each operator term
-                expectation = 0.0
+                expectation = 0.0  # stores the sum of contributions to the energy from each operator term
                 for j, term in enumerate(pauli_sum.terms):
                     meas_basis_change = pq.Program()
                     qubits_to_measure = []
@@ -264,11 +258,9 @@ class VQE(object):
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = \
-                                expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                          qubits_to_measure,
-                                                          qvm,
-                                                          samples)
+                            meas_outcome = expectation_from_sampling(pyquil_prog + meas_basis_change,
+                                                                     qubits_to_measure,
+                                                                     qvm, samples)
 
                     expectation += term.coefficient * meas_outcome
 
@@ -313,14 +305,14 @@ def expectation_from_sampling(pyquil_program, marked_qubits, qvm, samples):
     for qindex in marked_qubits:
         pyquil_program.measure(qindex, qindex)
 
-    bitstring_samples = qvm.run(pyquil_program, range(max(marked_qubits) + 1), trials=samples)
+    bitstring_samples = qvm.run(pyquil_program, list(range(max(marked_qubits) + 1)), trials=samples)
     bitstring_tuples = list(map(tuple, bitstring_samples))
 
     freq = Counter(bitstring_tuples)
 
     # perform weighted average
     expectation = 0
-    for bitstring, count in freq.items():
+    for bitstring, count in list(freq.items()):
         bitstring_int = int("".join([str(x) for x in bitstring[::-1]]), 2)
         if parity_even_p(bitstring_int, marked_qubits):
             expectation += float(count)/samples

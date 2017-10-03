@@ -19,7 +19,7 @@ from pyquil.quil import Program
 from pyquil.wavefunction import Wavefunction
 from pyquil.gates import RX, H, RZ
 from pyquil.paulis import PauliSum, PauliTerm
-from mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch
 import numpy as np
 from scipy.linalg import expm
 from scipy.optimize import minimize
@@ -101,6 +101,6 @@ def test_parity_even_p():
         parity_even_p("", marked_qubits)
     assert parity_even_p(state_index, marked_qubits)
 
-
-if __name__ == "__main__":
-    test_expectation()
+def main():
+    if __name__ == "__main__":
+        test_expectation()

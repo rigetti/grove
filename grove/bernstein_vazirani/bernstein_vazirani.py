@@ -6,7 +6,6 @@ http://pages.cs.wisc.edu/~dieter/Courses/2010f-CS880/Scribes/04/lecture04.pdf
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
-from six.moves import input
 
 
 def oracle_function(vec_a, b, qubits, ancilla):
@@ -55,7 +54,7 @@ def oracle_function(vec_a, b, qubits, ancilla):
     """
     assert len(vec_a) == len(qubits), \
         "vec_a must be the same length as the number of input qubits"
-    assert all(list(map(lambda x: x in {0, 1}, vec_a))), \
+    assert all([x in {0, 1} for x in vec_a]), \
         "vec_a must be a list of 0s and 1s"
     assert b in {0, 1}, "b must be a 0 or 1"
 
@@ -138,32 +137,32 @@ if __name__ == "__main__":
     import pyquil.api as api
 
     # ask user to input the value for a
-    bitstring = input("Give a bitstring representation for the vector a: ")
+    bitstring = eval(input("Give a bitstring representation for the vector a: "))
     while not (all([num in ('0', '1') for num in bitstring])):
         print("The bitstring must be a string of ones and zeros.")
-        bitstring = input(
-            "Give a bitstring representation for the vector a: ")
+        bitstring = eval(input(
+            "Give a bitstring representation for the vector a: "))
     vec_a = np.array(list(map(int, bitstring)))
 
     # ask user to input the value for b
-    b = int(input("Give a single bit for b: "))
+    b = int(eval(input("Give a single bit for b: ")))
     while b not in {0, 1}:
         print("b must be either 0 or 1")
-        b = int(input("Give a single bit for b: "))
+        b = int(eval(input("Give a single bit for b: ")))
 
     qvm = api.SyncConnection()
-    qubits = range(len(vec_a))
+    qubits = list(range(len(vec_a)))
     ancilla = len(vec_a)
 
     oracle = oracle_function(vec_a, b, qubits, ancilla)
 
     a, b, bv_program = run_bernstein_vazirani(qvm, oracle, qubits, ancilla)
-    bitstring_a = "".join(list(map(str, a)))
+    bitstring_a = "".join(map(str, a))
     print("-----------------------------------")
-    print("The bitstring a is given by: ", bitstring)
-    print("b is given by: ", b)
+    print(("The bitstring a is given by: ", bitstring))
+    print(("b is given by: ", b))
     print("-----------------------------------")
-    if input("Show Program? (y/n): ") == 'y':
+    if eval(input("Show Program? (y/n): ")) == 'y':
         print("----------Quantum Programs Used----------")
         print("Program to find a given by: ")
         print(bv_program)

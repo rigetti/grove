@@ -1,4 +1,4 @@
-##############################################################################
+range##############################################################################
 # Copyright 2016-2017 Rigetti Computing
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ Intro_to_QC_Vol_1_Loceff.pdf
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import *
-from six.moves import input
 
 
 def unitary_function(mappings):
@@ -94,8 +93,7 @@ def unitary_function(mappings):
         unitary_funct[i, j] = 1
 
     # if one to one, just ignore the scratch bit as it's already unitary
-    unmapped_range_values = filter(lambda i: len(reverse_mapping[i]) == 0,
-                                   reverse_mapping.keys())
+    unmapped_range_values = [i for i in list(reverse_mapping.keys()) if len(reverse_mapping[i]) == 0]
     if len(unmapped_range_values) == 0:
         return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
 
@@ -157,7 +155,7 @@ def oracle_function(unitary_funct, qubits, ancillas, gate_name='FUNCT'):
     p.defgate(gate_name, unitary_funct)
     p.defgate(inverse_gate_name, np.linalg.inv(unitary_funct))
     p.inst(tuple([gate_name] + bits_for_funct))
-    p.inst(list(map(lambda qs: CNOT(qs[0], qs[1]), zip(qubits, ancillas))))
+    p.inst([CNOT(qs[0], qs[1]) for qs in zip(qubits, ancillas)])
     p.inst(tuple([inverse_gate_name] + bits_for_funct))
 
     p.free(scratch_bit)
@@ -397,6 +395,7 @@ def check_two_to_one(cxn, oracle, ancillas, s):
     :param Program oracle: the oracle to query;
                            emulates a classical :math:`f(x)`
                            function as a blackbox.
+    :param list(int) qubits: the input qubits
     :param list(int) ancillas: the ancillary qubits, where :math:`f(x)`
                                 is written to by the oracle
     :param str s: the proposed mask of the function, found by Simon's algorithm
@@ -421,20 +420,20 @@ if __name__ == "__main__":
     import pyquil.api as api
 
     # Read function mappings from user
-    n = int(input("How many bits? "))
+    n = int(eval(input("How many bits? ")))
     assert n > 0, "The number of bits must be positive."
     print("Enter f(x) for the following n-bit inputs:")
     mappings = []
     for i in range(2 ** n):
         val = input(np.binary_repr(i, n) + ': ')
-        assert all(list(map(lambda x: x in {'0', '1'}, val))), \
+        assert all([x in {'0', '1'} for x in val]), \
             "f(x) must return only 0 and 1"
         mappings.append(int(val, 2))
 
     qvm = api.SyncConnection()
 
-    qubits = range(n)
-    ancillas = range(n, 2 * n)
+    qubits = list(range(n))
+    ancillas = list(range(n, 2 * n))
 
     unitary_funct = unitary_function(mappings)
     oracle = oracle_function(unitary_funct, qubits, ancillas)
@@ -443,10 +442,10 @@ if __name__ == "__main__":
     two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
 
     if two_to_one:
-        print("The function is two-to-one with mask s = ", s)
+        print(("The function is two-to-one with mask s = ", s))
     else:
         print("The function is one-to-one")
-    print("Iterations of the algorithm: ", iterations)
+    print(("Iterations of the algorithm: ", iterations))
 
     if input("Show Program? (y/n): ") == 'y':
         print("----------Quantum Program Used----------")

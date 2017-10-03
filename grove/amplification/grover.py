@@ -6,9 +6,9 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X, STANDARD_GATES
 
-import grove.amplification.amplification as amp
+from . import amplification as amp
 
-STANDARD_GATE_NAMES = STANDARD_GATES.keys()
+STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
 
 def grover(oracle, qubits, num_iter=None):
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         raise ValueError("Enter a target bitstring for Grover's Algorithm.")
 
     grover_program = pq.Program()
-    qubits = range(len(target))
+    qubits = list(range(len(target)))
     oracle = basis_selector_oracle(target, qubits)
     grover_program += grover(oracle, qubits)
 

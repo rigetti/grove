@@ -10,7 +10,6 @@ into the wavefunction of a quantum state. For example, the input vector
 
 """
 import numpy as np
-from six.moves import input
 
 
 def unitary_operator(state_vector):
@@ -98,11 +97,11 @@ if __name__ == "__main__":
     vector = []
     for i in range(num_entries):
         vector.append(complex(input("Element {0}: ".format(i))))
-    print("You entered the following vector: ", vector)
+    print(("You entered the following vector: ", vector))
     state_vector = fix_norm_and_length(vector)
-    print("The following vector will be encoded: ", state_vector)
+    print(("The following vector will be encoded: ", state_vector))
     print("The following matrix was generated: ")
     mat = unitary_operator(state_vector)
     print(mat)
     print("The first column of this matrix is: ")
-    print(list(mat[:, 0]))
+    print((list(mat[:, 0])))
