@@ -4,7 +4,7 @@ import numpy as np
 import pyquil.api as api
 import pytest
 
-from grove.simon.simon import find_mask, unitary_function, \
+from grove.alpha.simon.simon import find_mask, unitary_function, \
     oracle_function, is_unitary, most_significant_bit, check_two_to_one, \
     insert_into_row_echelon_binary_matrix, make_square_row_echelon, \
     binary_back_substitute

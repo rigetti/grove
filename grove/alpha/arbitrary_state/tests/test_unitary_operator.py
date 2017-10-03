@@ -1,6 +1,6 @@
 import numpy as np
 
-from grove.arbitrary_state.unitary_operator import unitary_operator, \
+from grove.alpha.arbitrary_state.unitary_operator import unitary_operator, \
     get_bits_needed, fix_norm_and_length
 
 

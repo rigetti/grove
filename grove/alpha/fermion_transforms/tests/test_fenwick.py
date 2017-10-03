@@ -1,4 +1,4 @@
-from grove.fermion_transforms.fenwick_tree import FenwickTree
+from grove.alpha.fermion_transforms.fenwick_tree import FenwickTree
 
 
 def test_sets():

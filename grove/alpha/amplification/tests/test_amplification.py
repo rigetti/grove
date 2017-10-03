@@ -19,8 +19,7 @@ import pyquil.quil as pq
 import pytest
 from pyquil.gates import *
 
-from grove.amplification.amplification import amplify, n_qubit_control, \
-    diffusion_operator
+from grove.alpha.amplification.amplification import amplify, n_qubit_control, diffusion_operator
 from grove.pyqaoa.utils import compare_progs
 
 # Normal operation
