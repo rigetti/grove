@@ -19,7 +19,7 @@ from scipy import optimize
 import numpy as np
 from grove.pyvqe.vqe import VQE
 import pyquil.quil as pq
-from pyquil.gates import H, RESET
+from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
 from functools import reduce
 
@@ -165,7 +165,6 @@ class QAOA(object):
             betas = params[:self.steps]
             gammas = params[self.steps:]
 
-            # Ensure you start every step with a clean ground-state wavefunction
             prog = pq.Program()
             prog += self.ref_state_prep
             for idx in range(self.steps):
