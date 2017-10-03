@@ -166,7 +166,7 @@ class QAOA(object):
             gammas = params[self.steps:]
 
             # Ensure you start every step with a clean ground-state wavefunction
-            prog = pq.Program([RESET])
+            prog = pq.Program()
             prog += self.ref_state_prep
             for idx in range(self.steps):
                 for fprog in cost_para_programs[idx]:

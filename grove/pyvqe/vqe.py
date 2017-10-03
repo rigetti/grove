@@ -159,7 +159,6 @@ class VQE(object):
                 expectation_vals.append(self._current_expectation)
 
         # using self.minimizer
-        # Need to keep deprecated method for py2.7 compatibility
         arguments = funcsigs.signature(self.minimizer).parameters.keys()
 
         if disp is not None and 'callback' in arguments:
