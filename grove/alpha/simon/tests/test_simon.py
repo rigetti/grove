@@ -91,13 +91,12 @@ def test_check_two_to_one():
     simon_algo.log_qubits = [0, 1]
     simon_algo.ancillas = [2, 3]
     simon_algo.unitary_function_mapping = expected_return
-
-    orc_func = simon_algo._construct_oracle()
+    simon_algo.oracle_circuit = simon_algo._construct_oracle()
 
     with patch("pyquil.api.SyncConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.return_value = [[1, 1], [0, 1]]
-    assert simon_algo.check_two_to_one(qvm, orc_func, [2, 3], "11")
+    assert simon_algo.check_two_to_one(qvm, "11")
 
 
 def test_no_substitution():

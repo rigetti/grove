@@ -199,6 +199,7 @@ class Simon(object):
         return p
 
     def _init_attr(self, bitstring_map):
+        """Acts instead of __init__ method to instantiate the necessary Simon Object state."""
         self.unitary_function_mapping = self._construct_unitary_matrix(bitstring_map)
         self.n_qubits = int(np.log2(self.unitary_function_mapping.shape[0])) - 1
         self.n_ancillas = self.n_qubits
@@ -367,7 +368,7 @@ class Simon(object):
 
         return W
 
-    def check_two_to_one(self, cxn, oracle, ancillas, s):
+    def check_two_to_one(self, cxn, s):
         """
         Check if the oracle is one-to-one or two-to-one. The oracle is known
         to represent either a one-to-one function, or a two-to-one function
@@ -384,15 +385,12 @@ class Simon(object):
                  that is two-to-one with mask :math:`s`
         :rtype: bool
         """
-        zero_program = oracle
-        mask_program = pq.Program()
-        for i in range(len(s)):
-            if s[i] == '1':
-                mask_program.inst(X(i))
-        mask_program += oracle
+        zero_program = self.oracle_circuit
+        mask_program = pq.Program([X(i) for i in range(len(s)) if s[i] == '1']) + \
+                       self.oracle_circuit
 
-        zero_value = cxn.run_and_measure(zero_program, ancillas)[0]
-        mask_value = cxn.run_and_measure(mask_program, ancillas)[0]
+        zero_value = cxn.run_and_measure(zero_program, self.ancillas)[0]
+        mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
 
         return zero_value == mask_value
 

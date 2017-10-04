@@ -29,7 +29,4 @@ def most_significant_bit(lst):
     :return: the first position in lst that a 1 appears
     :rtype: int
     """
-    msb = 0
-    while lst[msb] != 1:
-        msb += 1
-    return msb
+    return np.argwhere(np.asarray(lst) == 1)[0][0]
