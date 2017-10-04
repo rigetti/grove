@@ -23,9 +23,8 @@ For more information, see
 
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import *
+from pyquil.gates import CNOT, H, X
 import grove.alpha.simon.utils as u
-from six.moves import input
 
 
 class Simon(object):
@@ -341,39 +340,3 @@ class Simon(object):
         mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
 
         return zero_value == mask_value
-
-
-if __name__ == "__main__":
-    import pyquil.api as api
-
-    # Read function mappings from user
-    n = int(input("How many bits? "))
-    assert n > 0, "The number of bits must be positive."
-    print("Enter f(x) for the following n-bit inputs:")
-    mappings = []
-    for i in range(2 ** n):
-        val = input(np.binary_repr(i, n) + ': ')
-        assert all(list(map(lambda x: x in {'0', '1'}, val))), \
-            "f(x) must return only 0 and 1"
-        mappings.append(int(val, 2))
-
-    qvm = api.SyncConnection()
-
-    qubits = range(n)
-    ancillas = range(n, 2 * n)
-
-    unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancillas)
-
-    s, iterations, simon_program = find_mask(qvm, oracle, qubits)
-    two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
-
-    if two_to_one:
-        print("The function is two-to-one with mask s = ", s)
-    else:
-        print("The function is one-to-one")
-    print("Iterations of the algorithm: ", iterations)
-
-    if input("Show Program? (y/n): ") == 'y':
-        print("----------Quantum Program Used----------")
-        print(simon_program)
