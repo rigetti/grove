@@ -38,6 +38,7 @@ class Simon(object):
     ancillas = None
     simon_circuit = None
     oracle_circuit = None
+    _dict_of_linearly_indep_bit_vectors = {}
 
     def _construct_unitary_matrix(self, mappings):
         """
@@ -227,24 +228,26 @@ class Simon(object):
         # Generate n-1 linearly independent vectors
         # that will be orthonormal to the mask mask_array
         # Done so by running the quantum program repeatedly
-        # and building up a row-echelon matrix echelon_matrix
+        # and building up a dictionary of linearly independent bit-vectors
         iterations = 0
-        echelon_matrix = np.array([], dtype=int)
-        while len(echelon_matrix) < self.n_qubits - 1:
+        # build echelon-array
+        while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
             z = np.array(cxn.run_and_measure(self.simon_circuit, self.log_qubits)[0], dtype=int)
-            # attempt to insert z in such a way that
-            # echelon_matrix remains row-echelon
-            # and all rows are orthogonal to mask_array
-            echelon_matrix = self.insert_into_row_echelon_binary_matrix(echelon_matrix, z)
+            self._add_to_dict_of_indep_bit_vectors(z)
             iterations += 1
 
-        # make the matrix square by inserting a row
-        # that maintain echelon_matrix in row-echelon form
-        echelon_matrix, insert_row_num = self.make_square_row_echelon(echelon_matrix)
+        # The sampling guarantees that there are n-1 linearly independent vectors
+        # based on their provenance. This means there is exactly one missing provenance value.
+        # We will augment the collection of independent vectors accordingly
+        missing_prov = self._add_missing_provenance_vector()
+        echelon_matrix = np.asarray([tup[1] for tup in
+                                     sorted(zip(self._dict_of_linearly_indep_bit_vectors.keys(),
+                                                self._dict_of_linearly_indep_bit_vectors.values()),
+                                            key=lambda x: x[0])])
 
         mask_array = np.zeros(shape=(self.n_qubits,), dtype=int)
         # inserted row is chosen not be orthogonal to mask_array
-        mask_array[insert_row_num] = 1
+        mask_array[missing_prov] = 1
 
         mask_array = self.binary_back_substitute(echelon_matrix, mask_array)
 
@@ -252,121 +255,46 @@ class Simon(object):
 
         return mask_string, iterations, self.simon_circuit
 
-    def binary_back_substitute(self, W, s):
+    def _add_to_dict_of_indep_bit_vectors(self, z):
         """
-        Perform back substitution on a binary system of equations.
+        This method adds a bit-vector z to the dictionary of independent vectors. We keep track of
+        this list by ordering them according to their most-significant bit (provenance). This is
+        sufficient by virtue of the Gauss elimination procedure.
 
-        Finds the :math:`\\mathbf{x}` such that
-        :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
-        where all arithmetic is taken bitwise and modulo 2.
-
-        :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
-                  in row-echelon form
-        :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
-        :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
-                 system of equations.
-        :rtype: 1darray
+        :param z: sampled bit-vector
+        :return: None
         """
-        # iterate backwards, starting from second to last row for back-substitution
-        s_copy = np.array(s)
-        n = len(s)
-        for row_num in range(n - 2, -1, -1):
-            row = W[row_num]
-            for col_num in range(row_num + 1, n):
-                if row[col_num] == 1:
-                    s_copy[row_num] = (s_copy[row_num] + s_copy[col_num]) % 2
+        msb_z = u.most_significant_bit(z)
 
-        return s_copy
+        # try to add bitstring z to samples dictionary directly
+        if msb_z not in self._dict_of_linearly_indep_bit_vectors.keys():
+            self._dict_of_linearly_indep_bit_vectors[msb_z] = z
+        # if we have a conflict with the provenance of a sample try to create
+        # bit-wise XOR vector (guaranteed to be orthogonal to the conflict) and add
+        # that to the samples.
+        # Bail if this doesn't work and continue sampling.
+        else:
+            conflict_z = self._dict_of_linearly_indep_bit_vectors[msb_z]
+            not_z = [conflict_z[idx] ^ z[idx] for idx in range(len(z))]
+            msb_not_z = u.most_significant_bit(not_z)
+            if msb_not_z not in self._dict_of_linearly_indep_bit_vectors.keys():
+                self._dict_of_linearly_indep_bit_vectors[msb_not_z] = not_z
 
-    def make_square_row_echelon(self, W):
-        """
-        Make :math:`\\mathbf{\\mathit{W}}`
-        into a square matrix for Simon's algorithm, satisfying a few criteria.
+    def _add_missing_provenance_vector(self):
+        """Adds a unit vector with the missing provenance in the collection of independent
+        bit-vectors"""
+        missing_prov = None
+        for idx in range(self.n_qubits):
+            if idx not in self._dict_of_linearly_indep_bit_vectors.keys():
+                missing_prov = idx
 
-        :param 2darray W: an :math:`(n-1)\\times n` array of 0s and 1s in
-                          row-echelon form such that all rows are orthogonal
-                          to some length :math:`n` vector
-                          of 0s and 1s :math:`\\mathbf{s}`.
-        :return: a two-element tuple. The first element is
-                 an :math:`n\\times n` square array identical
-                 to :math:`\\mathbf{\\mathit{W}}` except with one row added.
-                 That row is chosen to keep :math:`\\mathbf{\\mathit{W}}`
-                 in row-echelon form. The second element is the row that
-                 the new row is in, where the top row is at index 0.
-        :rtype: tuple
-        """
-        n = len(W) + 1
+        if missing_prov is None:
+            raise ValueError("Expected a missing provenance, but didn't find one")
+        augment_vec = np.zeros(shape=(self.n_qubits,))
+        augment_vec[missing_prov] = 1
+        self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec
+        return missing_prov
 
-        # Generate one final vector that is not orthonormal to the mask s
-        # can do by adding a vector with a single 1
-        # that can be inserted so that diag(W) is all ones
-        insert_row_num = 0
-        while insert_row_num < n - 1 and W[insert_row_num][insert_row_num] == 1:
-            insert_row_num += 1
-
-        new_row = np.zeros(shape=(n,), dtype=int)
-        new_row[insert_row_num] = 1
-        W = np.insert(W, insert_row_num, new_row, 0)
-
-        return W, insert_row_num
-
-    def insert_into_row_echelon_binary_matrix(self, W, z):
-        """
-        Given a matrix :math:`\\mathbf{\\mathit{W}}` of 0s and 1s
-        in row-echelon form, such that each row is orthogonal to some (unknown)
-        vector :math:`\\mathbf{s}` of 0s and 1s, attempt to insert a new row
-        into :math:`\\mathbf{\\mathit{W}}` that maintains the above property.
-
-        Besides the above property, a vector :math:`\\mathbf{z}` is given
-        that is known to also be orthogonal to :math:`\\mathbf{s}`.
-
-        If (and only if) no such row can be inserted with certainty,
-        :math:`\\mathbf{\\mathit{W}}` is return unchanged.
-
-        :param 2darray W: a matrix of 0s and 1s in row-echelon form, with rows all
-                          orthogonal to some vector of 0s and 1s.
-
-        :param 1darray z: a vector of 0s and 1s known
-                          to be orthogonal to :math:`\\mathbf{s}`
-        :return: either the same matrix :math:`\\mathbf{\\mathit{W}}`, unchanged,
-                 or :math:`\\mathbf{\\mathit{W}}` with one additional
-                 row added that maintains the property described above.
-        :rtype: 2darray
-        """
-        n = len(z)
-        while np.any(z != 0):  # while z is not all zeros
-            if len(W) == 0:
-                W = z
-                W = W.reshape(1, n)
-                break
-            msb_z = u.most_significant_bit(z)
-
-            # Search for a row to insert z into,
-            # so that it has an earlier significant bit than the row below
-            # and a later one than the row above (when reading left-to-right)
-            got_to_end = True
-            for row_num in range(len(W)):
-                row = W[row_num]
-                msb_row = u.most_significant_bit(row)
-                # if the row as the same msb as z,
-                # set z to the bitwise xor of z and the current row
-                # as it will be guaranteed to still be orthogonal to s
-                if msb_row == msb_z:
-                    z = np.array([z[i] ^ row[i] for i in range(n)])
-                    got_to_end = False
-                    break
-                # if the row has a greater msb than z,
-                # then this is the row to z insert above
-                elif msb_row > msb_z:
-                    W = np.insert(W, row_num, z, 0)
-                    got_to_end = False
-                    break
-            # if z has a greater msb than all rows,
-            # insert it to the bottom of the array
-            if got_to_end:
-                W = np.insert(W, len(W), z, 0)
-
-        return W
 
     def check_two_to_one(self, cxn, s):
         """
@@ -393,6 +321,32 @@ class Simon(object):
         mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
 
         return zero_value == mask_value
+
+    def binary_back_substitute(self, W, s):
+        """
+        Perform back substitution on a binary system of equations.
+
+        Finds the :math:`\\mathbf{x}` such that
+        :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
+        where all arithmetic is taken bitwise and modulo 2.
+
+        :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
+                  in row-echelon form
+        :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
+        :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
+                 system of equations.
+        :rtype: 1darray
+        """
+        # iterate backwards, starting from second to last row for back-substitution
+        s_copy = np.array(s)
+        n = len(s)
+        for row_num in range(n - 2, -1, -1):
+            row = W[row_num]
+            for col_num in range(row_num + 1, n):
+                if row[col_num] == 1:
+                    s_copy[row_num] = (s_copy[row_num] + s_copy[col_num]) % 2
+
+        return s_copy
 
 
 if __name__ == "__main__":

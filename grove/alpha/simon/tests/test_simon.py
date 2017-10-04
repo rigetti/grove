@@ -101,102 +101,154 @@ def test_check_two_to_one():
 
 def test_no_substitution():
     simon_algo = Simon()
-    W = np.array([[1, 0, 1, 0, 0],
-                  [0, 1, 0, 0, 0],
-                  [0, 0, 0, 1, 0]])
-    z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
+    z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows hence won't add
 
-    W = simon_algo.insert_into_row_echelon_binary_matrix(W, z)
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
 
-    W_expected = np.array([[1, 0, 1, 0, 0],
-                           [0, 1, 0, 0, 0],
-                           [0, 0, 0, 1, 0]])
+    W_expected = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_simple_conflict():
+    simon_algo = Simon()
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
+    z = np.array([1, 0, 0, 0, 1])  # conflict with first row.
+
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+
+    W_expected = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0]
+    }
+
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_insert_directly():
     simon_algo = Simon()
-    W = np.array([[1, 1, 0, 0, 0],
-                  [0, 1, 0, 1, 0]])
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 1, 0]
+    }
     z = np.array([0, 0, 1, 0, 1])
 
-    W = simon_algo.insert_into_row_echelon_binary_matrix(W, z)
-    W_expected = np.array([[1, 1, 0, 0, 0],
-                           [0, 1, 0, 1, 0],
-                           [0, 0, 1, 0, 1]])
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 1, 0],
+        2: [0, 0, 1, 0, 1]
+    }
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_insert_after_xor():
     simon_algo = Simon()
-    W = np.array([[1, 0, 0, 0, 0, 0],
-                  [0, 1, 1, 0, 0, 0]])
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 0, 0, 0, 0],
+        1: [0, 1, 1, 0, 0, 0]
+    }
 
-    z = np.array([1, 0, 1, 0, 1, 1])
+    z = np.array([0, 0, 1, 0, 1, 1])
 
-    W = simon_algo.insert_into_row_echelon_binary_matrix(W, z)
-    W_expected = np.array([[1, 0, 0, 0, 0, 0],
-                           [0, 1, 1, 0, 0, 0],
-                           [0, 0, 1, 0, 1, 1]])
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0, 0, 0],
+        1: [0, 1, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1, 1]
+    }
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_add_row_at_top():
     simon_algo = Simon()
-    W = np.array([[0, 1, 0, 1, 0],
-                  [0, 0, 1, 0, 0],
-                  [0, 0, 0, 1, 1],
-                  [0, 0, 0, 0, 1]])
-    W, insert_row_num = simon_algo.make_square_row_echelon(W)
+    simon_algo.n_qubits = 4
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
+    insert_row_num = simon_algo._add_missing_provenance_vector()
 
-    W_expected = np.array([[1, 0, 0, 0, 0],
-                           [0, 1, 0, 1, 0],
-                           [0, 0, 1, 0, 0],
-                           [0, 0, 0, 1, 1],
-                           [0, 0, 0, 0, 1]])
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
 
     assert insert_row_num == 0
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_add_row_at_bottom():
     simon_algo = Simon()
-    W = np.array([[1, 0, 0, 0],
-                  [0, 1, 0, 1],
-                  [0, 0, 1, 0]])
-    W, insert_row_num = simon_algo.make_square_row_echelon(W)
+    simon_algo.n_qubits = 4
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0]
+    }
+    insert_row_num = simon_algo._add_missing_provenance_vector()
 
-    W_expected = np.array([[1, 0, 0, 0],
-                           [0, 1, 0, 1],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]])
-
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
     assert insert_row_num == 3
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_add_row_in_middle():
     simon_algo = Simon()
-    W = np.array([[1, 1, 0, 0, 0],
-                  [0, 0, 1, 0, 1],
-                  [0, 0, 0, 1, 0],
-                  [0, 0, 0, 0, 1]])
-    W, insert_row_num = simon_algo.make_square_row_echelon(W)
+    simon_algo.n_qubits = 5
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0],
+        4: [0, 0, 0, 0, 1]
+    }
+    insert_row_num = simon_algo._add_missing_provenance_vector()
 
-    W_expected = np.array([[1, 1, 0, 0, 0],
-                           [0, 1, 0, 0, 0],
-                           [0, 0, 1, 0, 1],
-                           [0, 0, 0, 1, 0],
-                           [0, 0, 0, 0, 1]])
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0],
+        4: [0, 0, 0, 0, 1]
+    }
 
     assert insert_row_num == 1
 
-    assert np.allclose(W, W_expected)
+    np.testing.assert_equal(W_actual, W_expected)
 
 
 def test_one_at_top():
