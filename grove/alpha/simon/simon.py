@@ -40,7 +40,6 @@ def create_periodic_1to1_bitmap(mask):
     return dct
 
 
-
 class Simon(object):
 
     def __init__(self):
@@ -95,10 +94,6 @@ class Simon(object):
             raise ValueError("mappings must have a length that is a power of two")
 
         # check validity of mapping
-        reverse_mapping = defaultdict(list)
-        for idx, val in enumerate(mappings):
-            reverse_mapping[val].append(idx)
-
         c = Counter(mappings)
         most_common_map = c.most_common(1)[0]
         if most_common_map[1] >= 2:
@@ -106,31 +101,13 @@ class Simon(object):
                              " at least two domain values map to "
                              + np.binary_repr(most_common_map[0], n_bits))
 
-        # Strategy: add an extra qubit by default
-        # and force the function to be one-to-one
-        unitary_funct = np.zeros(shape=(2 ** (n_bits + 1), 2 ** (n_bits + 1)))
+        unitary_funct = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
 
-        # Fill in what is known so far
         for idx, val in enumerate(mappings):
+            # TODO: 2-to-1 mask lifting.
             unitary_funct[val, idx] = 1
 
-        # if one to one, just ignore the scratch bit as it's already unitary
-        unmapped_range_values = list(filter(lambda i: len(reverse_mapping[i]) == 0,
-                                            reverse_mapping.keys()))
-        if len(unmapped_range_values) == 0:
-            return np.kron(np.identity(2), unitary_funct[0:2 ** n_bits, 0:2 ** n_bits])
-
-        # otherwise, if two-to-one, fill the array to make it unitary
-        # assuming scratch bit will properly be 0
-        lower_index = 2 ** n_bits
-
-        for val in unmapped_range_values:
-            unitary_funct[val, lower_index] = 1
-            unitary_funct[val + 2 ** n_bits, lower_index + 1] = 1
-            lower_index += 2
-
-        u.is_unitary(unitary_funct)
-        return unitary_funct
+        return unitary_funct[0:2 ** n_bits, 0:2 ** n_bits]
 
     def _construct_oracle(self, gate_name='FUNCT'):
         """
@@ -172,17 +149,14 @@ class Simon(object):
         p = pq.Program()
 
         inverse_gate_name = gate_name + '-INV'
-        scratch_bit = p.alloc()
-        bits_for_funct = [scratch_bit] + self.log_qubits
 
         p.defgate(gate_name, self.unitary_function_mapping)
         p.defgate(inverse_gate_name, np.linalg.inv(self.unitary_function_mapping))
 
-        p.inst(tuple([gate_name] + bits_for_funct))
+        p.inst(tuple([gate_name] + self.log_qubits))
         p.inst([CNOT(qb, an) for qb, an in zip(self.log_qubits, self.ancillas)])
-        p.inst(tuple([inverse_gate_name] + bits_for_funct))
+        p.inst(tuple([inverse_gate_name] + self.log_qubits))
 
-        p.free(scratch_bit)
         return p
 
     def _hadamard_walsh_append(self):
@@ -214,7 +188,7 @@ class Simon(object):
         self.bit_map = bitstring_map
         self.unitary_function_mapping = \
             self._construct_unitary_matrix(u.mapping_dict_to_list(bitstring_map))
-        self.n_qubits = int(np.log2(self.unitary_function_mapping.shape[0])) - 1
+        self.n_qubits = len(list(bitstring_map.keys())[0])
         self.n_ancillas = self.n_qubits
         self._qubits = list(range(self.n_qubits + self.n_ancillas))
         self.log_qubits = self._qubits[:self.n_qubits]

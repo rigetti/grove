@@ -10,14 +10,10 @@ import pytest
 
 
 expected_return = [
-    [0., 0., 1., 0., 0., 0., 0., 0.],
-    [0., 0., 0., 1., 0., 0., 0., 0.],
-    [1., 0., 0., 0., 0., 0., 0., 0.],
-    [0., 1., 0., 0., 0., 0., 0., 0.],
-    [0., 0., 0., 0., 0., 0., 1., 0.],
-    [0., 0., 0., 0., 0., 0., 0., 1.],
-    [0., 0., 0., 0., 1., 0., 0., 0.],
-    [0., 0., 0., 0., 0., 1., 0., 0.]
+    [0., 0., 1., 0.],
+    [0., 0., 0., 1.],
+    [1., 0., 0., 0.],
+    [0., 1., 0., 0.]
 ]
 
 
@@ -28,10 +24,10 @@ def _create_expected_program():
     expected_prog.inst("H 0")
     expected_prog.inst("H 1")
 
-    expected_prog.inst("FUNCT 4 0 1")
+    expected_prog.inst("FUNCT 0 1")
     expected_prog.inst("CNOT 0 2")
     expected_prog.inst("CNOT 1 3")
-    expected_prog.inst("FUNCT-INV 4 0 1")
+    expected_prog.inst("FUNCT-INV 0 1")
 
     expected_prog.inst("H 0")
     expected_prog.inst("H 1")
@@ -110,10 +106,10 @@ def test_oracle_program():
     expected_prog = Program()
     expected_prog.defgate("FUNCT", expected_return)
     expected_prog.defgate("FUNCT-INV", np.linalg.inv(expected_return))
-    expected_prog.inst("FUNCT 4 0 1")
+    expected_prog.inst("FUNCT 0 1")
     expected_prog.inst("CNOT 0 2")
     expected_prog.inst("CNOT 1 3")
-    expected_prog.inst("FUNCT-INV 4 0 1")
+    expected_prog.inst("FUNCT-INV 0 1")
     assert expected_prog.__str__() == actual_prog.__str__()
 
 
