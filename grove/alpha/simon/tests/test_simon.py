@@ -1,11 +1,12 @@
 """Test class for helper methods found simon"""
 
 import numpy as np
-from grove.alpha.simon.simon import Simon, create_periodic_bitmap
+from grove.alpha.simon.simon import Simon, create_periodic_1to1_bitmap
 import grove.alpha.simon.utils as u
 from pyquil.quil import Program
 
 from mock import patch
+import pytest
 
 
 expected_return = [
@@ -77,6 +78,23 @@ def test_unitary_function_return():
 
     actual_return = simon_algo._construct_unitary_matrix(u.mapping_dict_to_list(bit_string_mapping))
     np.testing.assert_equal(actual_return, expected_return)
+
+
+def test_unitary_function_return_for_2to1():
+    simon_algo = Simon()
+    bit_string_mapping = {
+        '000': '10',
+        '001': '11',
+        '010': '00',
+        '011': '01',
+        '100': '10',
+        '101': '11',
+        '110': '00',
+        '111': '01'
+    }
+
+    with pytest.raises(ValueError):
+        _ = simon_algo._construct_unitary_matrix(u.mapping_dict_to_list(bit_string_mapping))
 
 
 def test_oracle_program():
@@ -280,6 +298,6 @@ def test_bit_map_generation():
         '110': '011',
         '111': '010'
     }
-    actual_map = create_periodic_bitmap(mask)
+    actual_map = create_periodic_1to1_bitmap(mask)
     assert actual_map == expected_map
 

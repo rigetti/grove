@@ -69,3 +69,24 @@ def test_bit_masking():
     bit_string = '101'
     mask_string = '110'
     assert u.bit_masking(bit_string, mask_string) == '011'
+
+
+def test_is_power_of_2():
+    assert u.is_power2(8)
+    assert u.is_power2(32)
+    assert u.is_power2(4096)
+    assert not u.is_power2(441)
+    assert not u.is_power2(7)
+
+
+def test_binary_back_step():
+    A = np.asarray([[1, 1, 0, 1],
+                    [0, 1, 1, 0],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 1]])
+    s = np.asarray([0, 0, 0, 1])
+    print(u.binary_back_substitute(A, s))
+
+    print(np.linalg.inv(A))
+
+    print(np.dot(np.linalg.inv(A) % 2, s))

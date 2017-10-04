@@ -25,11 +25,12 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import CNOT, H, X
 import grove.alpha.simon.utils as u
+from collections import defaultdict, Counter
 
 import warnings
 
 
-def create_periodic_bitmap(mask):
+def create_periodic_1to1_bitmap(mask):
     n_bits = len(mask)
     form_string = "{0:0" + str(n_bits) + "b}"
     dct = {}
@@ -37,6 +38,7 @@ def create_periodic_bitmap(mask):
         bit_string = form_string.format(idx)
         dct[bit_string] = u.bit_masking(bit_string, mask)
     return dct
+
 
 
 class Simon(object):
@@ -87,53 +89,44 @@ class Simon(object):
         if len(mappings) < 2:
             raise ValueError("function domain must be at least one bit (size 2)")
 
-        n = len(mappings).bit_length() - 1
+        n_bits = len(mappings).bit_length() - 1
 
-        if len(mappings) != 2 ** n:
+        if len(mappings) != 2 ** n_bits:
             raise ValueError("mappings must have a length that is a power of two")
+
+        # check validity of mapping
+        reverse_mapping = defaultdict(list)
+        for idx, val in enumerate(mappings):
+            reverse_mapping[val].append(idx)
+
+        c = Counter(mappings)
+        most_common_map = c.most_common(1)[0]
+        if most_common_map[1] >= 2:
+            raise ValueError("Function must be one-to-one;"
+                             " at least two domain values map to "
+                             + np.binary_repr(most_common_map[0], n_bits))
 
         # Strategy: add an extra qubit by default
         # and force the function to be one-to-one
-        reverse_mapping = {x: list() for x in range(2 ** n)}
-
-        unitary_funct = np.zeros(shape=(2 ** (n + 1), 2 ** (n + 1)))
+        unitary_funct = np.zeros(shape=(2 ** (n_bits + 1), 2 ** (n_bits + 1)))
 
         # Fill in what is known so far
-        prospective_mask = None
-        for j in range(2 ** n):
-            i = mappings[j]
-            reverse_mapping[i].append(j)
-            num_mappings_to_i = len(reverse_mapping[i])
-            if num_mappings_to_i > 2:
-                raise ValueError("Function must be one-to-one or two-to-one;"
-                                 " at least three domain values map to "
-                                 + np.binary_repr(i, n))
-            if num_mappings_to_i == 2:
-                # to force it to be one-to-one, we promote the output
-                # to have scratch bit set to 1
-                mask_for_i = reverse_mapping[i][0] \
-                             ^ reverse_mapping[i][1]
-                if prospective_mask is None:
-                    prospective_mask = mask_for_i
-                else:
-                    if prospective_mask != mask_for_i:
-                        raise ValueError("Mask is not consistent")
-                i += 2 ** n
-            unitary_funct[i, j] = 1
+        for idx, val in enumerate(mappings):
+            unitary_funct[val, idx] = 1
 
         # if one to one, just ignore the scratch bit as it's already unitary
         unmapped_range_values = list(filter(lambda i: len(reverse_mapping[i]) == 0,
                                             reverse_mapping.keys()))
         if len(unmapped_range_values) == 0:
-            return np.kron(np.identity(2), unitary_funct[0:2 ** n, 0:2 ** n])
+            return np.kron(np.identity(2), unitary_funct[0:2 ** n_bits, 0:2 ** n_bits])
 
         # otherwise, if two-to-one, fill the array to make it unitary
         # assuming scratch bit will properly be 0
-        lower_index = 2 ** n
+        lower_index = 2 ** n_bits
 
-        for i in unmapped_range_values:
-            unitary_funct[i, lower_index] = 1
-            unitary_funct[i + 2 ** n, lower_index + 1] = 1
+        for val in unmapped_range_values:
+            unitary_funct[val, lower_index] = 1
+            unitary_funct[val + 2 ** n_bits, lower_index + 1] = 1
             lower_index += 2
 
         u.is_unitary(unitary_funct)
@@ -297,8 +290,7 @@ class Simon(object):
         provenance_unit[missing_prov] = 1
 
         # solve matrix equation
-        self.mask = [int(np.abs(x)) for x in
-                     np.dot(np.linalg.inv(upper_triangular_matrix), provenance_unit)]
+        self.mask = u.binary_back_substitute(upper_triangular_matrix, provenance_unit).tolist()
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """

@@ -53,3 +53,28 @@ def bit_masking(bit_string, mask_string):
     assert len(bit_string) == len(mask_string)
     n_bits = len(bit_string)
     return PADDED_BINARY_BIT_STRING.format(int(bit_string, 2) ^ int(mask_string, 2), n_bits)
+
+
+def binary_back_substitute(W, s):
+    """
+    Perform back substitution on a binary system of equations.
+    Finds the :math:`\\mathbf{x}` such that
+    :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
+    where all arithmetic is taken bitwise and modulo 2.
+    :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
+              in row-echelon form
+    :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
+    :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
+             system of equations.
+    :rtype: 1darray
+    """
+    # iterate backwards, starting from second to last row for back-substitution
+    m = np.copy(s)
+    n = len(s)
+    for row_num in range(n - 2, -1, -1):
+        row = W[row_num]
+        for col_num in range(row_num + 1, n):
+            if row[col_num] == 1:
+                m[row_num] = s[row_num] ^ s[col_num]
+
+    return m
