@@ -1,5 +1,7 @@
 import numpy as np
 
+PADDED_BINARY_BIT_STRING = "{0:0{1:0d}b}"
+
 
 def is_power2(num):
     return num != 0 and ((num & (num - 1)) == 0)
@@ -37,8 +39,8 @@ def mapping_list_to_dict(lst):
     if len(lst) != 2 ** n_bits:
         raise ValueError("mappings must have a length that is a power of two")
 
-    form_string = "{0:0" + str(n_bits) + "b}"
-    return {form_string.format(idx): form_string.format(val) for idx, val in enumerate(lst)}
+    return {PADDED_BINARY_BIT_STRING.format(idx, n_bits):
+                PADDED_BINARY_BIT_STRING.format(val, n_bits) for idx, val in enumerate(lst)}
 
 
 def mapping_dict_to_list(dct):
@@ -49,4 +51,5 @@ def mapping_dict_to_list(dct):
 
 def bit_masking(bit_string, mask_string):
     assert len(bit_string) == len(mask_string)
-    return ''.join([str((int(bit_string[i]) + int(mask_string[i])) % 2) for i in range(len(bit_string))])
+    n_bits = len(bit_string)
+    return PADDED_BINARY_BIT_STRING.format(int(bit_string, 2) ^ int(mask_string, 2), n_bits)
