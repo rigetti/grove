@@ -38,7 +38,7 @@ class Simon(object):
     simon_circuit = None
     oracle_circuit = None
     _dict_of_linearly_indep_bit_vectors = {}
-    mask_array = None
+    mask = None
 
     def _construct_unitary_matrix(self, mappings):
         """
@@ -194,9 +194,9 @@ class Simon(object):
         p = pq.Program()
 
         # Apply Hadamard, Unitary function, and Hadamard again
-        p.inst(list(map(H, self.log_qubits)))
+        p.inst([H(i) for i in self.log_qubits])
         p += self.oracle_circuit
-        p.inst(list(map(H, self.log_qubits)))
+        p.inst([H(i) for i in self.log_qubits])
         return p
 
     def _init_attr(self, bitstring_map):
@@ -218,17 +218,15 @@ class Simon(object):
         :param Program oracle: the oracle to query;
                        emulates a classical :math:`f(x)` function as a blackbox.
         :param list(int) qubits: the input qubits
-        :return: a tuple t, where t[0] is the bitstring of the mask,
-                 t[1] is the number of iterations that the quantum program was run,
-                 and t[2] is said quantum program.
-        :rtype: tuple
+        :return: Tuple[Int, List, Bool] representing the number of iterations, the bit mask and
+        True if mask is two-to-one or False if mask is one-to-one
         """
         self._init_attr(bitstring_map)
 
         iterations = self._sample_independent_bit_vectors(cxn)
-        mask_string = self._invert_mask_equation()
+        mask = self._invert_mask_equation()
 
-        return mask_string, iterations, self.simon_circuit
+        return iterations, mask, self.check_two_to_one(cxn)
 
     def _sample_independent_bit_vectors(self, cxn):
         """This method samples n-1 linearly independent vectors that will be orthonormal to the mask
@@ -238,7 +236,7 @@ class Simon(object):
         the resulting matrix is invertible due to the guarantees of an Upper Triangular Matrix
 
         :param cxn: Connection object to the Quantum Engine (QVM, QPU)
-        :return: None
+        :return: Int representing the number of iterations need to do the sampling.
         """
         iterations = 0
         while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
@@ -258,6 +256,7 @@ class Simon(object):
         find the mask :math:`\mathbf{m}` by solving the equation
 
             :math:`\\mathbf{\\mathit{W}}\\mathbf{m}=\\mathbf{a}`
+        :return: List representing the bit mask
         """
         missing_prov = self._add_missing_provenance_vector()
         upper_triangular_matrix = np.asarray(
@@ -269,11 +268,9 @@ class Simon(object):
         provenance_unit[missing_prov] = 1
 
         # solve matrix equation
-        self.mask_array = [int(np.abs(x)) for x in
-                      np.dot(np.linalg.inv(upper_triangular_matrix), provenance_unit)]
-
-        mask_string = ''.join(str(x) for x in self.mask_array)
-        return mask_string
+        self.mask = [int(np.abs(x)) for x in
+                     np.dot(np.linalg.inv(upper_triangular_matrix), provenance_unit)]
+        return self.mask
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """
@@ -302,7 +299,11 @@ class Simon(object):
 
     def _add_missing_provenance_vector(self):
         """Adds a unit vector with the missing provenance in the collection of independent
-        bit-vectors"""
+        bit-vectors
+
+        :return: Int representing the missing most significant bit / provenance in the collection of
+        independent bit-vectors.
+        """
         missing_prov = None
         for idx in range(self.n_qubits):
             if idx not in self._dict_of_linearly_indep_bit_vectors.keys():
@@ -315,25 +316,19 @@ class Simon(object):
         self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec
         return missing_prov
 
-    def check_two_to_one(self, cxn, s):
+    def check_two_to_one(self, cxn,):
         """
         Check if the oracle is one-to-one or two-to-one. The oracle is known
         to represent either a one-to-one function, or a two-to-one function
         with mask :math:`s`.
 
         :param JobConnection cxn: the connection used to run programs
-        :param Program oracle: the oracle to query;
-                               emulates a classical :math:`f(x)`
-                               function as a blackbox.
-        :param list(int) ancillas: the ancillary qubits, where :math:`f(x)`
-                                    is written to by the oracle
-        :param str s: the proposed mask of the function, found by Simon's algorithm
         :return: true if and only if the oracle represents a function
                  that is two-to-one with mask :math:`s`
         :rtype: bool
         """
         zero_program = self.oracle_circuit
-        mask_program = pq.Program([X(i) for i in range(len(s)) if s[i] == '1']) + \
+        mask_program = pq.Program([X(i) for i in self.mask if i == 1]) + \
                        self.oracle_circuit
 
         zero_value = cxn.run_and_measure(zero_program, self.ancillas)[0]
