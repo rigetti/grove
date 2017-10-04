@@ -26,19 +26,35 @@ import pyquil.quil as pq
 from pyquil.gates import CNOT, H, X
 import grove.alpha.simon.utils as u
 
+import warnings
+
+
+def create_periodic_bitmap(mask):
+    n_bits = len(mask)
+    form_string = "{0:0" + str(n_bits) + "b}"
+    dct = {}
+    for idx in range(2**n_bits):
+        bit_string = form_string.format(idx)
+        dct[bit_string] = u.bit_masking(bit_string, mask)
+    return dct
+
 
 class Simon(object):
 
-    unitary_function_mapping = None
-    n_qubits = None
-    n_ancillas = None
-    _qubits = None
-    log_qubits = None
-    ancillas = None
-    simon_circuit = None
-    oracle_circuit = None
-    _dict_of_linearly_indep_bit_vectors = {}
-    mask = None
+    def __init__(self):
+        self.unitary_function_mapping = None
+        self.n_qubits = None
+        self.n_ancillas = None
+        self._qubits = None
+        self.log_qubits = None
+        self.ancillas = None
+        self.simon_circuit = None
+        self.oracle_circuit = None
+        self._dict_of_linearly_indep_bit_vectors = {}
+        self.mask = None
+        self.bit_map = None
+        self.found_mask = False
+        self.iterations = None
 
     def _construct_unitary_matrix(self, mappings):
         """
@@ -168,8 +184,9 @@ class Simon(object):
 
         p.defgate(gate_name, self.unitary_function_mapping)
         p.defgate(inverse_gate_name, np.linalg.inv(self.unitary_function_mapping))
+
         p.inst(tuple([gate_name] + bits_for_funct))
-        p.inst(list(map(lambda qs: CNOT(qs[0], qs[1]), zip(self.log_qubits, self.ancillas))))
+        p.inst([CNOT(qb, an) for qb, an in zip(self.log_qubits, self.ancillas)])
         p.inst(tuple([inverse_gate_name] + bits_for_funct))
 
         p.free(scratch_bit)
@@ -201,7 +218,9 @@ class Simon(object):
 
     def _init_attr(self, bitstring_map):
         """Acts instead of __init__ method to instantiate the necessary Simon Object state."""
-        self.unitary_function_mapping = self._construct_unitary_matrix(bitstring_map)
+        self.bit_map = bitstring_map
+        self.unitary_function_mapping = \
+            self._construct_unitary_matrix(u.mapping_dict_to_list(bitstring_map))
         self.n_qubits = int(np.log2(self.unitary_function_mapping.shape[0])) - 1
         self.n_ancillas = self.n_qubits
         self._qubits = list(range(self.n_qubits + self.n_ancillas))
@@ -209,6 +228,12 @@ class Simon(object):
         self.ancillas = self._qubits[self.n_qubits:]
         self.oracle_circuit = self._construct_oracle()
         self.simon_circuit = self._hadamard_walsh_append()
+        self.iterations = 0
+        self._reset_attr()
+
+    def _reset_attr(self):
+        self._dict_of_linearly_indep_bit_vectors = {}
+        self.mask = None
 
     def find_mask(self, cxn, bitstring_map):
         """
@@ -221,12 +246,22 @@ class Simon(object):
         :return: Tuple[Int, List, Bool] representing the number of iterations, the bit mask and
         True if mask is two-to-one or False if mask is one-to-one
         """
+        if not isinstance(bitstring_map, dict):
+            raise ValueError("Bitstring map needs to be a map from bitstring to bitstring")
         self._init_attr(bitstring_map)
 
-        iterations = self._sample_independent_bit_vectors(cxn)
-        mask = self._invert_mask_equation()
+        while not self.found_mask:
+            # if there is no solution yet, reset the solution variables
+            self._reset_attr()
 
-        return iterations, mask, self.check_two_to_one(cxn)
+            # create the samples of linearly independent bit-vectors
+            self._sample_independent_bit_vectors(cxn)
+            # try to invert the mask and check validity
+            self._invert_mask_equation()
+            self._check_mask()
+            self.iterations += 1
+
+        return self.iterations, self.mask, self.check_two_to_one(cxn)
 
     def _sample_independent_bit_vectors(self, cxn):
         """This method samples n-1 linearly independent vectors that will be orthonormal to the mask
@@ -236,15 +271,10 @@ class Simon(object):
         the resulting matrix is invertible due to the guarantees of an Upper Triangular Matrix
 
         :param cxn: Connection object to the Quantum Engine (QVM, QPU)
-        :return: Int representing the number of iterations need to do the sampling.
         """
-        iterations = 0
         while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
             z = np.array(cxn.run_and_measure(self.simon_circuit, self.log_qubits)[0], dtype=int)
-            self._add_to_dict_of_indep_bit_vectors(z)
-            iterations += 1
-
-        return iterations
+            self._add_to_dict_of_indep_bit_vectors(z.tolist())
 
     def _invert_mask_equation(self):
         """The sampling guarantees that there are n-1 linearly independent vectors based on their
@@ -256,7 +286,6 @@ class Simon(object):
         find the mask :math:`\mathbf{m}` by solving the equation
 
             :math:`\\mathbf{\\mathit{W}}\\mathbf{m}=\\mathbf{a}`
-        :return: List representing the bit mask
         """
         missing_prov = self._add_missing_provenance_vector()
         upper_triangular_matrix = np.asarray(
@@ -270,7 +299,6 @@ class Simon(object):
         # solve matrix equation
         self.mask = [int(np.abs(x)) for x in
                      np.dot(np.linalg.inv(upper_triangular_matrix), provenance_unit)]
-        return self.mask
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """
@@ -281,6 +309,8 @@ class Simon(object):
         :param z: sampled bit-vector
         :return: None
         """
+        if all(np.asarray(z) == 0):
+            return
         msb_z = u.most_significant_bit(z)
 
         # try to add bitstring z to samples dictionary directly
@@ -293,6 +323,8 @@ class Simon(object):
         else:
             conflict_z = self._dict_of_linearly_indep_bit_vectors[msb_z]
             not_z = [conflict_z[idx] ^ z[idx] for idx in range(len(z))]
+            if all(np.asarray(not_z) == 0):
+                return
             msb_not_z = u.most_significant_bit(not_z)
             if msb_not_z not in self._dict_of_linearly_indep_bit_vectors.keys():
                 self._dict_of_linearly_indep_bit_vectors[msb_not_z] = not_z
@@ -310,7 +342,9 @@ class Simon(object):
                 missing_prov = idx
 
         if missing_prov is None:
-            raise ValueError("Expected a missing provenance, but didn't find one")
+            warnings.WarningMessage("Expected a missing provenance, but didn't find one. "
+                                    "Trying to continue")
+
         augment_vec = np.zeros(shape=(self.n_qubits,))
         augment_vec[missing_prov] = 1
         self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec
@@ -335,3 +369,7 @@ class Simon(object):
         mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
 
         return zero_value == mask_value
+
+    def _check_mask(self):
+        mask_str = ''.join([str(b) for b in self.mask])
+        self.found_mask = all([u.bit_masking(k, mask_str) == v for k, v in self.bit_map.items()])

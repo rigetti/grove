@@ -30,3 +30,23 @@ def most_significant_bit(lst):
     :rtype: int
     """
     return np.argwhere(np.asarray(lst) == 1)[0][0]
+
+
+def mapping_list_to_dict(lst):
+    n_bits = len(lst).bit_length() - 1
+    if len(lst) != 2 ** n_bits:
+        raise ValueError("mappings must have a length that is a power of two")
+
+    form_string = "{0:0" + str(n_bits) + "b}"
+    return {form_string.format(idx): form_string.format(val) for idx, val in enumerate(lst)}
+
+
+def mapping_dict_to_list(dct):
+
+    int_list = [(int(k, 2), int(v, 2)) for k, v in dct.items()]
+    return [t[1] for t in sorted(int_list, key=lambda x: x[0])]
+
+
+def bit_masking(bit_string, mask_string):
+    assert len(bit_string) == len(mask_string)
+    return ''.join([str((int(bit_string[i]) + int(mask_string[i])) % 2) for i in range(len(bit_string))])
