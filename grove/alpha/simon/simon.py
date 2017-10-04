@@ -27,51 +27,17 @@ from pyquil.gates import *
 import grove.alpha.simon.utils as u
 from six.moves import input
 
-#
-# def check_two_to_one(cxn, oracle, ancillas, s):
-#     """
-#     Check if the oracle is one-to-one or two-to-one. The oracle is known
-#     to represent either a one-to-one function, or a two-to-one function
-#     with mask :math:`s`.
-#
-#     :param JobConnection cxn: the connection used to run programs
-#     :param Program oracle: the oracle to query;
-#                            emulates a classical :math:`f(x)`
-#                            function as a blackbox.
-#     :param list(int) ancillas: the ancillary qubits, where :math:`f(x)`
-#                                 is written to by the oracle
-#     :param str s: the proposed mask of the function, found by Simon's algorithm
-#     :return: true if and only if the oracle represents a function
-#              that is two-to-one with mask :math:`s`
-#     :rtype: bool
-#     """
-#     zero_program = oracle
-#     mask_program = pq.Program()
-#     for i in range(len(s)):
-#         if s[i] == '1':
-#             mask_program.inst(X(i))
-#     mask_program += oracle
-#
-#     zero_value = cxn.run_and_measure(zero_program, ancillas)[0]
-#     mask_value = cxn.run_and_measure(mask_program, ancillas)[0]
-#
-#     return zero_value == mask_value
-
 
 class Simon(object):
 
-    def __init__(self, boolean_function_mapping):
-        assert isinstance(boolean_function_mapping, list)
-        assert u.is_power2(len(boolean_function_mapping))
-        # assert boolean_function_mapping.shape[0] == boolean_function_mapping.shape[1]
-        # assert u.is_unitary(boolean_function_mapping)
-
-        self.unitary_function_mapping = self._construct_unitary_matrix(boolean_function_mapping)
-        self.n_qubits = int(np.log2(self.unitary_function_mapping.shape[0])) - 1
-        self.n_ancillas = self.n_qubits
-        self._qubits = list(range(self.n_qubits + self.n_ancillas))
-        self.log_qubits = self._qubits[:self.n_qubits]
-        self.ancillas = self._qubits[self.n_qubits:]
+    unitary_function_mapping = None
+    n_qubits = None
+    n_ancillas = None
+    _qubits = None
+    log_qubits = None
+    ancillas = None
+    simon_circuit = None
+    oracle_circuit = None
 
     def _construct_unitary_matrix(self, mappings):
         """
@@ -208,7 +174,7 @@ class Simon(object):
         p.free(scratch_bit)
         return p
 
-    def _hadamard_walsh_append(self, oracle_program):
+    def _hadamard_walsh_append(self):
         """
         Implementation of the quantum portion of Simon's Algorithm.
 
@@ -228,11 +194,21 @@ class Simon(object):
 
         # Apply Hadamard, Unitary function, and Hadamard again
         p.inst(list(map(H, self.log_qubits)))
-        p += oracle_program
+        p += self.oracle_circuit
         p.inst(list(map(H, self.log_qubits)))
         return p
 
-    def find_mask(self, cxn):
+    def _init_attr(self, bitstring_map):
+        self.unitary_function_mapping = self._construct_unitary_matrix(bitstring_map)
+        self.n_qubits = int(np.log2(self.unitary_function_mapping.shape[0])) - 1
+        self.n_ancillas = self.n_qubits
+        self._qubits = list(range(self.n_qubits + self.n_ancillas))
+        self.log_qubits = self._qubits[:self.n_qubits]
+        self.ancillas = self._qubits[self.n_qubits:]
+        self.oracle_circuit = self._construct_oracle()
+        self.simon_circuit = self._hadamard_walsh_append()
+
+    def find_mask(self, cxn, bitstring_map):
         """
         Runs Simon'mask_array algorithm to find the mask.
 
@@ -245,7 +221,7 @@ class Simon(object):
                  and t[2] is said quantum program.
         :rtype: tuple
         """
-        simon_program = self._hadamard_walsh_append(self._construct_oracle())
+        self._init_attr(bitstring_map)
 
         # Generate n-1 linearly independent vectors
         # that will be orthonormal to the mask mask_array
@@ -253,10 +229,8 @@ class Simon(object):
         # and building up a row-echelon matrix echelon_matrix
         iterations = 0
         echelon_matrix = np.array([], dtype=int)
-        while True:
-            if len(echelon_matrix) == self.n_qubits - 1:
-                break
-            z = np.array(cxn.run_and_measure(simon_program, self.log_qubits)[0], dtype=int)
+        while len(echelon_matrix) < self.n_qubits - 1:
+            z = np.array(cxn.run_and_measure(self.simon_circuit, self.log_qubits)[0], dtype=int)
             # attempt to insert z in such a way that
             # echelon_matrix remains row-echelon
             # and all rows are orthogonal to mask_array
@@ -275,7 +249,7 @@ class Simon(object):
 
         mask_string = ''.join(str(x) for x in mask_array)
 
-        return mask_string, iterations, simon_program
+        return mask_string, iterations, self.simon_circuit
 
     def binary_back_substitute(self, W, s):
         """

@@ -38,17 +38,19 @@ def _create_expected_program():
 
 
 def test_simon_class():
-    simon_algo = Simon([0, 2, 2, 0])
-    assert simon_algo.n_qubits == 2
-    assert simon_algo.n_ancillas == 2
-    assert simon_algo.log_qubits == [0, 1]
-    assert simon_algo.ancillas == [2, 3]
+    simon_algo = Simon()
 
     with patch("pyquil.api.SyncConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.return_value = [[1, 1], [0, 1]]
 
-    mask_string, n_iter, simon_program = simon_algo.find_mask(qvm)
+    mask_string, n_iter, simon_program = simon_algo.find_mask(qvm, [0, 2, 2, 0])
+
+    assert simon_algo.n_qubits == 2
+    assert simon_algo.n_ancillas == 2
+    assert simon_algo.log_qubits == [0, 1]
+    assert simon_algo.ancillas == [2, 3]
+
     assert mask_string == '11'
     assert n_iter == 1
 
@@ -56,13 +58,20 @@ def test_simon_class():
 
 
 def test_unitary_function_return():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     actual_return = simon_algo._construct_unitary_matrix([0, 2, 2, 0])
     np.testing.assert_equal(actual_return, expected_return)
 
 
 def test_oracle_program():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
+
+    simon_algo.n_qubits = 2
+    simon_algo.n_ancillas = 2
+    simon_algo.log_qubits = [0, 1]
+    simon_algo.ancillas = [2, 3]
+    simon_algo.unitary_function_mapping = expected_return
+
     actual_prog = simon_algo._construct_oracle()
     expected_prog = Program()
     expected_prog.defgate("FUNCT", expected_return)
@@ -75,8 +84,14 @@ def test_oracle_program():
 
 
 def test_check_two_to_one():
-    simon_algo = Simon([0, 2, 2, 0])
-    func = simon_algo._construct_unitary_matrix([0, 2, 2, 0])
+    simon_algo = Simon()
+
+    simon_algo.n_qubits = 2
+    simon_algo.n_ancillas = 2
+    simon_algo.log_qubits = [0, 1]
+    simon_algo.ancillas = [2, 3]
+    simon_algo.unitary_function_mapping = expected_return
+
     orc_func = simon_algo._construct_oracle()
 
     with patch("pyquil.api.SyncConnection") as qvm:
@@ -86,7 +101,7 @@ def test_check_two_to_one():
 
 
 def test_no_substitution():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 0, 1, 0, 0],
                   [0, 1, 0, 0, 0],
                   [0, 0, 0, 1, 0]])
@@ -102,7 +117,7 @@ def test_no_substitution():
 
 
 def test_insert_directly():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 1, 0, 0, 0],
                   [0, 1, 0, 1, 0]])
     z = np.array([0, 0, 1, 0, 1])
@@ -116,7 +131,7 @@ def test_insert_directly():
 
 
 def test_insert_after_xor():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 0, 0, 0, 0, 0],
                   [0, 1, 1, 0, 0, 0]])
 
@@ -131,7 +146,7 @@ def test_insert_after_xor():
 
 
 def test_add_row_at_top():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[0, 1, 0, 1, 0],
                   [0, 0, 1, 0, 0],
                   [0, 0, 0, 1, 1],
@@ -150,7 +165,7 @@ def test_add_row_at_top():
 
 
 def test_add_row_at_bottom():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 0, 0, 0],
                   [0, 1, 0, 1],
                   [0, 0, 1, 0]])
@@ -167,7 +182,7 @@ def test_add_row_at_bottom():
 
 
 def test_add_row_in_middle():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 1, 0, 0, 0],
                   [0, 0, 1, 0, 1],
                   [0, 0, 0, 1, 0],
@@ -186,7 +201,7 @@ def test_add_row_in_middle():
 
 
 def test_one_at_top():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 1, 0, 0, 0],
                   [0, 1, 0, 0, 0],
                   [0, 0, 1, 0, 1],
@@ -203,7 +218,7 @@ def test_one_at_top():
 
 
 def test_one_at_bottom():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 0, 0, 0],
                   [0, 1, 0, 1],
                   [0, 0, 1, 0],
@@ -219,7 +234,7 @@ def test_one_at_bottom():
 
 
 def test_one_at_middle():
-    simon_algo = Simon([0, 2, 2, 0])
+    simon_algo = Simon()
     W = np.array([[1, 1, 0, 0, 0],
                   [0, 1, 0, 0, 0],
                   [0, 0, 1, 0, 1],
