@@ -39,6 +39,7 @@ class Simon(object):
     simon_circuit = None
     oracle_circuit = None
     _dict_of_linearly_indep_bit_vectors = {}
+    mask_array = None
 
     def _construct_unitary_matrix(self, mappings):
         """
@@ -225,35 +226,55 @@ class Simon(object):
         """
         self._init_attr(bitstring_map)
 
-        # Generate n-1 linearly independent vectors
-        # that will be orthonormal to the mask mask_array
-        # Done so by running the quantum program repeatedly
-        # and building up a dictionary of linearly independent bit-vectors
+        iterations = self._sample_independent_bit_vectors(cxn)
+        mask_string = self._invert_mask_equation()
+
+        return mask_string, iterations, self.simon_circuit
+
+    def _sample_independent_bit_vectors(self, cxn):
+        """This method samples n-1 linearly independent vectors that will be orthonormal to the mask
+        encoded in the Simon Circuit.
+        This is achieved by repeatedly running the circuit and building up a dictionary of linearly
+        independent bit-vectors. The key is the provenance of the vector so we can guarantee that
+        the resulting matrix is invertible due to the guarantees of an Upper Triangular Matrix
+
+        :param cxn: Connection object to the Quantum Engine (QVM, QPU)
+        :return: None
+        """
         iterations = 0
-        # build echelon-array
         while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
             z = np.array(cxn.run_and_measure(self.simon_circuit, self.log_qubits)[0], dtype=int)
             self._add_to_dict_of_indep_bit_vectors(z)
             iterations += 1
 
-        # The sampling guarantees that there are n-1 linearly independent vectors
-        # based on their provenance. This means there is exactly one missing provenance value.
-        # We will augment the collection of independent vectors accordingly
+        return iterations
+
+    def _invert_mask_equation(self):
+        """The sampling guarantees that there are n-1 linearly independent vectors based on their
+        most significant bit (provenance). This implicates that there is exactly one missing
+        provenance value in the sample of independent bit-vectors.
+
+        To reconstruct the mask we find this missing provenance and add a unit-bit-vector :math:`a`
+        with the missing provenance to the set of linearly independent bit-vectors. Then we can
+        find the mask :math:`\mathbf{m}` by solving the equation
+
+            :math:`\\mathbf{\\mathit{W}}\\mathbf{m}=\\mathbf{a}`
+        """
         missing_prov = self._add_missing_provenance_vector()
-        echelon_matrix = np.asarray([tup[1] for tup in
-                                     sorted(zip(self._dict_of_linearly_indep_bit_vectors.keys(),
-                                                self._dict_of_linearly_indep_bit_vectors.values()),
-                                            key=lambda x: x[0])])
+        upper_triangular_matrix = np.asarray(
+            [tup[1] for tup in sorted(zip(self._dict_of_linearly_indep_bit_vectors.keys(),
+                                          self._dict_of_linearly_indep_bit_vectors.values()),
+                                      key=lambda x: x[0])])
 
-        mask_array = np.zeros(shape=(self.n_qubits,), dtype=int)
-        # inserted row is chosen not be orthogonal to mask_array
-        mask_array[missing_prov] = 1
+        provenance_unit = np.zeros(shape=(self.n_qubits,), dtype=int)
+        provenance_unit[missing_prov] = 1
 
-        mask_array = self.binary_back_substitute(echelon_matrix, mask_array)
+        # solve matrix equation
+        self.mask_array = [int(np.abs(x)) for x in
+                      np.dot(np.linalg.inv(upper_triangular_matrix), provenance_unit)]
 
-        mask_string = ''.join(str(x) for x in mask_array)
-
-        return mask_string, iterations, self.simon_circuit
+        mask_string = ''.join(str(x) for x in self.mask_array)
+        return mask_string
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """
@@ -295,7 +316,6 @@ class Simon(object):
         self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec
         return missing_prov
 
-
     def check_two_to_one(self, cxn, s):
         """
         Check if the oracle is one-to-one or two-to-one. The oracle is known
@@ -321,32 +341,6 @@ class Simon(object):
         mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
 
         return zero_value == mask_value
-
-    def binary_back_substitute(self, W, s):
-        """
-        Perform back substitution on a binary system of equations.
-
-        Finds the :math:`\\mathbf{x}` such that
-        :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
-        where all arithmetic is taken bitwise and modulo 2.
-
-        :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
-                  in row-echelon form
-        :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
-        :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
-                 system of equations.
-        :rtype: 1darray
-        """
-        # iterate backwards, starting from second to last row for back-substitution
-        s_copy = np.array(s)
-        n = len(s)
-        for row_num in range(n - 2, -1, -1):
-            row = W[row_num]
-            for col_num in range(row_num + 1, n):
-                if row[col_num] == 1:
-                    s_copy[row_num] = (s_copy[row_num] + s_copy[col_num]) % 2
-
-        return s_copy
 
 
 if __name__ == "__main__":
