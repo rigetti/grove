@@ -20,7 +20,7 @@ import pytest
 from pyquil.gates import *
 
 from grove.alpha.amplification.amplification import amplify, n_qubit_control, diffusion_operator
-from grove.pyqaoa.utils import compare_progs
+from grove.pyquil_utilities import prog_equality
 
 # Normal operation
 
@@ -74,7 +74,7 @@ def test_amplify():
         qubits) + A + cz_gate + A.dagger() + diffusion_operator(qubits) + A
     created = amplify(A, cz_gate, qubits, iters)
 
-    compare_progs(desired, created)
+    prog_equality(desired, created)
 
 
 def test_amplify_init():
@@ -84,9 +84,9 @@ def test_amplify_init():
     # Essentially Grover's to select 011 or 111
     desired = cz_gate + A.dagger() + diffusion_operator(
         qubits) + A + cz_gate + A.dagger() + diffusion_operator(qubits) + A
-    created = amplify(A, cz_gate, qubits, iters, init=False)
+    created = amplify(A, cz_gate, qubits, iters)
 
-    compare_progs(desired, created)
+    prog_equality(desired, created)
 
 
 # Edge Cases
@@ -112,7 +112,7 @@ def test_edge_case_oracle_none():
     Checks that U_w cannot be None
     """
     with pytest.raises(ValueError):
-        amplify(A, qubits, iters)
+        amplify(A, None, qubits, iters)
 
 
 def test_edge_case_qubits_empty():
@@ -140,15 +140,6 @@ def test_n_qubit_control_unitary_none():
     """
     with pytest.raises(ValueError):
         n_qubit_control([0, 1, 2], 3, "not an array", "BAD")
-
-
-def test_n_qubit_control_controls_none():
-    """
-    Checks that the n qubit control object needs a
-    list of control qubits
-    """
-    with pytest.raises(ValueError):
-        n_qubit_control([], 3, np.array([[1, 0], [0, 1]]), "IDENT")
 
 
 def test_n_qubit_control_target_none():

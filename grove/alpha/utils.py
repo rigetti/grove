@@ -3,38 +3,61 @@
 
 from scipy.linalg import sqrtm
 import numpy as np
+from collections import Sequence
 
 from pyquil.gates import STANDARD_GATES
 import pyquil.quil as pq
+from pyquil.quilbase import Qubit
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
 
-def n_qubit_control(controls, target, u, gate_name):
+def is_valid_qubits(qubits):
+    """Checks that qubits is a valid list of qubit-like objects.
+
+    :param Sequence qubits: Sequence of qubit-like objects (ints or Qubits).
+    :return: True if qubits is a valid Sequence of qubits, False otherwise.
+    :rtype: bool
     """
-    Returns a controlled u gate with n-1 controls.
+    if isinstance(qubits, Sequence):
+        for qubit in qubits:
+            if not isinstance(qubit, (Qubit, int)):
+                return False
+            if isinstance(qubit, int):
+                if qubit < 0:
+                    return False
+    return True
+
+
+def n_qubit_control(control_qubits, target, operation, gate_name):
+    """
+    Returns a controlled u gate with n-1 control_qubits.
     Useful for constructing oracles.
 
     Uses a number of gates quadratic in the number of qubits,
-    and defines a linear number of new gates. (Roots and adjoints of u.)
-
+    and defines a linear number of new gates. (Roots and adjoints of unitary.)
     See arXiv:quant-ph/9503016 for more information.
 
-    :param controls: The indices of the qubits to condition the gate on.
-    :param target: The index of the target of the gate.
-    :param u: The unitary gate to be controlled, given as a numpy array.
-    :param gate_name: The name of the gate u.
+    :param list control_qubits: The indices of the qubits to condition the gate on.
+    :param int target: The index of the target of the gate.
+    :param numpy.ndarray operation: The unitary gate to be controlled, given as a numpy array.
+    :param str gate_name: The name of the gate target.
     :return: The controlled gate.
     """
-    assert isinstance(u, np.ndarray), "The unitary 'u' must be a numpy array"
-    assert len(controls) > 0, "The control qubits list must not be empty"
-    assert isinstance(target, int) and target > 0, \
-        "The target index must be an integer greater than 0"
-    assert len(gate_name) > 0, "Gate name must have length greater than one"
+    if (not isinstance(operation, np.ndarray)
+        or len(operation.shape) != 2
+        or operation.shape[0] != operation.shape[1]):
+        raise ValueError("operation must be a square 2D numpy array")
+    if not is_valid_qubits(control_qubits) or len(control_qubits) < 0:
+        raise ValueError(
+            "controls must be a non-empty Sequence of Qubits, or non-negative integers.")
+    if not is_valid_qubits([target]):
+        raise ValueError("The target must be a Qubit or non-negative integer.")
+    if not isinstance(gate_name, str) or len(gate_name) == 0:
+        raise ValueError("gate_name must be a non-empty string.")
 
-    def controlled_program_builder(controls, target, target_gate_name,
-                                   target_gate,
-                                   defined_gates=set(STANDARD_GATE_NAMES)):
+    def controlled_program_builder(control_qubits, target, target_gate_name,
+                                   target_gate, defined_gates=set(STANDARD_GATE_NAMES)):
         zero_projection = np.array([[1, 0], [0, 0]])
         one_projection = np.array([[0, 0], [0, 1]])
 
@@ -52,12 +75,16 @@ def n_qubit_control(controls, target, u, gate_name):
 
         # Initialize program and populate with gate information
         p = pq.Program()
+        if len(control_qubits) == 0:
+            p.defgate(target_gate_name, target_gate)
+            p.inst((target_gate_name, target))
+            return p, set()
 
-        if len(controls) == 1:
+        if len(control_qubits) == 1:
             if "C" + target_gate_name not in defined_gates:
                 p.defgate("C" + target_gate_name, controlled_gate)
                 defined_gates.add("C" + target_gate_name)
-            p.inst(("C" + target_gate_name, controls[0], target))
+            p.inst(("C" + target_gate_name, control_qubits[0], target))
 
         else:
             for gate_name, gate in ((sqrt_name, controlled_root_gate),
@@ -66,25 +93,25 @@ def n_qubit_control(controls, target, u, gate_name):
                 if "C" + gate_name not in defined_gates:
                     p.defgate("C" + gate_name, gate)
                     defined_gates.add("C" + gate_name)
-            p.inst(("C" + sqrt_name, controls[-1], target))
+            p.inst(("C" + sqrt_name, control_qubits[-1], target))
             many_toff, new_defined_gates = controlled_program_builder(
-                controls[:-1], controls[-1], 'NOT', np.array([[0, 1], [1, 0]]),
+                control_qubits[:-1], control_qubits[-1], 'NOT', np.array([[0, 1], [1, 0]]),
                 set(defined_gates))
             p += many_toff
             defined_gates.union(new_defined_gates)
 
-            p.inst(("C" + adj_sqrt_name, controls[-1], target))
+            p.inst(("C" + adj_sqrt_name, control_qubits[-1], target))
 
             # Don't redefine all of the gates.
             many_toff.defined_gates = []
             p += many_toff
             many_root_toff, new_defined_gates = controlled_program_builder(
-                controls[:-1], target, sqrt_name, sqrtm(target_gate),
+                control_qubits[:-1], target, sqrt_name, sqrtm(target_gate),
                 set(defined_gates))
             p += many_root_toff
             defined_gates.union(new_defined_gates)
 
         return p, defined_gates
 
-    p = controlled_program_builder(controls, target, gate_name, u)[0]
+    p = controlled_program_builder(control_qubits, target, gate_name, operation)[0]
     return p

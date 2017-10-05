@@ -25,6 +25,7 @@ import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
 from grove.alpha.utils import n_qubit_control
+from grove.alpha.utils import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
@@ -60,10 +61,10 @@ def amplify(algorithm, oracle, qubits, num_iter):
 
 
 def diffusion_operator(qubits):
-    """Constructs the diffusion operator on qubits, assuming they are ordered from
-    most significant qubit to least significant qubit.
+    """Constructs the diffusion operator in the Hadamard basis on qubits,
+    assuming they are ordered from most significant qubit to least significant qubit.
 
-    The diffusion operator is the diagonal operator given by (1, -1, -1, ..., -1).
+    This is the diagonal operator given by (1, -1, -1, ..., -1).
 
     See arXiv:quant-ph/0301079 for more information.
 
@@ -72,7 +73,8 @@ def diffusion_operator(qubits):
                    |qubits[0], ..., qubits[-1]>.
     """
 
-    assert len(qubits) > 0, "The diffusion operator must take in a non-empty list of qubits"
+    if not is_valid_qubits(qubits) or len(qubits) == 0:
+        raise ValueError("qubits must be a non-empty Sequence of qubits.")
 
     p = pq.Program()
 
@@ -82,8 +84,7 @@ def diffusion_operator(qubits):
         p.inst(list(map(X, qubits)))
         p.inst(H(qubits[-1]))
         p.inst(RZ(-np.pi)(qubits[0]))
-        p += n_qubit_control(qubits[:-1], qubits[-1],
-                             np.array([[0, 1], [1, 0]]), "NOT")
+        p += n_qubit_control(qubits[:-1], qubits[-1], np.array([[0, 1], [1, 0]]), "NOT")
         p.inst(RZ(-np.pi)(qubits[0]))
         p.inst(H(qubits[-1]))
         p.inst(list(map(X, qubits)))

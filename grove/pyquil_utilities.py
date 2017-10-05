@@ -48,6 +48,7 @@ def synthesize_programs(*progs):
                     equiv_classes[i] = set(equiv_class).union(other_equiv_class)
                     equiv_classes.remove(other_equiv_class)
                     repeat = True
+
     for equiv_class in equiv_classes:
         rm = ResourceManager()
         for prog in equiv_class:
