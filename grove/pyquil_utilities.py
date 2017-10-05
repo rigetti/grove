@@ -1,6 +1,8 @@
 """Module containing utilities that will eventually be implemented in pyquil."""
 
-from pyquil.quilbase import ACTION_INSTANTIATE_QUBIT
+from pyquil.quilbase import (ACTION_INSTANTIATE_QUBIT,
+                             ACTION_INSTALL_INSTRUCTION,
+                             ACTION_RELEASE_QUBIT)
 from pyquil.quilbase import Gate, Qubit
 from pyquil.resource_manager import merge_resource_managers, ResourceManager
 
@@ -13,6 +15,20 @@ def prog_equality(prog1, prog2):
     """
     return prog1.out() == prog2.out()
 
+
+def non_action_insts(prog):
+    """Returns quantum gates, and classical control flow of the program, ignoring qubit allocation,
+     and qubit release.
+
+    :param prog: The program to return instructions for.
+    :return: The length of the program, ignoring the irrelevant actions.
+    :rtype: list
+    """
+    insts = []
+    for action in prog:
+        if action[0] not in (ACTION_INSTANTIATE_QUBIT, ACTION_RELEASE_QUBIT):
+            insts.append(action)
+    return insts
 
 def synthesize_programs(*progs):
     """Synthesizes programs together, paying attention to shared qubits. This breaks if synthesize

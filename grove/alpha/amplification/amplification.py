@@ -24,8 +24,8 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
-from grove.alpha.utils import n_qubit_control
-from grove.alpha.utils import is_valid_qubits
+from grove.alpha.utility_programs import n_qubit_control
+from grove.alpha.utility_programs import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
@@ -37,18 +37,18 @@ def amplify(algorithm, oracle, qubits, num_iter):
 
     :param Program algorithm: A program representing a measurement-less algorithm run on qubits.
     :param Program oracle: An oracle maps any basis vector to either |0> or |1>.
-    :param qubits: the qubits to operate on
-    :param num_iter: number of iterations of amplifications to run
+    :param Sequence qubits: the qubits to operate on
+    :param int num_iter: number of iterations of amplifications to run
     :return: The amplified algorithm.
     :rtype: Program
     """
     if not isinstance(algorithm, pq.Program):
-        raise ValueError("A must be a valid Program instance")
+        raise ValueError("algorithm must be a valid Program instance")
     if not isinstance(oracle, pq.Program):
-        raise ValueError("U_w must be a valid Program instance")
+        raise ValueError("oracle must be a valid Program instance")
     if num_iter <= 0:
-        raise ValueError("num_iter must be greater than 0")
-    if len(qubits) <= 0:
+        raise ValueError("num_iter must be greater than zero")
+    if not is_valid_qubits(qubits) or len(qubits) <= 0:
         raise ValueError("The list of qubits to apply the diffusion operator to must be non-empty")
 
     prog = pq.Program()

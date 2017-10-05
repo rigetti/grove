@@ -26,7 +26,7 @@ def grover(oracle, qubits, num_iter=None):
     :rtype: Program
     """
     if len(qubits) < 1:
-        raise ValueError("Grover's Algorithm requires at least 1 qubit.")
+        raise ValueError("Grover's Algorithm requires at least one qubit.")
     if not all((isinstance(qubit, (int, Qubit)) for qubit in qubits)):
         raise ValueError("qubits should be a list of qubits or non-negative integers.")
     if num_iter is None:
