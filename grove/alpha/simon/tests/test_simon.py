@@ -49,7 +49,7 @@ def test_simon_class():
         '11': '01'
     }
 
-    n_iter, mask, is_2to1 = simon_algo.find_mask(qvm, bit_string_mapping)
+    n_iter, mask = simon_algo.find_mask(qvm, bit_string_mapping)
 
     assert simon_algo.n_qubits == 2
     assert simon_algo.n_ancillas == 2
@@ -58,8 +58,6 @@ def test_simon_class():
 
     assert mask == [1, 0]
     assert n_iter == 1
-    assert is_2to1
-
     assert simon_algo.simon_circuit.__str__() == _create_expected_program().__str__()
 
 
@@ -111,23 +109,6 @@ def test_oracle_program():
     expected_prog.inst("CNOT 1 3")
     expected_prog.inst("FUNCT-INV 0 1")
     assert expected_prog.__str__() == actual_prog.__str__()
-
-
-def test_check_two_to_one():
-    simon_algo = Simon()
-
-    simon_algo.n_qubits = 2
-    simon_algo.n_ancillas = 2
-    simon_algo.log_qubits = [0, 1]
-    simon_algo.ancillas = [2, 3]
-    simon_algo.unitary_function_mapping = expected_return
-    simon_algo.oracle_circuit = simon_algo._construct_oracle()
-    simon_algo.mask = [1, 1]
-
-    with patch("pyquil.api.SyncConnection") as qvm:
-        # Need to mock multiple returns as an iterable
-        qvm.run_and_measure.return_value = [[1, 1], [0, 1]]
-    assert simon_algo.check_two_to_one(qvm)
 
 
 def test_no_substitution():

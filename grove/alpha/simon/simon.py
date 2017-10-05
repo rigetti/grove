@@ -25,9 +25,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import CNOT, H, X
 import grove.alpha.simon.utils as u
-from collections import defaultdict, Counter
-
-import warnings
+from collections import Counter
 
 
 def create_periodic_1to1_bitmap(mask):
@@ -57,7 +55,8 @@ class Simon(object):
         self.found_mask = False
         self.iterations = None
 
-    def _construct_unitary_matrix(self, mappings):
+    @staticmethod
+    def _construct_unitary_matrix(mappings):
         """
         Creates a unitary transformation that maps each state
         to the values specified in mappings.
@@ -73,14 +72,13 @@ class Simon(object):
                                    representations.
                                    For example, the following mapping:
 
-                                   - :math:`00 \\rightarrow 00`
-                                   - :math:`01 \\rightarrow 10`
-                                   - :math:`10 \\rightarrow 10`
-                                   - :math:`11 \\rightarrow 00`
+                                   - :math:`00 \\rightarrow 10`
+                                   - :math:`01 \\rightarrow 11`
+                                   - :math:`10 \\rightarrow 00`
+                                   - :math:`11 \\rightarrow 01`
 
-                                   Would be represented as :math:`[0, 2, 2, 0]`.
-                                   Requires mappings to be either one-to-one,
-                                   or two-to-one with unique mask :math:`s`,
+                                   Would be represented as :math:`[2, 3, 0, 1]`.
+                                   Requires mappings to be a one-to-one unique mask :math:`s`,
                                    as specified in Simon's problem.
         :return: Matrix representing specified unitary transformation.
         :rtype: numpy array
@@ -88,10 +86,10 @@ class Simon(object):
         if len(mappings) < 2:
             raise ValueError("function domain must be at least one bit (size 2)")
 
-        n_bits = len(mappings).bit_length() - 1
-
-        if len(mappings) != 2 ** n_bits:
+        if not u.is_power2(len(mappings)):
             raise ValueError("mappings must have a length that is a power of two")
+
+        n_bits = len(mappings).bit_length() - 1
 
         # check validity of mapping
         c = Counter(mappings)
@@ -102,12 +100,11 @@ class Simon(object):
                              + np.binary_repr(most_common_map[0], n_bits))
 
         unitary_funct = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
-
         for idx, val in enumerate(mappings):
             # TODO: 2-to-1 mask lifting.
             unitary_funct[val, idx] = 1
 
-        return unitary_funct[0:2 ** n_bits, 0:2 ** n_bits]
+        return unitary_funct
 
     def _construct_oracle(self, gate_name='FUNCT'):
         """
@@ -186,9 +183,9 @@ class Simon(object):
     def _init_attr(self, bitstring_map):
         """Acts instead of __init__ method to instantiate the necessary Simon Object state."""
         self.bit_map = bitstring_map
+        self.n_qubits = len(list(bitstring_map.keys())[0])
         self.unitary_function_mapping = \
             self._construct_unitary_matrix(u.mapping_dict_to_list(bitstring_map))
-        self.n_qubits = len(list(bitstring_map.keys())[0])
         self.n_ancillas = self.n_qubits
         self._qubits = list(range(self.n_qubits + self.n_ancillas))
         self.log_qubits = self._qubits[:self.n_qubits]
@@ -210,8 +207,7 @@ class Simon(object):
         :param Program oracle: the oracle to query;
                        emulates a classical :math:`f(x)` function as a blackbox.
         :param list(int) qubits: the input qubits
-        :return: Tuple[Int, List, Bool] representing the number of iterations, the bit mask and
-        True if mask is two-to-one or False if mask is one-to-one
+        :return: Tuple[Int, List] representing the number of iterations, and the bit mask
         """
         if not isinstance(bitstring_map, dict):
             raise ValueError("Bitstring map needs to be a map from bitstring to bitstring")
@@ -228,7 +224,7 @@ class Simon(object):
             self._check_mask()
             self.iterations += 1
 
-        return self.iterations, self.mask, self.check_two_to_one(cxn)
+        return self.iterations, self.mask
 
     def _sample_independent_bit_vectors(self, cxn):
         """This method samples n-1 linearly independent vectors that will be orthonormal to the mask
@@ -308,33 +304,12 @@ class Simon(object):
                 missing_prov = idx
 
         if missing_prov is None:
-            warnings.WarningMessage("Expected a missing provenance, but didn't find one. "
-                                    "Trying to continue")
+            raise ValueError("Expected a missing provenance, but didn't find one.")
 
         augment_vec = np.zeros(shape=(self.n_qubits,))
         augment_vec[missing_prov] = 1
-        self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec
+        self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec.astype(int).tolist()
         return missing_prov
-
-    def check_two_to_one(self, cxn,):
-        """
-        Check if the oracle is one-to-one or two-to-one. The oracle is known
-        to represent either a one-to-one function, or a two-to-one function
-        with mask :math:`s`.
-
-        :param JobConnection cxn: the connection used to run programs
-        :return: true if and only if the oracle represents a function
-                 that is two-to-one with mask :math:`s`
-        :rtype: bool
-        """
-        zero_program = self.oracle_circuit
-        mask_program = pq.Program([X(i) for i in self.mask if i == 1]) + \
-                       self.oracle_circuit
-
-        zero_value = cxn.run_and_measure(zero_program, self.ancillas)[0]
-        mask_value = cxn.run_and_measure(mask_program, self.ancillas)[0]
-
-        return zero_value == mask_value
 
     def _check_mask(self):
         mask_str = ''.join([str(b) for b in self.mask])
