@@ -40,6 +40,7 @@ def amplify(algorithm, oracle, qubits, num_iter):
     :param qubits: the qubits to operate on
     :param num_iter: number of iterations of amplifications to run
     :return: The amplified algorithm.
+    :rtype: Program
     """
     if not isinstance(algorithm, pq.Program):
         raise ValueError("A must be a valid Program instance")

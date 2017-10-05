@@ -88,8 +88,35 @@ def test_x_oracle_two_grover(x_oracle):
     assert prog_equality(generated_x_oracle_grover, x_oracle_grover)
 
 
+def test_optimal_grover(x_oracle):
+    """Testing that Grover's algorithm with an oracle that applies an X gate to the query bit works,
+     and defaults to the optimal number of iterations."""
+    grover_precircuit = Program()
+    qubit0 = grover_precircuit.alloc()
+    qubits = [qubit0]
+    oracle, query_qubit = x_oracle
+    with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
+        mock_alloc.return_value = qubit0
+        generated_one_iter_grover = grover(oracle, qubits)
+    # First we put the input into uniform superposition.
+    grover_precircuit.inst(H(qubit0))
+    # We only do one iteration, which is the result of rounding pi * sqrt(N)/4
+    iter = Program()
+
+    # An oracle is applied.
+    iter.inst(X(query_qubit))
+    # We now apply the diffusion operator.
+    iter.inst(H(qubit0))
+    iter.inst(Z(qubit0))
+    iter.inst(H(qubit0))
+    one_iter_grover = grover_precircuit + iter
+    synthesize_programs(generated_one_iter_grover, one_iter_grover)
+    assert prog_equality(generated_one_iter_grover, one_iter_grover)
+
+
 def test_grover_bad_input():
     with pytest.raises(ValueError):
         _ = grover(identity_oracle, [], 2)
     with pytest.raises(ValueError):
         _ = grover(identity_oracle, ["foo"], 2)
+
