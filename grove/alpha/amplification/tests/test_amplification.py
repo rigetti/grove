@@ -26,7 +26,6 @@ from grove.pyqaoa.utils import compare_progs
 
 # Setup some variables to reuse
 A = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
-A_inv = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
 cz_gate = n_qubit_control([1], 2, np.array([[1, 0], [0, -1]]), "CZ")
 oracle = pq.Program().inst()
 qubits = [0, 1, 2]
@@ -71,9 +70,9 @@ def test_amplify():
     """
 
     # Essentially Grover's to select 011 or 111
-    desired = A + cz_gate + A_inv + diffusion_operator(
-        qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
-    created = amplify(A, A_inv, cz_gate, qubits, iters)
+    desired = A + cz_gate + A.dagger() + diffusion_operator(
+        qubits) + A + cz_gate + A.dagger() + diffusion_operator(qubits) + A
+    created = amplify(A, cz_gate, qubits, iters)
 
     compare_progs(desired, created)
 
@@ -83,9 +82,9 @@ def test_amplify_init():
     Test the usage of amplify without init
     """
     # Essentially Grover's to select 011 or 111
-    desired = cz_gate + A_inv + diffusion_operator(
-        qubits) + A + cz_gate + A_inv + diffusion_operator(qubits) + A
-    created = amplify(A, A_inv, cz_gate, qubits, iters, init=False)
+    desired = cz_gate + A.dagger() + diffusion_operator(
+        qubits) + A + cz_gate + A.dagger() + diffusion_operator(qubits) + A
+    created = amplify(A, cz_gate, qubits, iters, init=False)
 
     compare_progs(desired, created)
 
@@ -96,32 +95,24 @@ def test_edge_case_amplify_0_iters():
     """
     Checks that the number of iterations needed to be greater than 0
     """
-    with pytest.raises(AssertionError):
-        amplify(A, A_inv, oracle, qubits, 0)
+    with pytest.raises(ValueError):
+        amplify(A, oracle, qubits, 0)
 
 
 def test_edge_case_A_none():
     """
     Checks that A cannot be None
     """
-    with pytest.raises(AssertionError):
-        amplify(None, A_inv, oracle, qubits, iters)
-
-
-def test_edge_case_A_inv_none():
-    """
-    Checks that A_inv cannot be None
-    """
-    with pytest.raises(AssertionError):
-        amplify(A, None, oracle, qubits, iters)
+    with pytest.raises(ValueError):
+        amplify(None, oracle, qubits, iters)
 
 
 def test_edge_case_oracle_none():
     """
     Checks that U_w cannot be None
     """
-    with pytest.raises(AssertionError):
-        amplify(A, A_inv, None, qubits, iters)
+    with pytest.raises(ValueError):
+        amplify(A, qubits, iters)
 
 
 def test_edge_case_qubits_empty():
@@ -129,8 +120,8 @@ def test_edge_case_qubits_empty():
     Checks that the list of qubits to apply the grover
     diffusion operator to must be non-empty
     """
-    with pytest.raises(AssertionError):
-        amplify(A, A_inv, oracle, [], iters)
+    with pytest.raises(ValueError):
+        amplify(A, oracle, [], iters)
 
 
 def test_diffusion_operator_empty():
@@ -138,7 +129,7 @@ def test_diffusion_operator_empty():
     Checks that the list of qubits to apply the grover
     diffusion operator to must be non-empty
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         diffusion_operator([])
 
 
@@ -147,7 +138,7 @@ def test_n_qubit_control_unitary_none():
     Checks that the n qubit control object needs a
     unitary as a numpy matrix
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         n_qubit_control([0, 1, 2], 3, "not an array", "BAD")
 
 
@@ -156,7 +147,7 @@ def test_n_qubit_control_controls_none():
     Checks that the n qubit control object needs a
     list of control qubits
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         n_qubit_control([], 3, np.array([[1, 0], [0, 1]]), "IDENT")
 
 
@@ -165,7 +156,7 @@ def test_n_qubit_control_target_none():
     Checks that the n qubit control object needs a
     list of control qubits
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         n_qubit_control([0, 1, 2], -1, np.array([[1, 0], [0, 1]]), "IDENT")
 
 
@@ -174,5 +165,5 @@ def test_n_qubit_control_name_bad():
     Checks that the n qubit control object needs a
     list of control qubits
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         n_qubit_control([0, 1, 2], 4, np.array([[1, 0], [0, 1]]), "")

@@ -20,9 +20,8 @@ def grover(oracle, qubits, num_iter=None):
     :param qubits: List of qubits for Grover's Algorithm.
     :type qubits: list[int or Qubit]
     :param int num_iter: The number of iterations to repeat the algorithm for.
-                         The default is the integer closest to
-                         :math:`\\frac{\\pi}{4}\sqrt{N}`, where :math:`N` is
-                         the size of the domain.
+                         The default is the integer closest to :math:`\\frac{\\pi}{4}\sqrt{N}`,
+                         where :math:`N` is the size of the domain.
     :return: A program corresponding to the desired instance of Grover's Algorithm.
     :rtype: Program
     """
@@ -33,7 +32,6 @@ def grover(oracle, qubits, num_iter=None):
     if num_iter is None:
         num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
 
-    many_hadamard = pq.Program().inst(list(map(H, qubits)))
-    amp_prog = amp.amplify(many_hadamard, many_hadamard,
-                           oracle, qubits, num_iter)
+    uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
+    amp_prog = amp.amplify(uniform_superimposer, oracle, qubits, num_iter)
     return amp_prog

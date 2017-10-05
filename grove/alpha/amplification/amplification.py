@@ -14,64 +14,56 @@
 #    limitations under the License.
 ##############################################################################
 
-"""Module for amplitude amplification, for use in algorithms such as Grover's
-algorithm.
+"""Module for amplitude amplification, for use in algorithms such as Grover's algorithm.
 
 For more information, see arXiv:quant-ph/0005055.
 """
 
 import numpy as np
+
 import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
+
 from grove.alpha.utils import n_qubit_control
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
 
-def amplify(A, A_inv, U_w, qubits, num_iter, init=True):
+def amplify(algorithm, oracle, qubits, num_iter):
     """
-    Returns a program that does n rounds of amplification,
-    given a measurement-less algorithm A, an oracle U_w,
-    and a list of qubits to operate on.
+    Returns a program that does n rounds of amplification, given a measurement-less algorithm,
+    an oracle, and a list of qubits to operate on.
 
-    :param A: a program representing a measurement-less algorithm run on qubits
-    :param A_inv: a program representing the inverse algorithm of A.
-                  This can be done using the Program
-                  object's adjoint() method
-    :param U_w: an oracle maps any basis vector to either |0> or |1>
+    :param Program algorithm: A program representing a measurement-less algorithm run on qubits.
+    :param Program oracle: An oracle maps any basis vector to either |0> or |1>.
     :param qubits: the qubits to operate on
     :param num_iter: number of iterations of amplifications to run
-    :param init: a boolean flag that is set to True if and only if A
-                 is to be applied initially on the input qubits.
-                 By default, it is set to True.
-    :return:
+    :return: The amplified algorithm.
     """
-    if not isinstance(A, pq.Program):
+    if not isinstance(algorithm, pq.Program):
         raise ValueError("A must be a valid Program instance")
-    if not isinstance(A_inv, pq.Program):
-        raise ValueError("A_inv must be a valid Program instance")
-    if not isinstance(U_w, pq.Program):
+    if not isinstance(oracle, pq.Program):
         raise ValueError("U_w must be a valid Program instance")
-    assert num_iter > 0, \
-        "The number of iterations must be greater than 0"
-    assert len(qubits) > 0, \
-        "The list of qubits to apply the diffusion " \
-        "operator to must be non-empty"
+    if num_iter <= 0:
+        raise ValueError("num_iter must be greater than 0")
+    if len(qubits) <= 0:
+        raise ValueError("The list of qubits to apply the diffusion operator to must be non-empty")
 
-    p = A if init else pq.Program()
+    prog = pq.Program()
+
+    uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
+    prog += uniform_superimposer
 
     for _ in range(num_iter):
-        # A (2|0><0| - I) A^-1 (I - 2|w><w|) n times
-        p += U_w + A_inv + diffusion_operator(qubits) + A
-    return p
+        prog += oracle + algorithm.dagger() + diffusion_operator(qubits) + algorithm
+    return prog
 
 
 def diffusion_operator(qubits):
     """Constructs the diffusion operator on qubits, assuming they are ordered from
     most significant qubit to least significant qubit.
 
-    The diffusion operator is the diagonal operator given
-    by (1, -1, -1, ..., -1).
+    The diffusion operator is the diagonal operator given by (1, -1, -1, ..., -1).
 
     See arXiv:quant-ph/0301079 for more information.
 
@@ -85,10 +77,7 @@ def diffusion_operator(qubits):
     p = pq.Program()
 
     if len(qubits) == 1:
-        p.inst(H(qubits[0]))
         p.inst(Z(qubits[0]))
-        p.inst(H(qubits[0]))
-
     else:
         p.inst(list(map(X, qubits)))
         p.inst(H(qubits[-1]))

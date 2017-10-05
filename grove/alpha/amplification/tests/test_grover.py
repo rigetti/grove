@@ -31,14 +31,10 @@ def test_trivial_grover():
     qubit0 = trivial_grover.alloc()
     # First we put the input into uniform superposition.
     trivial_grover.inst(H(qubit0))
-    # No oracle is applied, so we just apply the diffusion operator. We first do a change of basis.
-    trivial_grover.inst(H(qubit0))
-    # We apply the diffusion operator.
+    # No oracle is applied, so we just apply the diffusion operator.
     trivial_grover.inst(H(qubit0))
     trivial_grover.inst(Z(qubit0))
     trivial_grover.inst(H(qubit0))
-    # We now change our basis back after having applied the diffusion operator.
-    trivial_grover.inst((H(qubit0)))
     qubits = [qubit0]
     generated_trivial_grover = grover(identity_oracle, qubits, 1)
     generated_trivial_grover.synthesize()
@@ -60,13 +56,10 @@ def test_x_oracle_one_grover(x_oracle):
     x_oracle_grover.inst(H(qubit0))
     # Now an oracle is applied.
     x_oracle_grover.inst(X(query_qubit))
-    # We then do a change of basis to apply the diffusion operator.
-    x_oracle_grover.inst(H(qubit0))
+    # We now apply the diffusion operator.
     x_oracle_grover.inst(H(qubit0))
     x_oracle_grover.inst(Z(qubit0))
     x_oracle_grover.inst(H(qubit0))
-    # We now change our basis back after having applied the diffusion operator.
-    x_oracle_grover.inst((H(qubit0)))
     synthesize_programs(generated_x_oracle_grover, x_oracle_grover)
     assert prog_equality(generated_x_oracle_grover, x_oracle_grover)
 
@@ -87,13 +80,10 @@ def test_x_oracle_two_grover(x_oracle):
     for _ in range(2):
         # Now an oracle is applied.
         x_oracle_grover.inst(X(query_qubit))
-        # We then do a change of basis to apply the diffusion operator.
-        x_oracle_grover.inst(H(qubit0))
+        # We apply the diffusion operator.
         x_oracle_grover.inst(H(qubit0))
         x_oracle_grover.inst(Z(qubit0))
         x_oracle_grover.inst(H(qubit0))
-        # We now change our basis back after having applied the diffusion operator.
-        x_oracle_grover.inst((H(qubit0)))
     synthesize_programs(generated_x_oracle_grover, x_oracle_grover)
     assert prog_equality(generated_x_oracle_grover, x_oracle_grover)
 
