@@ -3,10 +3,6 @@ import numpy as np
 PADDED_BINARY_BIT_STRING = "{0:0{1:0d}b}"
 
 
-def is_power2(num):
-    return num != 0 and ((num & (num - 1)) == 0)
-
-
 def is_unitary(matrix):
     """
     A helper function that checks if a matrix is unitary.
@@ -34,41 +30,29 @@ def most_significant_bit(lst):
     return np.argwhere(np.asarray(lst) == 1)[0][0]
 
 
-def mapping_list_to_dict(lst):
-    n_bits = len(lst).bit_length() - 1
-    if len(lst) != 2 ** n_bits:
-        raise ValueError("mappings must have a length that is a power of two")
+def bitwise_xor(bs0, bs1):
+    """
+    A helper to calculate the bitwise XOR of two bit string
 
-    return {PADDED_BINARY_BIT_STRING.format(idx, n_bits):
-                PADDED_BINARY_BIT_STRING.format(val, n_bits) for idx, val in enumerate(lst)}
-
-
-def mapping_dict_to_list(dct):
-
-    int_list = [(int(k, 2), int(v, 2)) for k, v in dct.items()]
-    return [t[1] for t in sorted(int_list, key=lambda x: x[0])]
-
-
-def bit_masking(bit_string, mask_string):
-    assert len(bit_string) == len(mask_string)
-    n_bits = len(bit_string)
-    return PADDED_BINARY_BIT_STRING.format(int(bit_string, 2) ^ int(mask_string, 2), n_bits)
-
-
-def bit_string_orthogonality(bs0, bs1):
-    assert len(bs0) == len(bs1)
+    :param bs0: String of 0's and 1's representing a number in binary representations
+    :param bs1: String of 0's and 1's representing a number in binary representations
+    :return: String of 0's and 1's representing the XOR between bs0 and bs1
+    :rtype: str
+    """
+    assert len(bs0) == len(bs1), "Bit strings are not of equal length"
     n_bits = len(bs0)
-    return all([int(bs0[i]) * int(bs1[i]) == 0 for i in range(n_bits)])
+    return PADDED_BINARY_BIT_STRING.format(int(bs0, 2) ^ int(bs1, 2), n_bits)
 
 
 def binary_back_substitute(W, s):
     """
-    Perform back substitution on a binary system of equations.
-    Finds the :math:`\\mathbf{x}` such that
-    :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`,
-    where all arithmetic is taken bitwise and modulo 2.
+    Perform back substitution on a binary system of equations, i.e. it performs Gauss elimination
+    over the field :math:`GF(2)`. It finds an :math:`\\mathbf{x}` such that
+    :math:`\\mathbf{\\mathit{W}}\\mathbf{x}=\\mathbf{s}`, where all arithmetic is taken bitwise
+    and modulo 2.
+
     :param 2darray W: A square :math:`n\\times n` matrix of 0s and 1s,
-              in row-echelon form
+              in row-echelon (upper-triangle) form
     :param 1darray s: An :math:`n\\times 1` vector of 0s and 1s
     :return: The :math:`n\\times 1` vector of 0s and 1s that solves the above
              system of equations.
