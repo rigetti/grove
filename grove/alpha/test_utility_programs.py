@@ -4,7 +4,7 @@ import pytest
 from pyquil.quil import Program
 
 from grove.alpha.utility_programs import n_qubit_control
-from grove.pyquil_utilities import non_action_insts
+from grove.pyquil_utilities import non_action_insts, prog_len
 
 
 def test_1_qubit_control():
@@ -14,7 +14,7 @@ def test_1_qubit_control():
     sigma_z = np.array([[1, 0], [0, -1]])
     prog += n_qubit_control([control_qubit], qubit, sigma_z, "Z")
     # This should be one "CZ" instruction, from control_qubit to qubit.
-    assert len(prog) == 1
+    assert prog_len(prog) == 1
     prog.synthesize()
     instruction = non_action_insts(prog)[0]
     assert instruction[1].operator_name == 'CZ'
@@ -31,7 +31,7 @@ def test_2_qubit_control():
 
     # This should be one "CZ" instruction, from control_qubit to qubit.
     # The circuit should
-    assert len(prog) == 5
+    assert prog_len(prog) == 5
     prog.synthesize()
     instructions = non_action_insts(prog)
     assert instructions[0][1].operator_name == 'CSQRTZ'

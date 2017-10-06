@@ -30,6 +30,21 @@ def non_action_insts(prog):
             insts.append(action)
     return insts
 
+
+def prog_len(prog):
+    """Returns the length of of a program, defined as the number of instructions.
+
+    :return: The length of prog.
+    :rtype: int
+    """
+    length = 0
+    for action in prog:
+        if action[0] == ACTION_INSTANTIATE_QUBIT:
+            continue
+        length += 1
+    return length
+
+
 def synthesize_programs(*progs):
     """Synthesizes programs together, paying attention to shared qubits. This breaks if synthesize
      is called after, very fragile.
