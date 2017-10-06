@@ -55,6 +55,12 @@ def bit_masking(bit_string, mask_string):
     return PADDED_BINARY_BIT_STRING.format(int(bit_string, 2) ^ int(mask_string, 2), n_bits)
 
 
+def bit_string_orthogonality(bs0, bs1):
+    assert len(bs0) == len(bs1)
+    n_bits = len(bs0)
+    return all([int(bs0[i]) * int(bs1[i]) == 0 for i in range(n_bits)])
+
+
 def binary_back_substitute(W, s):
     """
     Perform back substitution on a binary system of equations.
@@ -77,4 +83,4 @@ def binary_back_substitute(W, s):
             if row[col_num] == 1:
                 m[row_num] = s[row_num] ^ s[col_num]
 
-    return m
+    return m[::-1]

@@ -85,8 +85,50 @@ def test_binary_back_step():
                     [0, 0, 1, 1],
                     [0, 0, 0, 1]])
     s = np.asarray([0, 0, 0, 1])
-    print(u.binary_back_substitute(A, s))
 
-    print(np.linalg.inv(A))
+    np.testing.assert_equal(
+        u.binary_back_substitute(A, s),
+        [1, 1, 0, 1]
+    )
 
-    print(np.dot(np.linalg.inv(A) % 2, s))
+    A = np.asarray([[1, 1, 0, 0],
+                    [0, 1, 1, 0],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 1]])
+    s = np.asarray([0, 0, 0, 1])
+
+    np.testing.assert_equal(
+        u.binary_back_substitute(A, s),
+        [1, 1, 0, 0]
+    )
+
+    A = np.asarray([[1, 0, 1, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 1]])
+    s = np.asarray([0, 0, 0, 1])
+
+    np.testing.assert_equal(
+        u.binary_back_substitute(A, s),
+        [1, 1, 0, 0]
+    )
+
+    A = np.asarray([[1, 0, 1],
+                    [0, 1, 0],
+                    [0, 0, 1]])
+    s = np.asarray([0, 1, 0])
+
+    np.testing.assert_equal(
+        u.binary_back_substitute(A, s),
+        [0, 1, 0]
+    )
+
+    A = np.asarray([[1, 0, 0],
+                    [0, 1, 1],
+                    [0, 0, 1]])
+    s = np.asarray([0, 0, 1])
+
+    np.testing.assert_equal(
+        u.binary_back_substitute(A, s),
+        [1, 1, 0]
+    )
