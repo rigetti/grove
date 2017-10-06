@@ -2,34 +2,28 @@
 
 import numpy as np
 from grove.alpha.simon.simon import Simon, create_periodic_1to1_bitmap, create_valid_2to1_bitmap
-import grove.alpha.simon.utils as u
 from pyquil.quil import Program
 
+from os.path import abspath, dirname
 from mock import patch
-import pytest
 
-import sys
-from os.path import abspath, join, dirname
 package_path = abspath(dirname(dirname(__file__)))
 
 EXPECTED_SIMON_ORACLE = np.load(package_path + '/tests/data/simon_test_oracle.npy')
-# /Users/johannes/code/grove/grove/alpha/simon/tests/data/simon_test_oracle.npy
+
 
 def _create_expected_program():
     expected_prog = Program()
-    expected_prog.defgate("FUNCT", EXPECTED_SIMON_ORACLE)
-    expected_prog.defgate("FUNCT-INV", np.linalg.inv(EXPECTED_SIMON_ORACLE))
+    expected_prog.defgate("SIMON_ORACLE", EXPECTED_SIMON_ORACLE)
     expected_prog.inst("H 0")
     expected_prog.inst("H 1")
+    expected_prog.inst("H 2")
 
-    expected_prog.inst("FUNCT 0 1")
-    expected_prog.inst("CNOT 0 2")
-    expected_prog.inst("CNOT 1 3")
-    expected_prog.inst("FUNCT-INV 0 1")
+    expected_prog.inst("SIMON_ORACLE 5 4 3 2 1 0")
 
     expected_prog.inst("H 0")
     expected_prog.inst("H 1")
-
+    expected_prog.inst("H 2")
     return expected_prog
 
 
@@ -70,7 +64,7 @@ def test_simon_class():
     assert simon_algo.ancillas == [3, 4, 5]
 
     assert mask == [1, 1, 0]
-    # assert simon_algo.simon_circuit.__str__() == _create_expected_program().__str__()
+    assert simon_algo.simon_circuit.__str__() == _create_expected_program().__str__()
 
 
 def test_unitary_function_return():
@@ -129,26 +123,6 @@ def test_unitary_oracle_func_computer_2():
                              [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.],
                              [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0.]]
                             )
-
-
-@pytest.mark.skip("Need to fix circuit before refactor this one")
-def test_oracle_program():
-    simon_algo = Simon()
-
-    simon_algo.n_qubits = 2
-    simon_algo.n_ancillas = 2
-    simon_algo._qubits = list(range(4))
-    simon_algo.log_qubits = [0, 1]
-    simon_algo.ancillas = [2, 3]
-    simon_algo.unitary_function_mapping = EXPECTED_SIMON_ORACLE
-
-    actual_prog = simon_algo._hadamard_walsh_append()
-    expected_prog = Program()
-    expected_prog.defgate("FUNCT", EXPECTED_SIMON_ORACLE)
-    expected_prog.inst("HADAMARD 3 2 1 0")
-    expected_prog.inst("FUNCT 3 2 1 0")
-    expected_prog.inst("HADAMARD 3 2 1 0")
-    assert expected_prog.__str__() == actual_prog.__str__()
 
 
 def test_no_substitution():
