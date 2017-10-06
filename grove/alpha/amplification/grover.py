@@ -8,9 +8,24 @@ from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
 import grove.alpha.amplification.amplification as amp
+from grove.alpha.utility_programs import compute_grover_oracle_matrix
 
 
-def grover(oracle, qubits, num_iter=None):
+def grover(bitstring_map):
+    """Constructs an instance of Grover's Algorithm given a bitstring_map.
+    """
+    oracle_unitary = compute_grover_oracle_matrix(bitstring_map)
+    oracle = pq.Program()
+    oracle_name = "ORACLE"
+    print oracle_unitary
+    oracle.defgate(oracle_name, oracle_unitary)
+    number_of_qubits = oracle_unitary.shape[0]
+    qubits = [oracle.alloc() for _ in range(number_of_qubits / 2)]
+    oracle.inst(tuple([oracle_name] + qubits))
+    return oracle_grover(oracle, qubits)
+
+
+def oracle_grover(oracle, qubits, num_iter=None):
     """Implementation of Grover's Algorithm for a given oracle.
 
     The query qubit will be left in the zero state afterwards.
