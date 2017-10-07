@@ -16,7 +16,8 @@
 
 """Module for amplitude amplification, for use in algorithms such as Grover's algorithm.
 
-For more information, see arXiv:quant-ph/0005055.
+ See G. Brassard, P. Hoyer, M. Mosca (2000) `Quantum Amplitude Amplification and Estimation
+ <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
 """
 
 import numpy as np
@@ -67,7 +68,8 @@ def diffusion_operator(qubits):
 
     This is the diagonal operator given by (1, -1, -1, ..., -1).
 
-    See arXiv:quant-ph/0301079 for more information.
+    See C. Lavor, L.R.U. Manssur, and R. Portugal (2003) `Grover's Algorithm: Quantum Database
+    Search<https://arxiv.org/abs/quant-ph/0301079>`_ for more information.
 
     :param qubits: A list of ints corresponding to the qubits to operate on.
                    The operator operates on bistrings of the form

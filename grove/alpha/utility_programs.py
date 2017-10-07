@@ -19,7 +19,8 @@ def n_qubit_control(control_qubits, target, operation, gate_name):
 
     Uses a number of gates quadratic in the number of qubits,
     and defines a linear number of new gates. (Roots and adjoints of unitary.)
-    See arXiv:quant-ph/9503016 for more information.
+     See A. Barenco, C. Bennett, R. Cleve (1995) `Elementary Gates for Quantum Computation
+     <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
 
     :param list control_qubits: The indices of the qubits to condition the gate on.
     :param int or Qubit target: The Qubit or index of the target of the gate.
