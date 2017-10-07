@@ -10,7 +10,7 @@ def test_create():
     jw = JWTransform()
     creation = jw.create(5)
     # we really need PauliSum and PauliTerm logical compare
-    assert '(0.5+0j)*Z0*Z1*Z2*Z3*Z4*X5 + -0.5j*Z0*Z1*Z2*Z3*Z4*Y5' == creation.__str__()
+    assert '0.5*Z0*Z1*Z2*Z3*Z4*X5 + -0.5j*Z0*Z1*Z2*Z3*Z4*Y5' == creation.__str__()
 
 
 def test_annihilation():
@@ -20,7 +20,7 @@ def test_annihilation():
     jw = JWTransform()
     annihilation = jw.kill(5)
     # we really need PauliSum and PauliTerm logical compare
-    assert '(0.5+0j)*Z0*Z1*Z2*Z3*Z4*X5 + 0.5j*Z0*Z1*Z2*Z3*Z4*Y5' == annihilation.__str__()
+    assert '0.5*Z0*Z1*Z2*Z3*Z4*X5 + 0.5j*Z0*Z1*Z2*Z3*Z4*Y5' == annihilation.__str__()
 
 
 def test_hopping():
