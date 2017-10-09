@@ -1,6 +1,7 @@
 numpy
 scipy
-pyquil >= 1.0.0, <1.1.2
+pyquil >= 1.0.0,<1.1.2
+
 mock
 networkx
 matplotlib
