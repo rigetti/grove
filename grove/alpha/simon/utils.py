@@ -1,4 +1,5 @@
 import numpy as np
+from operator import xor
 
 PADDED_BINARY_BIT_STRING = "{0:0{1:0d}b}"
 
@@ -39,9 +40,10 @@ def bitwise_xor(bs0, bs1):
     :return: String of 0's and 1's representing the XOR between bs0 and bs1
     :rtype: str
     """
-    assert len(bs0) == len(bs1), "Bit strings are not of equal length"
+    if len(bs0) != len(bs1):
+        raise ValueError("Bit strings are not of equal length")
     n_bits = len(bs0)
-    return PADDED_BINARY_BIT_STRING.format(int(bs0, 2) ^ int(bs1, 2), n_bits)
+    return PADDED_BINARY_BIT_STRING.format(xor(int(bs0, 2), int(bs1, 2)), n_bits)
 
 
 def binary_back_substitute(W, s):
@@ -65,6 +67,6 @@ def binary_back_substitute(W, s):
         row = W[row_num]
         for col_num in range(row_num + 1, n):
             if row[col_num] == 1:
-                m[row_num] = s[row_num] ^ s[col_num]
+                m[row_num] = xor(s[row_num], s[col_num])
 
     return m[::-1]

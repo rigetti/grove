@@ -1,7 +1,7 @@
 """Test class for helper methods found simon"""
 
 import numpy as np
-from grove.alpha.simon.simon import Simon, create_periodic_1to1_bitmap, create_valid_2to1_bitmap
+from grove.alpha.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap
 from pyquil.quil import Program
 
 from os.path import abspath, dirname
@@ -289,7 +289,7 @@ def test_bit_map_generation():
         '110': '011',
         '111': '010'
     }
-    actual_map = create_periodic_1to1_bitmap(mask)
+    actual_map = create_1to1_bitmap(mask)
     assert actual_map == expected_map
 
 

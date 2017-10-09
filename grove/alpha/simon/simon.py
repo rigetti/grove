@@ -15,28 +15,35 @@
 ##############################################################################
 
 """
-Module for the Simon's Algorithm.
-For more information, see
+Module for  Simon's Algorithm.
+For more information, see [Simon1995]_, [Loceff2015]_, [Watrous2006]_
 
-- https://courses.cs.washington.edu/courses/cse599/01wi/papers/simon_qc.pdf
-- http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
-- https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf
+.. [Simon1995] Simon, D.R. (1995), `"On the power of quantum computation"`_, 35th Annual Symposium on Foundations of Computer Science, Proceedings, p. 116–123.
+.. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_, Volume 1, Chapter 18, p 484-541.
+.. [Watrous2006] Watrous, J. (2006), `"Simon's Algorithm"`_, University of Calgary CPSC 519/619: Quantum Computation, Lecture 6.
+
+.. _`"On the power of quantum computation"`: https://courses.cs.washington.edu/courses/cse599/01wi/papers/simon_qc.pdf
+.. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+.. _`"Simon's Algorithm"`: https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf
 """
 
+from collections import defaultdict
+from operator import xor
+
+import pyquil.quil as pq
 import numpy as np
 import numpy.random as rd
-import pyquil.quil as pq
 from pyquil.gates import H
-import grove.alpha.simon.utils as u
-from collections import defaultdict
+
+import grove.alpha.simon.utils as utils
 
 
-def create_periodic_1to1_bitmap(mask):
+def create_1to1_bitmap(mask):
     """
     A helper to create a bit map function for a given mask. E.g. for a mask :math:`m = 10` the
     return would is a dictionary:
 
-    >>> create_periodic_1to1_bitmap('10')
+    >>> create_1to1_bitmap('10')
     ... {
     ...     '00': '10',
     ...     '01': '11',
@@ -44,9 +51,9 @@ def create_periodic_1to1_bitmap(mask):
     ...     '11': '01'
     ... }
 
-    :param mask: binary mask as a string of 0's and 1's
-    :return: dictionary containing a mapping of all possible bit strings of the same size a the mask
-    and their mapped bit-string value
+    :param string mask: binary mask as a string of 0's and 1's
+    :return: dictionary containing a mapping of all possible bit strings of the same length as the
+    mask's string and their mapped bit-string value
 
     :rtype: Dict[String, String]
     """
@@ -55,18 +62,19 @@ def create_periodic_1to1_bitmap(mask):
     dct = {}
     for idx in range(2**n_bits):
         bit_string = form_string.format(idx)
-        dct[bit_string] = u.bitwise_xor(bit_string, mask)
+        dct[bit_string] = utils.bitwise_xor(bit_string, mask)
     return dct
 
 
-def create_valid_2to1_bitmap(mask):
+def create_valid_2to1_bitmap(mask, random_seed =None):
     """
-    A helper to create a valid 2-to-1 function with a given mask. This can be used to create a valid
-    input to Simon's algorithm.
+    A helper to create a 2-to-1 binary function that is invariant with respect to the application of
+    a specified XOR bitmask. This property must be satisfied if a 2-to-1 function is to be used in
+    Simon's algorithm
 
-    A 2-to-1 function is boolean function with the property :math:`f(x) = f(x \oplus m)` where
-    :math:`m` is a bit mask and :math:`\oplus` denotes the bit wise XOR operation. An example of
-    such a function is the truth-table
+    More explicitly, such a 2-to-1 function :math:`f` must satisfy :math:`f(x) = f(x \oplus m)`
+    where :math:`m` is a bit mask and :math:`\oplus` denotes the bit wise XOR operation. An example
+    of such a function is the truth-table
 
     ==== ====
      x   f(x)
@@ -83,37 +91,38 @@ def create_valid_2to1_bitmap(mask):
     Note that, e.g. both `000` and `110` map to the same value `101` and
     :math:`000 \oplus 110 = 110`. The same holds true for other pairs.
 
-    :param mask: mask input that defines the periodicity of f
+    :param string mask: mask input that defines the periodicity of f
+    :param integer random_seed: (optional) integer to set numpy.random.seed parameter.
     :return: dictionary containing the truth table of a valid 2-to-1 boolean function
     :rtype: Dict[String, String]
     """
-    bm = create_periodic_1to1_bitmap(mask)
-    n_samples = int(len(list(bm.keys())) / 2)
-    list_of_half_size = list(rd.choice(list(bm.keys()), replace=False, size=n_samples))
+    if random_seed:
+        rd.seed(random_seed)
+    bit_map = create_1to1_bitmap(mask)
+    n_samples = int(len(bit_map.keys()) / 2)
 
-    list_of_tup = sorted([(k, v) for k, v in bm.items()], key=lambda x: x[0])
+    # We create a 2-to-1 mapping and hence need to generate a list with exactly half the possible
+    # bit-strings. We do this by randomly sampling the set of all possible bit-strings.
+    range_of_2to1_map = list(rd.choice(list(bit_map.keys()), replace=False, size=n_samples))
+
+    list_of_tup = sorted([(k, v) for k, v in bit_map.items()], key=lambda x: x[0])
 
     dct = {}
-    cnt = 0
-    while cnt < n_samples:
+    for cnt in range(n_samples):
         tup = list_of_tup[cnt]
-        val = list_of_half_size[cnt]
+        val = range_of_2to1_map[cnt]
         dct[tup[0]] = val
         dct[tup[1]] = val
-        cnt += 1
 
     return dct
 
 
 class Simon(object):
     """
-    `Simon's algorithm`_ is amongst the earliest algorithms providing an exponential speedup of a
-    computation using a Quantum Computer vs. a Classical Computer.
+    This class contains an implementation of Simon's algorithm using pyQuil. For more references see
+    the documentation_
 
-    This class contains an implementation of Simon's algorithm with pyQuil and can be run on
-    hardware provided by Rigetti Computing, Inc.
-
-    .. _`Simon's algorithm`:https://courses.cs.washington.edu/courses/cse599/01wi/papers/simon_qc.pdf
+    .. _documentation: http://grove-docs.readthedocs.io/en/latest/simon.html
     """
 
     def __init__(self):
@@ -193,8 +202,8 @@ class Simon(object):
         for b in range(2**n_bits):
             pad_str = np.binary_repr(b, n_bits)
             for k, v in bitstring_map.items():
-                dct[pad_str + k] = u.bitwise_xor(pad_str, v) + k
-                i, j = int(pad_str+k, 2), int(u.bitwise_xor(pad_str, v) + k, 2)
+                dct[pad_str + k] = utils.bitwise_xor(pad_str, v) + k
+                i, j = int(pad_str+k, 2), int(utils.bitwise_xor(pad_str, v) + k, 2)
                 ufunc[i, j] = 1
         return ufunc, dct
 
@@ -264,7 +273,7 @@ class Simon(object):
         provenance_unit = np.zeros(shape=(self.n_qubits,), dtype=int)
         provenance_unit[missing_prov] = 1
 
-        self.mask = u.binary_back_substitute(upper_triangular_matrix, provenance_unit).tolist()
+        self.mask = utils.binary_back_substitute(upper_triangular_matrix, provenance_unit).tolist()
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """
@@ -278,7 +287,7 @@ class Simon(object):
         """
         if all(np.asarray(z) == 0) or all(np.asarray(z) == 1):
             return
-        msb_z = u.most_significant_bit(z)
+        msb_z = utils.most_significant_bit(z)
 
         # try to add bitstring z to samples dictionary directly
         if msb_z not in self._dict_of_linearly_indep_bit_vectors.keys():
@@ -289,10 +298,10 @@ class Simon(object):
         # Bail if this doesn't work and continue sampling.
         else:
             conflict_z = self._dict_of_linearly_indep_bit_vectors[msb_z]
-            not_z = [conflict_z[idx] ^ z[idx] for idx in range(len(z))]
+            not_z = [xor(conflict_z[idx], z[idx]) for idx in range(len(z))]
             if all(np.asarray(not_z) == 0):
                 return
-            msb_not_z = u.most_significant_bit(not_z)
+            msb_not_z = utils.most_significant_bit(not_z)
             if msb_not_z not in self._dict_of_linearly_indep_bit_vectors.keys():
                 self._dict_of_linearly_indep_bit_vectors[msb_not_z] = not_z
 
@@ -325,5 +334,5 @@ class Simon(object):
         :return: True if mask reproduces the input function
         """
         mask_str = ''.join([str(b) for b in self.mask])
-        return all([self.bit_map[k] == self.bit_map[u.bitwise_xor(k, mask_str)]
+        return all([self.bit_map[k] == self.bit_map[utils.bitwise_xor(k, mask_str)]
                     for k in self.bit_map.keys()])
