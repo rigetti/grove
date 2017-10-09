@@ -16,8 +16,8 @@ def test_hardcoded_transform():
     x = bkt.kill(9)
     y = bkt.create(9)
 
-    assert str(x) == '0.5j*Z7*Y9*X11*X15 + 0.5*Z7*Z8*X9*X11*X15'
-    assert str(y) == '-0.5j*Z7*Y9*X11*X15 + 0.5*Z7*Z8*X9*X11*X15'
+    assert str(x) == '0.5j*Z7*Y9*X11*X15 + (0.5+0j)*Z7*Z8*X9*X11*X15'
+    assert str(y) == '-0.5j*Z7*Y9*X11*X15 + (0.5+0j)*Z7*Z8*X9*X11*X15'
 
 
 def test_term_length():
