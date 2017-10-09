@@ -26,7 +26,7 @@ import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
 from grove.alpha.utility_programs import n_qubit_control
-from grove.alpha.utility_programs import is_valid_qubits
+from grove.alpha.utils import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 

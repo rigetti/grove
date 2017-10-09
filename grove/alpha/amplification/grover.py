@@ -8,7 +8,6 @@ from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
 import grove.alpha.amplification.amplification as amp
-from grove.alpha.utility_programs import compute_grover_oracle_matrix
 
 
 def grover(bitstring_map):
@@ -49,3 +48,22 @@ def oracle_grover(oracle, qubits, num_iter=None):
     uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
     amp_prog = amp.amplify(uniform_superimposer, oracle, qubits, num_iter)
     return amp_prog
+
+
+def compute_grover_oracle_matrix(bitstring_map):
+    """
+    Computes the unitary matrix that encodes the oracle function for Grover's algorithm
+
+    :param bitstring_map: truth-table of the input bitstring map in dictionary format
+    :return: a dense matrix containing the permutation of the bit strings and a dictionary
+    containing the indices of the non-zero elements of the computed permutation matrix as
+    key-value-pairs
+    :rtype: Tuple[2darray, Dict[String, String]]
+    """
+    n_bits = len(list(bitstring_map.keys())[0])
+    ufunc = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
+    for b in range(2**n_bits):
+        pad_str = np.binary_repr(b, n_bits)
+        phase_factor = bitstring_map[pad_str]
+        ufunc[b, b] = (-1) ** phase_factor
+    return ufunc

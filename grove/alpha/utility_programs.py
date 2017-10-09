@@ -7,12 +7,13 @@ import numpy as np
 from pyquil.gates import STANDARD_GATES
 import pyquil.quil as pq
 
-from grove.alpha.utils import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
+ZERO_PROJECTION = np.array([[1, 0], [0, 0]])
+ONE_PROJECTION = np.array([[0, 0], [0, 1]])
 
 
-def n_qubit_control(control_qubits, target, operation, gate_name):
+class ControlledProgramBuilder(object):
     """
     Returns a controlled u gate with n-1 control_qubits.
     Useful for constructing oracles.
@@ -22,99 +23,119 @@ def n_qubit_control(control_qubits, target, operation, gate_name):
      See A. Barenco, C. Bennett, R. Cleve (1995) `Elementary Gates for Quantum Computation
      <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
 
-    :param list control_qubits: The indices of the qubits to condition the gate on.
-    :param int or Qubit target: The Qubit or index of the target of the gate.
-    :param numpy.ndarray operation: The unitary gate to be controlled, given as a numpy array.
+
     :param str gate_name: The name of the gate target.
     :return: The controlled gate.
     """
-    if (not isinstance(operation, np.ndarray)
-        or len(operation.shape) != 2
-        or operation.shape[0] != operation.shape[1]):
-        raise ValueError("operation must be a square 2D numpy array")
-    if not is_valid_qubits(control_qubits):
-        raise ValueError(
-            "controls must be a Sequence of Qubits, or non-negative integers.")
-    if not is_valid_qubits([target]):
-        raise ValueError("The target must be a Qubit or non-negative integer.")
-    if not isinstance(gate_name, str) or len(gate_name) == 0:
-        raise ValueError("gate_name must be a non-empty string.")
 
-    def controlled_program_builder(control_qubits, target, target_gate_name,
-                                   target_gate, defined_gates=set(STANDARD_GATE_NAMES)):
-        zero_projection = np.array([[1, 0], [0, 0]])
-        one_projection = np.array([[0, 0], [0, 1]])
+    def __init__(self):
+        self.defined_gates = []
+        self.control_qubits = None
+        self.target_qubit = None
+        self.operation = None
+        self.gate_name = None
 
-        control_true = np.kron(one_projection, target_gate)
-        control_false = np.kron(zero_projection, np.eye(2, 2))
-        control_root_true = np.kron(one_projection, sqrtm(target_gate))
+    def with_controls(self, control_qubits):
+        """Sets the qubits to control on for this controlled operation.
 
+        :param list control_qubits: The indices of the qubits to condition the gate on.
+        :return: self, with control_qubits set.
+        :rtype: ControlledProgramBuilder
+        """
+        self.control_qubits = control_qubits
+        return self
+
+    def with_target(self, target_qubit):
+        """Sets the target qubit for this controlled operation.
+
+        :param int or Qubit target: The Qubit or index of the target of the gate.
+        :return: self, with target_qubit set.
+        :rtype: ControlledProgramBuilder
+        """
+        self.target_qubit = target_qubit
+        return self
+
+    def with_operation(self, operation):
+        """Sets the operation that defines the controlled gate.
+
+        :param numpy.ndarray operation: The unitary gate to be controlled, given as a numpy array.
+        :return: self, with operation set.
+        :rtype: ControlledProgramBuilder
+        """
+        self.operation = operation
+        return self
+
+    def with_gate_name(self, gate_name):
+        """Sets the name for the controlled gate, used in constructing and defining sqrts of the
+         gate.
+
+        :param String gate_name:
+        :return: self, with gate_name set.
+        :rtype: ControlledProgramBuilder
+        """
+        self.gate_name = gate_name
+        return self
+
+    def build(self):
+        """Builds this controlled gate.
+
+        :return: The controlled gate, defined by this object.
+        :rtype: Program
+        """
+        self.defined_gates = set(STANDARD_GATE_NAMES)
+        prog = self._recursive_builder(self.operation,
+                                       self.gate_name,
+                                       self.control_qubits,
+                                       self.target_qubit)
+        return prog
+
+    def _recursive_builder(self, operation, gate_name, control_qubits, target_qubit):
+        """Helper function used to define the controlled gate recursively.
+
+        :param numpy.ndarray operation: The matrix for the unitary to be controlled.
+        :param String gate_name: The name for the gate being controlled.
+        :param Sequence control_qubits: The qubits that are the controls.
+        :param Qubit or Int target_qubit: The qubit that the gate should be applied to.
+        :return: The intermediate Program being built.
+        :rtype: Program
+        """
+        control_true = np.kron(ONE_PROJECTION, operation)
+        control_false = np.kron(ZERO_PROJECTION, np.eye(2, 2))
+        control_root_true = np.kron(ONE_PROJECTION, sqrtm(operation))
         controlled_gate = control_true + control_false
         controlled_root_gate = control_root_true + control_false
-        assert np.isclose(controlled_gate, np.dot(controlled_root_gate,
-                                                  controlled_root_gate)).all()
+        sqrt_name = "SQRT-" + self.gate_name
 
-        sqrt_name = "SQRT" + target_gate_name
-        adj_sqrt_name = "ADJ" + sqrt_name
-
-        # Initialize program and populate with gate information
         p = pq.Program()
-        if len(control_qubits) == 0:
-            p.defgate(target_gate_name, target_gate)
-            p.inst((target_gate_name, target))
-            return p, set()
 
+        control_gate = pq.Program()
         if len(control_qubits) == 1:
-            if "C" + target_gate_name not in defined_gates:
-                p.defgate("C" + target_gate_name, controlled_gate)
-                defined_gates.add("C" + target_gate_name)
-            p.inst(("C" + target_gate_name, control_qubits[0], target))
+            if "C" + gate_name not in self.defined_gates:
+                control_gate.defgate("C" + gate_name, controlled_gate)
+                self.defined_gates.add("C" + gate_name)
+            control_gate.inst(("C" + gate_name, control_qubits[0], target_qubit))
+            return control_gate
 
         else:
-            for gate_name, gate in ((sqrt_name, controlled_root_gate),
-                                    (adj_sqrt_name,
-                                     np.conj(controlled_root_gate.T))):
-                if "C" + gate_name not in defined_gates:
-                    p.defgate("C" + gate_name, gate)
-                    defined_gates.add("C" + gate_name)
-            p.inst(("C" + sqrt_name, control_qubits[-1], target))
-            many_toff, new_defined_gates = controlled_program_builder(
-                control_qubits[:-1], control_qubits[-1], 'NOT', np.array([[0, 1], [1, 0]]),
-                set(defined_gates))
-            p += many_toff
-            defined_gates.union(new_defined_gates)
+            if "C-" + sqrt_name not in self.defined_gates:
+                control_gate.defgate("C-" + sqrt_name, controlled_root_gate)
+                self.defined_gates.add("C-" + sqrt_name)
+            control_gate.inst(("C-" + sqrt_name, control_qubits[-1], target_qubit))
 
-            p.inst(("C" + adj_sqrt_name, control_qubits[-1], target))
+            n_minus_one_toffoli = self._recursive_builder(np.array([[0, 1], [1, 0]]),
+                                                          'NOT',
+                                                          control_qubits[:-1],
+                                                          control_qubits[-1])
 
-            # Don't redefine all of the gates.
-            many_toff.defined_gates = []
-            p += many_toff
-            many_root_toff, new_defined_gates = controlled_program_builder(
-                control_qubits[:-1], target, sqrt_name, sqrtm(target_gate),
-                set(defined_gates))
-            p += many_root_toff
-            defined_gates.union(new_defined_gates)
+            p += control_gate
+            p += n_minus_one_toffoli
+            p.inst(control_gate.dagger())
 
-        return p, defined_gates
+            p += n_minus_one_toffoli
+            n_minus_one_root_toffoli = self._recursive_builder(sqrtm(operation),
+                                                               sqrt_name,
+                                                               control_qubits[:-1],
+                                                               target_qubit)
+            p += n_minus_one_root_toffoli
+            return p
 
-    p = controlled_program_builder(control_qubits, target, gate_name, operation)[0]
-    return p
-
-
-def compute_grover_oracle_matrix(bitstring_map):
-    """
-    Computes the unitary matrix that encodes the oracle function for Grover's algorithm
-
-    :param bitstring_map: truth-table of the input bitstring map in dictionary format
-    :return: a dense matrix containing the permutation of the bit strings and a dictionary
-    containing the indices of the non-zero elements of the computed permutation matrix as
-    key-value-pairs
-    :rtype: Tuple[2darray, Dict[String, String]]
-    """
-    n_bits = len(list(bitstring_map.keys())[0])
-    ufunc = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
-    for b in range(2**n_bits):
-        pad_str = np.binary_repr(b, n_bits)
-        phase_factor = bitstring_map[pad_str]
-        ufunc[b, b] = (-1) ** phase_factor
-    return ufunc

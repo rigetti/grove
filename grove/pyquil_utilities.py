@@ -1,7 +1,6 @@
 """Module containing utilities that will eventually be implemented in pyquil."""
 
 from pyquil.quilbase import (ACTION_INSTANTIATE_QUBIT,
-                             ACTION_INSTALL_INSTRUCTION,
                              ACTION_RELEASE_QUBIT)
 from pyquil.quilbase import Gate, Qubit
 from pyquil.resource_manager import merge_resource_managers, ResourceManager
@@ -21,7 +20,7 @@ def non_action_insts(prog):
      and qubit release.
 
     :param prog: The program to return instructions for.
-    :return: The length of the program, ignoring the irrelevant actions.
+    :return: The instructions in the program, ignoring qubit allocation and deallocation.
     :rtype: list
     """
     insts = []
