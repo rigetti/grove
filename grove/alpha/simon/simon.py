@@ -13,12 +13,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
 """
 Module for  Simon's Algorithm.
 For more information, see [Simon1995]_, [Loceff2015]_, [Watrous2006]_
 
-.. [Simon1995] Simon, D.R. (1995), `"On the power of quantum computation"`_, 35th Annual Symposium on Foundations of Computer Science, Proceedings, p. 116–123.
+.. [Simon1995] Simon, D.R. (1995), `"On the power of quantum computation"`_, 35th Annual Symposium on Foundations of Computer Science, Proceedings, p. 116-123.
 .. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_, Volume 1, Chapter 18, p 484-541.
 .. [Watrous2006] Watrous, J. (2006), `"Simon's Algorithm"`_, University of Calgary CPSC 519/619: Quantum Computation, Lecture 6.
 
