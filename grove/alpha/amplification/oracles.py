@@ -11,14 +11,12 @@ from grove.alpha.utility_programs import ControlledProgramBuilder
 def basis_selector_oracle(qubits, bitstring):
     """Defines an oracle that selects the ith element of the computational basis.
 
-    Defines a phase flip rather than bit flip oracle to eliminate need
-    for extra qubit. Flips the sign of the state :math:`\\vert x\\rangle>`
+    Flips the sign of the state :math:`\\vert x\\rangle>`
     if and only if x==bitstring and does nothing otherwise.
 
     :param qubits: The qubits the oracle is called on. The qubits are assumed to be ordered from
      most significant qubit to least significant qubit.
-    :param bitstring: The desired bitstring,
-     given as a string of ones and zeros. e.g. "101"
+    :param bitstring: The desired bitstring, given as a string of ones and zeros. e.g. "101"
     :return: A program representing this oracle.
     :rtype: Program
     """
@@ -26,6 +24,7 @@ def basis_selector_oracle(qubits, bitstring):
         raise ValueError(
             "The bitstring should be the same length as the number of qubits.")
     oracle_prog = pq.Program()
+
     # In the case of one qubit, we just want to flip the phase of state relative to the other.
     if len(bitstring) == 1:
         oracle_prog.inst(Z(qubits[0]))

@@ -140,20 +140,20 @@ class ControlledProgramBuilder(object):
                 control_gate.defgate(control_sqrt_name, controlled_root_gate)
                 self.defined_gates.add(control_sqrt_name)
             control_gate.inst((control_sqrt_name, control_qubits[-1], target_qubit))
-
             # Here we recurse to build a toffoli gate on n - 1 of the qubits.
             n_minus_one_toffoli = self._recursive_builder(NOT_GATE,
                                                           NOT_GATE_LABEL,
                                                           control_qubits[:-1],
                                                           control_qubits[-1])
 
-            controlled_subprogram += control_gate.dagger()
-            controlled_subprogram += n_minus_one_toffoli
-
             # We recurse to build a controlled sqrt of the target_gate, excluding the last control.
             n_minus_one_controlled_sqrt = self._recursive_builder(sqrtm(operation),
                                                                   sqrt_name,
                                                                   control_qubits[:-1],
                                                                   target_qubit)
+            controlled_subprogram += control_gate
+            controlled_subprogram += n_minus_one_toffoli
+            controlled_subprogram += control_gate.dagger()
+            controlled_subprogram += n_minus_one_toffoli
             controlled_subprogram += n_minus_one_controlled_sqrt
             return controlled_subprogram
