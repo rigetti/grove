@@ -20,7 +20,7 @@ def grover(bitstring_map):
     """
     oracle_unitary = compute_grover_oracle_matrix(bitstring_map)
     oracle = pq.Program()
-    oracle_name = "ORACLE"
+    oracle_name = "GROVER_ORACLE"
     oracle.defgate(oracle_name, oracle_unitary)
     number_of_qubits = oracle_unitary.shape[0]
     qubits = [oracle.alloc() for _ in range(number_of_qubits / 2)]
