@@ -6,7 +6,9 @@ from grove.alpha.amplification.oracles import basis_selector_oracle
 
 
 def test_basis_selector_oracle():
-    """Currently we can't test that the output is correct, so we only test for coverage."""
+    """Given that the oracle is a 'black box', we shouldn't test its circuits. We should instead
+     test that it gives the right result on a basis set of vectors. Currently we aren't implementing
+     this behavior in the Grove tests, so we just write tests for code coverage here."""
     prog = Program()
     qubit0 = prog.alloc()
     qubit1 = prog.alloc()
@@ -16,13 +18,5 @@ def test_basis_selector_oracle():
 
 
 def test_bad_input_basis_selector_oracle():
-    prog = Program()
-    qubit0 = prog.alloc()
     with pytest.raises(ValueError):
         _ = basis_selector_oracle([], "100")
-    with pytest.raises(ValueError):
-        _ = basis_selector_oracle("qubit", "100")
-    with pytest.raises(ValueError):
-        _ = basis_selector_oracle(qubit0, "100")
-    with pytest.raises(ValueError):
-        _ = basis_selector_oracle([qubit0], "foo")
