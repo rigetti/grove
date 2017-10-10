@@ -18,22 +18,26 @@
 Module for the Bernstein-Vazirani Algorithm.
 For more information, see [Loceff2015]_
 
-.. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_, Volume 1, Chapter 18, p 484-541.
+.. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_,
+Volume 1, Chapter 18, p 484-541.
 
-.. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+.. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/
+wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
 """
+
+from collections import defaultdict
 
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X
+
 from grove.alpha.bernstein_vazirani import utils
-from collections import defaultdict
 
 
-def create_bv_bitmap(a, b):
+def create_bv_bitmap(dot_product_vector, dot_product_bias):
     """
     This function creates a map from bitstring to function value for a boolean formula :math:`f`
-    with
+    with a dot product vector :math:`a` and a dot product bias :math:`b`
 
         .. math::
 
@@ -42,18 +46,22 @@ def create_bv_bitmap(a, b):
            \\mathbf{x}\\rightarrow \\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}
 
            (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
-    :param String a: a string of 0's and 1's that represents the dot-product partner in :math:`f`
-    :param String b: 0 or 1 as a string representing the bias term in :math:`f`
+
+    :param String dot_product_vector: a string of 0's and 1's that represents the dot-product
+    partner in :math:`f`
+    :param String dot_product_bias: 0 or 1 as a string representing the bias term in :math:`f`
     :return: A dictionary containing all possible bitstring of length equal to :math:`a` and the
     function value :math:`f`
     :rtype: Dict[String, String]
     """
-    n_bits = len(a)
+    n_bits = len(dot_product_vector)
     bit_map = {}
     for bit_val in range(2 ** n_bits):
-        bit_map[np.binary_repr(bit_val, width=n_bits)] = \
-            str((int(utils.bitwise_dot_product(
-                np.binary_repr(bit_val, width=n_bits), a)) + int(b, 2)) % 2)
+        bit_map[np.binary_repr(bit_val, width=n_bits)] = str(
+            (int(utils.bitwise_dot_product(np.binary_repr(bit_val, width=n_bits),
+                                           dot_product_vector))
+             + int(dot_product_bias, 2)) % 2
+        )
 
     return bit_map
 
@@ -129,7 +137,8 @@ class BernsteinVazirani(object):
         :math:`\\vert 0\\rangle` state, create a program that can find :math:`\\vec{a}` with one
         query to the given oracle.
 
-        :param Program oracle_circuit: Program representing unitary application of function
+        :param Dict[String, String] bit_map: truth-table of a function for Bernstein-Vazirani with
+        the keys being all possible bit vectors strings and the values being the function values
         :rtype: Program
         """
         unitary, _ = self._compute_unitary_oracle_matrix(bit_map)
@@ -150,10 +159,11 @@ class BernsteinVazirani(object):
         """
         Runs the Bernstein-Vazirani algorithm.
 
-        Given a QVM connection, find the :math:`\\mathbf{a}` and :math:`b` corresponding to the
-        function represented by the oracle.
+        Given a connection to a QVM or QPU, find the :math:`\\mathbf{a}` and :math:`b` corresponding
+        to the function represented by the oracle function that will be constructed from the
+        bitstring map.
 
-        :param Connection cxn: the QVM connection to use to run the programs
+        :param Connection cxn: connection to the QPU or QVM
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
         whose dot-product vector and bias is to be found
         :rtype: BernsteinVazirani

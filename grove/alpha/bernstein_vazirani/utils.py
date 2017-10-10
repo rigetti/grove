@@ -6,8 +6,9 @@ PADDED_BINARY_BIT_STRING = "{0:0{1:0d}b}"
 def bitwise_dot_product(bs0, bs1):
     """
     A helper to calculate the bitwise dot-product between two string representing bit-vectors
-    :param bs0: String of 0's and 1's representing a number in binary representations
-    :param bs1: String of 0's and 1's representing a number in binary representations
+
+    :param String bs0: String of 0's and 1's representing a number in binary representations
+    :param String bs1: String of 0's and 1's representing a number in binary representations
     :return: 0 or 1 as a string corresponding to the dot-product value
     :rtype: String
     """
@@ -19,10 +20,11 @@ def bitwise_dot_product(bs0, bs1):
 def bitwise_xor(bs0, bs1):
     """
     A helper to calculate the bitwise XOR of two bit string
-    :param bs0: String of 0's and 1's representing a number in binary representations
-    :param bs1: String of 0's and 1's representing a number in binary representations
+
+    :param String bs0: String of 0's and 1's representing a number in binary representations
+    :param String bs1: String of 0's and 1's representing a number in binary representations
     :return: String of 0's and 1's representing the XOR between bs0 and bs1
-    :rtype: str
+    :rtype: String
     """
     if len(bs0) != len(bs1):
         raise ValueError("Bit strings are not of equal length")
