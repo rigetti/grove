@@ -7,7 +7,7 @@ import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
-import grove.alpha.amplification.amplification as amp
+import grove.alpha.utility_programs as util_progs
 
 
 def grover(bitstring_map):

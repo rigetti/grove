@@ -26,7 +26,6 @@ import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
 from grove.alpha.utility_programs import ControlledProgramBuilder
-from grove.alpha.utils import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 
@@ -49,8 +48,6 @@ def amplify(algorithm, oracle, qubits, num_iter):
         raise ValueError("oracle must be a valid Program instance")
     if num_iter <= 0:
         raise ValueError("num_iter must be greater than zero")
-    if not is_valid_qubits(qubits) or len(qubits) <= 0:
-        raise ValueError("The list of qubits to apply the diffusion operator to must be non-empty")
 
     prog = pq.Program()
 
@@ -75,10 +72,6 @@ def diffusion_operator(qubits):
                    The operator operates on bistrings of the form
                    |qubits[0], ..., qubits[-1]>.
     """
-
-    if not is_valid_qubits(qubits) or len(qubits) == 0:
-        raise ValueError("qubits must be a non-empty Sequence of qubits.")
-
     diffusion_program = pq.Program()
 
     if len(qubits) == 1:
