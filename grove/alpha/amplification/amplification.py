@@ -55,10 +55,9 @@ def amplify(algorithm, oracle, qubits, num_iter):
 
 
 def diffusion_operator(qubits):
-    """Constructs the diffusion operator in the Hadamard basis on qubits,
-    assuming they are ordered from most significant qubit to least significant qubit.
-
-    This is the diagonal operator given by (1, -1, -1, ..., -1).
+    """Constructs the diffusion operator used in Grover's Algorithm, acted on both sides by an
+     a Hadamard gate on each qubit. Note that this means that the matrix representation of this
+     operator is diag(1, -1, ..., -1).
 
     See C. Lavor, L.R.U. Manssur, and R. Portugal (2003) `Grover's Algorithm: Quantum Database
     Search<https://arxiv.org/abs/quant-ph/0301079>`_ for more information.
