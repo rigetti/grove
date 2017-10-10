@@ -1,14 +1,12 @@
+import numpy as np
 import pytest
-from mock import Mock, patch
+from mock import patch
 
 from pyquil.quil import Program
 from pyquil.gates import X, Z, H
-from pyquil.quilbase import Qubit
 
-from grove.alpha.amplification.grover import grover
+from grove.alpha.amplification.grover import oracle_grover, grover
 from grove.test_utilities import prog_equality, synthesize_programs
-
-BASE_PATH=""
 
 identity_oracle = Program()
 """Does nothing on all inputs."""
@@ -36,7 +34,7 @@ def test_trivial_grover():
     trivial_grover.inst(Z(qubit0))
     trivial_grover.inst(H(qubit0))
     qubits = [qubit0]
-    generated_trivial_grover = grover(identity_oracle, qubits, 1)
+    generated_trivial_grover = oracle_grover(identity_oracle, qubits, 1)
     generated_trivial_grover.synthesize()
     trivial_grover.synthesize()
     assert prog_equality(generated_trivial_grover, trivial_grover)
@@ -51,7 +49,7 @@ def test_x_oracle_one_grover(x_oracle):
     oracle, query_qubit = x_oracle
     with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
-    generated_x_oracle_grover = grover(oracle, qubits, 1)
+    generated_x_oracle_grover = oracle_grover(oracle, qubits, 1)
     # First we put the input into uniform superposition.
     x_oracle_grover.inst(H(qubit0))
     # Now an oracle is applied.
@@ -73,7 +71,7 @@ def test_x_oracle_two_grover(x_oracle):
     oracle, query_qubit = x_oracle
     with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
-    generated_x_oracle_grover = grover(oracle, qubits, 2)
+    generated_x_oracle_grover = oracle_grover(oracle, qubits, 2)
     # First we put the input into uniform superposition.
     x_oracle_grover.inst(H(qubit0))
     # Two iterations.
@@ -97,7 +95,7 @@ def test_optimal_grover(x_oracle):
     oracle, query_qubit = x_oracle
     with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
-        generated_one_iter_grover = grover(oracle, qubits)
+        generated_one_iter_grover = oracle_grover(oracle, qubits)
     # First we put the input into uniform superposition.
     grover_precircuit.inst(H(qubit0))
     # We only do one iteration, which is the result of rounding pi * sqrt(N)/4
@@ -114,9 +112,10 @@ def test_optimal_grover(x_oracle):
     assert prog_equality(generated_one_iter_grover, one_iter_grover)
 
 
-def test_grover_bad_input():
-    with pytest.raises(ValueError):
-        _ = grover(identity_oracle, [], 2)
-    with pytest.raises(ValueError):
-        _ = grover(identity_oracle, ["foo"], 2)
-
+def test_bitstring_grover():
+    bitstring_map = {"0": 1, "1": -1}
+    prog = grover(bitstring_map)
+    # Make sure it only defines the one ORACLE gate.
+    assert len(prog.defined_gates) == 1
+    # Make sure that it produces the oracle we expect.
+    assert (prog.defined_gates[0].matrix == np.array([[1, 0], [0, -1]])).all()

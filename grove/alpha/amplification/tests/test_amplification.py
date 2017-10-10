@@ -45,7 +45,6 @@ def test_diffusion_operator():
     desired.inst(H(1))
     desired.inst(X(0))
     desired.inst(X(1))
-    print created, desired
     assert prog_equality(created, desired)
 
 

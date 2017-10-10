@@ -7,13 +7,14 @@ import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
-import grove.alpha.utility_programs as util_progs
+from grove.alpha.amplification.amplification import amplify
 
 
 def grover(bitstring_map):
     """Constructs an instance of Grover's Algorithm given a bitstring_map.
 
-    :param bitstring_map: truth-table of the input bitstring map in dictionary format.
+    :param dict bitstring_map: dict with string keys corresponding to bitstrings, and integer values
+     corresponding to the desired phase on the output state.
     :return: A Program implementing the desired instance of Grover's Algorithm
     :rtype: Program
     """
@@ -28,8 +29,8 @@ def grover(bitstring_map):
 
 
 def oracle_grover(oracle, qubits, num_iter=None):
-    """Implementation of Grover's Algorithm for a given oracle.
-    The query qubit will be left in the zero state afterwards.
+    """Implementation of Grover's Algorithm for a given oracle. The query qubit will be left in the
+     zero state afterwards.
 
     :param Program oracle: An oracle defined as a Program. It should send |x> to (-1)^f(x)|x>,
                            where the range of f is {0, 1}.
@@ -41,15 +42,11 @@ def oracle_grover(oracle, qubits, num_iter=None):
     :return: A program corresponding to the desired instance of Grover's Algorithm.
     :rtype: Program
     """
-    if len(qubits) < 1:
-        raise ValueError("Grover's Algorithm requires at least one qubit.")
-    if not all((isinstance(qubit, (int, Qubit)) for qubit in qubits)):
-        raise ValueError("qubits should be a list of qubits or non-negative integers.")
     if num_iter is None:
         num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
 
     uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
-    amp_prog = amp.amplify(uniform_superimposer, oracle, qubits, num_iter)
+    amp_prog = amplify(uniform_superimposer, oracle, qubits, num_iter)
     return amp_prog
 
 
@@ -57,7 +54,8 @@ def compute_grover_oracle_matrix(bitstring_map):
     """
     Computes the unitary matrix that encodes the oracle function for Grover's algorithm
 
-    :param bitstring_map: truth-table of the input bitstring map in dictionary format
+    :param dict bitstring_map: dict with string keys corresponding to bitstrings, and integer values
+     corresponding to the desired phase on the output state.
     :return: a numpy array corresponding to the unitary matrix for oracle for the given
      bitstring_map
     :rtype: numpy.ndarray
@@ -67,5 +65,5 @@ def compute_grover_oracle_matrix(bitstring_map):
     for b in range(2 ** n_bits):
         pad_str = np.binary_repr(b, n_bits)
         phase_factor = bitstring_map[pad_str]
-        oracle_matrix[b, b] = (-1) ** phase_factor
+        oracle_matrix[b, b] = phase_factor
     return oracle_matrix
