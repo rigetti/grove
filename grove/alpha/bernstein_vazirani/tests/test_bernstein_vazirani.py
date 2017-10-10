@@ -1,12 +1,5 @@
-import numpy as np
-import pyquil.api as api
-import pyquil.quil as pq
-import pytest
-from pyquil.gates import X
 from mock import patch
-
-from pyquil.api import SyncConnection
-from pyquil.quil import Program
+import numpy as np
 
 from grove.alpha.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
 
