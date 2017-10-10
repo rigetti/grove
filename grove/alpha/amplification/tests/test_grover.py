@@ -6,7 +6,7 @@ from pyquil.gates import X, Z, H
 from pyquil.quilbase import Qubit
 
 from grove.alpha.amplification.grover import grover
-from grove.pyquil_utilities import prog_equality, synthesize_programs
+from grove.test_utilities import prog_equality, synthesize_programs
 
 BASE_PATH=""
 

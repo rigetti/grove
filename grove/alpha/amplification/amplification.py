@@ -19,7 +19,6 @@
  See G. Brassard, P. Hoyer, M. Mosca (2000) `Quantum Amplitude Amplification and Estimation
  <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
 """
-
 import numpy as np
 
 import pyquil.quil as pq
@@ -42,10 +41,6 @@ def amplify(algorithm, oracle, qubits, num_iter):
     :return: The amplified algorithm.
     :rtype: Program
     """
-    if not isinstance(algorithm, pq.Program):
-        raise ValueError("algorithm must be a valid Program instance")
-    if not isinstance(oracle, pq.Program):
-        raise ValueError("oracle must be a valid Program instance")
     if num_iter <= 0:
         raise ValueError("num_iter must be greater than zero")
 
@@ -81,8 +76,9 @@ def diffusion_operator(qubits):
         diffusion_program.inst(H(qubits[-1]))
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
         x_gate = np.array([[0, 1], [1, 0]])
-        diffusion_program += ControlledProgramBuilder().control_qubits(qubits[:-1]).target_qubit(
-            qubits[-1]).with_operation(x_gate).with_gate_name("NOT")
+        diffusion_program += ControlledProgramBuilder().with_controls(
+            qubits[:-1]).with_target(qubits[-1]).with_operation(x_gate).with_gate_name(
+            "NOT").build()
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
         diffusion_program.inst(H(qubits[-1]))
         diffusion_program.inst(list(map(X, qubits)))

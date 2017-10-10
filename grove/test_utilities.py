@@ -4,6 +4,7 @@ from pyquil.quilbase import (ACTION_INSTANTIATE_QUBIT,
                              ACTION_RELEASE_QUBIT)
 from pyquil.quilbase import Gate, Qubit
 from pyquil.resource_manager import merge_resource_managers, ResourceManager
+# TODO Implement this in pyQuil.
 
 
 def prog_equality(prog1, prog2):

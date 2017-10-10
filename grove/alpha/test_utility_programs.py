@@ -4,7 +4,7 @@ import pytest
 from pyquil.quil import Program
 
 from grove.alpha.utility_programs import n_qubit_control
-from grove.pyquil_utilities import non_action_insts, prog_len
+from grove.test_utilities import non_action_insts, prog_len
 
 
 def test_1_qubit_control():
