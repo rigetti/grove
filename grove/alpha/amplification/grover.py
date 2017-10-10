@@ -12,6 +12,10 @@ import grove.alpha.amplification.amplification as amp
 
 def grover(bitstring_map):
     """Constructs an instance of Grover's Algorithm given a bitstring_map.
+
+    :param bitstring_map: truth-table of the input bitstring map in dictionary format.
+    :return: A Program implementing the desired instance of Grover's Algorithm
+    :rtype: Program
     """
     oracle_unitary = compute_grover_oracle_matrix(bitstring_map)
     oracle = pq.Program()
@@ -25,7 +29,6 @@ def grover(bitstring_map):
 
 def oracle_grover(oracle, qubits, num_iter=None):
     """Implementation of Grover's Algorithm for a given oracle.
-
     The query qubit will be left in the zero state afterwards.
 
     :param Program oracle: An oracle defined as a Program. It should send |x> to (-1)^f(x)|x>,
@@ -55,15 +58,14 @@ def compute_grover_oracle_matrix(bitstring_map):
     Computes the unitary matrix that encodes the oracle function for Grover's algorithm
 
     :param bitstring_map: truth-table of the input bitstring map in dictionary format
-    :return: a dense matrix containing the permutation of the bit strings and a dictionary
-    containing the indices of the non-zero elements of the computed permutation matrix as
-    key-value-pairs
-    :rtype: Tuple[2darray, Dict[String, String]]
+    :return: a numpy array corresponding to the unitary matrix for oracle for the given
+     bitstring_map
+    :rtype: numpy.ndarray
     """
     n_bits = len(list(bitstring_map.keys())[0])
-    ufunc = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
-    for b in range(2**n_bits):
+    oracle_matrix = np.zeros(shape=(2 ** n_bits, 2 ** n_bits))
+    for b in range(2 ** n_bits):
         pad_str = np.binary_repr(b, n_bits)
         phase_factor = bitstring_map[pad_str]
-        ufunc[b, b] = (-1) ** phase_factor
-    return ufunc
+        oracle_matrix[b, b] = (-1) ** phase_factor
+    return oracle_matrix

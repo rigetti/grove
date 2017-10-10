@@ -25,7 +25,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
-from grove.alpha.utility_programs import n_qubit_control
+from grove.alpha.utility_programs import ControlledProgramBuilder
 from grove.alpha.utils import is_valid_qubits
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
@@ -79,16 +79,18 @@ def diffusion_operator(qubits):
     if not is_valid_qubits(qubits) or len(qubits) == 0:
         raise ValueError("qubits must be a non-empty Sequence of qubits.")
 
-    p = pq.Program()
+    diffusion_program = pq.Program()
 
     if len(qubits) == 1:
-        p.inst(Z(qubits[0]))
+        diffusion_program.inst(Z(qubits[0]))
     else:
-        p.inst(list(map(X, qubits)))
-        p.inst(H(qubits[-1]))
-        p.inst(RZ(-np.pi)(qubits[0]))
-        p += n_qubit_control(qubits[:-1], qubits[-1], np.array([[0, 1], [1, 0]]), "NOT")
-        p.inst(RZ(-np.pi)(qubits[0]))
-        p.inst(H(qubits[-1]))
-        p.inst(list(map(X, qubits)))
-    return p
+        diffusion_program.inst(list(map(X, qubits)))
+        diffusion_program.inst(H(qubits[-1]))
+        diffusion_program.inst(RZ(-np.pi)(qubits[0]))
+        x_gate = np.array([[0, 1], [1, 0]])
+        diffusion_program += ControlledProgramBuilder().control_qubits(qubits[:-1]).target_qubit(
+            qubits[-1]).with_operation(x_gate).with_gate_name("NOT")
+        diffusion_program.inst(RZ(-np.pi)(qubits[0]))
+        diffusion_program.inst(H(qubits[-1]))
+        diffusion_program.inst(list(map(X, qubits)))
+    return diffusion_program
