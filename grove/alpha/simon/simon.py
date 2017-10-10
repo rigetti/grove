@@ -192,7 +192,7 @@ class Simon(object):
         key-value-pairs
         :rtype: Tuple[2darray, Dict[String, String]]
         """
-        n_bits = len(bitstring_map.keys()[0])
+        n_bits = len(list(bitstring_map.keys())[0])
 
         # We instantiate an empty matrix of size 2 * n_bits to encode the mapping from n qubits
         # to n ancillas, which explains the factor 2 overhead.
