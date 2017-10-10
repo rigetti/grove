@@ -60,7 +60,7 @@ def test_simon_class():
     assert simon_algo.n_qubits == 3
     assert simon_algo.n_ancillas == 3
     assert simon_algo._qubits == [0, 1, 2, 3, 4, 5]
-    assert simon_algo.log_qubits == [0, 1, 2]
+    assert simon_algo.computational_qubits == [0, 1, 2]
     assert simon_algo.ancillas == [3, 4, 5]
 
     assert mask == [1, 1, 0]
@@ -215,7 +215,7 @@ def test_add_row_at_top():
         2: [0, 0, 1, 0],
         3: [0, 0, 0, 1]
     }
-    insert_row_num = simon_algo._add_missing_provenance_vector()
+    insert_row_num = simon_algo._add_missing_msb_vector()
 
     W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
     W_expected = {
@@ -238,7 +238,7 @@ def test_add_row_at_bottom():
         1: [0, 1, 0, 1],
         2: [0, 0, 1, 0]
     }
-    insert_row_num = simon_algo._add_missing_provenance_vector()
+    insert_row_num = simon_algo._add_missing_msb_vector()
 
     W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
     W_expected = {
@@ -261,7 +261,7 @@ def test_add_row_in_middle():
         3: [0, 0, 0, 1, 0],
         4: [0, 0, 0, 0, 1]
     }
-    insert_row_num = simon_algo._add_missing_provenance_vector()
+    insert_row_num = simon_algo._add_missing_msb_vector()
 
     W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
     W_expected = {

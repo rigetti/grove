@@ -29,9 +29,9 @@ For more information, see [Simon1995]_, [Loceff2015]_, [Watrous2006]_
 from collections import defaultdict
 from operator import xor
 
-import pyquil.quil as pq
 import numpy as np
 import numpy.random as rd
+import pyquil.quil as pq
 from pyquil.gates import H
 
 import grove.alpha.simon.utils as utils
@@ -39,8 +39,8 @@ import grove.alpha.simon.utils as utils
 
 def create_1to1_bitmap(mask):
     """
-    A helper to create a bit map function for a given mask. E.g. for a mask :math:`m = 10` the
-    return would is a dictionary:
+    A helper to create a bit map function (as a dictionary) for a given mask. E.g. for a mask
+    :math:`m = 10` the return is a dictionary:
 
     >>> create_1to1_bitmap('10')
     ... {
@@ -50,22 +50,21 @@ def create_1to1_bitmap(mask):
     ...     '11': '01'
     ... }
 
-    :param string mask: binary mask as a string of 0's and 1's
+    :param String mask: binary mask as a string of 0's and 1's
     :return: dictionary containing a mapping of all possible bit strings of the same length as the
     mask's string and their mapped bit-string value
-
     :rtype: Dict[String, String]
     """
     n_bits = len(mask)
     form_string = "{0:0" + str(n_bits) + "b}"
-    dct = {}
+    bit_map_dct = {}
     for idx in range(2**n_bits):
         bit_string = form_string.format(idx)
-        dct[bit_string] = utils.bitwise_xor(bit_string, mask)
-    return dct
+        bit_map_dct[bit_string] = utils.bitwise_xor(bit_string, mask)
+    return bit_map_dct
 
 
-def create_valid_2to1_bitmap(mask, random_seed =None):
+def create_valid_2to1_bitmap(mask, random_seed=None):
     """
     A helper to create a 2-to-1 binary function that is invariant with respect to the application of
     a specified XOR bitmask. This property must be satisfied if a 2-to-1 function is to be used in
@@ -90,8 +89,8 @@ def create_valid_2to1_bitmap(mask, random_seed =None):
     Note that, e.g. both `000` and `110` map to the same value `101` and
     :math:`000 \oplus 110 = 110`. The same holds true for other pairs.
 
-    :param string mask: mask input that defines the periodicity of f
-    :param integer random_seed: (optional) integer to set numpy.random.seed parameter.
+    :param String mask: mask input that defines the periodicity of f
+    :param Integer random_seed: (optional) integer to set numpy.random.seed parameter.
     :return: dictionary containing the truth table of a valid 2-to-1 boolean function
     :rtype: Dict[String, String]
     """
@@ -104,16 +103,16 @@ def create_valid_2to1_bitmap(mask, random_seed =None):
     # bit-strings. We do this by randomly sampling the set of all possible bit-strings.
     range_of_2to1_map = list(rd.choice(list(bit_map.keys()), replace=False, size=n_samples))
 
-    list_of_tup = sorted([(k, v) for k, v in bit_map.items()], key=lambda x: x[0])
+    list_of_bitstring_tuples = sorted([(k, v) for k, v in bit_map.items()], key=lambda x: x[0])
 
-    dct = {}
+    periodic_bit_map_dct = {}
     for cnt in range(n_samples):
-        tup = list_of_tup[cnt]
+        bitstring_tup = list_of_bitstring_tuples[cnt]
         val = range_of_2to1_map[cnt]
-        dct[tup[0]] = val
-        dct[tup[1]] = val
+        periodic_bit_map_dct[bitstring_tup[0]] = val
+        periodic_bit_map_dct[bitstring_tup[1]] = val
 
-    return dct
+    return periodic_bit_map_dct
 
 
 class Simon(object):
@@ -129,7 +128,7 @@ class Simon(object):
         self.n_qubits = None
         self.n_ancillas = None
         self._qubits = None
-        self.log_qubits = None
+        self.computational_qubits = None
         self.ancillas = None
         self.simon_circuit = None
         self.oracle_circuit = None
@@ -142,40 +141,37 @@ class Simon(object):
         """
         Implementation of the quantum portion of Simon's Algorithm.
 
-        Given a list of input qubits,
-        all initially in the :math:`\\vert 0\\rangle` state,
-        create a program that applies the Hadamard-Walsh transform the qubits
-        before and after going through the oracle.
+        Given a list of input qubits, all initially in the :math:`\\vert 0\\rangle` state, create a
+        program that applies the Walsh-Hadamard transform the qubits before and after going through
+        the oracle.
 
-        :param Program oracle: Program representing unitary application of function
-        :param list(int) qubits: List of qubits that enter as the input
-                            :math:`\\vert x \\rangle`.
-        :return: A program corresponding to the desired instance of
-                 Simon's Algorithm.
+        :return: A program corresponding to the desired instance of Simon's Algorithm.
         :rtype: Program
         """
-        p = pq.Program()
+        simon_circuit = pq.Program()
 
         oracle_name = "SIMON_ORACLE"
-        p.defgate(oracle_name, self.unitary_function_mapping)
+        simon_circuit.defgate(oracle_name, self.unitary_function_mapping)
 
-        p.inst([H(i) for i in self.log_qubits])
-        p.inst(tuple([oracle_name] + sorted(self._qubits, reverse=True)))
-        p.inst([H(i) for i in self.log_qubits])
-        return p
+        simon_circuit.inst([H(i) for i in self.computational_qubits])
+        simon_circuit.inst(tuple([oracle_name] + sorted(self._qubits, reverse=True)))
+        simon_circuit.inst([H(i) for i in self.computational_qubits])
+        return simon_circuit
 
     def _init_attr(self, bitstring_map):
         """
         Acts instead of __init__ method to instantiate the necessary Simon Object state.
 
-        :param bitstring_map: truth-table of the input bitstring map in dictionary format
+        :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
+        dictionary format
         :return: None
+        :rtype: NoneType
         """
         self.bit_map = bitstring_map
         self.n_qubits = len(list(bitstring_map.keys())[0])
         self.n_ancillas = self.n_qubits
         self._qubits = list(range(self.n_qubits + self.n_ancillas))
-        self.log_qubits = self._qubits[:self.n_qubits]
+        self.computational_qubits = self._qubits[:self.n_qubits]
         self.ancillas = self._qubits[self.n_qubits:]
         self.classical_register = np.asarray(list(range(self.n_qubits + self.n_ancillas)))
         self.unitary_function_mapping, _ = self._compute_unitary_oracle_matrix(bitstring_map)
@@ -189,36 +185,46 @@ class Simon(object):
         """
         Computes the unitary matrix that encodes the orcale function for Simon's algorithm
 
-        :param bitstring_map: truth-table of the input bitstring map in dictionary format
+        :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
+        dictionary format
         :return: a dense matrix containing the permutation of the bit strings and a dictionary
         containing the indices of the non-zero elements of the computed permutation matrix as
         key-value-pairs
         :rtype: Tuple[2darray, Dict[String, String]]
         """
-        n_bits = len(list(bitstring_map.keys())[0])
+        n_bits = len(bitstring_map.keys()[0])
+
+        # We instantiate an empty matrix of size 2 * n_bits to encode the mapping from n qubits
+        # to n ancillas, which explains the factor 2 overhead.
+        # To construct the matrix we go through all possible state transitions and pad the index
+        # according to all possible states the ancilla-subsystem could be in
         ufunc = np.zeros(shape=(2 ** (2 * n_bits), 2 ** (2 * n_bits)))
-        dct = defaultdict(dict)
+        index_mapping_dct = defaultdict(dict)
         for b in range(2**n_bits):
+            # padding according to ancilla state
             pad_str = np.binary_repr(b, n_bits)
             for k, v in bitstring_map.items():
-                dct[pad_str + k] = utils.bitwise_xor(pad_str, v) + k
+                # add mapping from initial state to the state in the ancilla system.
+                # pad_str corresponds to the initial state of the ancilla system.
+                index_mapping_dct[pad_str + k] = utils.bitwise_xor(pad_str, v) + k
+                # calculate matrix indices that correspond to the transition-matrix-element
+                # of the oracle unitary
                 i, j = int(pad_str+k, 2), int(utils.bitwise_xor(pad_str, v) + k, 2)
                 ufunc[i, j] = 1
-        return ufunc, dct
+        return ufunc, index_mapping_dct
 
     def find_mask(self, cxn, bitstring_map):
         """
-        Runs Simon'mask_array algorithm to find the mask.
+        Runs Simon's mask_array algorithm to find the mask.
 
         :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
         whose period is  to be found.
 
-        :return: Returns the mask (period) of the bitstring map or raises and Exception if the mask
-        cannot be found.
+        :return: Returns the mask of the bitstring map or raises and Exception if the mask cannot be
+        found.
+        :rtype: NoneType
         """
-        if not isinstance(bitstring_map, dict):
-            raise ValueError("Bitstring map needs to be a map from bitstring to bitstring")
         self._init_attr(bitstring_map)
 
         # create the samples of linearly independent bit-vectors
@@ -236,24 +242,24 @@ class Simon(object):
         It attempts to put the sampled bitstring into a dictionary and only terminates once the
         dictionary contains :math:`n-1` samples
 
-
-
-
-        :param cxn: Connection object to the Quantum Engine (QVM, QPU)
+        :param cxn: Connection object to a QVM or QPU
         :return: None
+        :rtype: NoneType
         """
         while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
-            z = np.array(cxn.run_and_measure(self.simon_circuit, self.log_qubits)[0], dtype=int)
-            self._add_to_dict_of_indep_bit_vectors(z.tolist())
+            sampled_bit_string = np.array(cxn.run_and_measure(self.simon_circuit,
+                                                              self.computational_qubits)[0],
+                                          dtype=int)
+            self._add_to_dict_of_indep_bit_vectors(sampled_bit_string.tolist())
 
     def _invert_mask_equation(self):
         """
         This method tries to infer the bit mask of the input function from the sampled :math:`n-1`
         linearly independent bit vectors.
 
-        It first finds the missing provenance in the collection of sampled bit vectors, then
-        constructs a matrix in upper-triangular (row-echelon) form and finally uses backsubstitution
-        over :math:`GF(2)` to find a solution to the equation
+        It first finds the value of the missing most-significant bit (MSB) in the collection of
+        sampled bit vectors, then constructs a matrix in upper-triangular (row-echelon) form and
+        finally uses back-substitution over :math:`GF(2)` to find a solution to the equation
 
             :math:`\\mathbf{\\mathit{W}}\\mathbf{m}=\\mathbf{a}`
 
@@ -262,17 +268,18 @@ class Simon(object):
         matrix.
 
         :return: None
+        :rtype: NoneType
         """
-        missing_prov = self._add_missing_provenance_vector()
+        missing_msb = self._add_missing_msb_vector()
         upper_triangular_matrix = np.asarray(
             [tup[1] for tup in sorted(zip(self._dict_of_linearly_indep_bit_vectors.keys(),
                                           self._dict_of_linearly_indep_bit_vectors.values()),
                                       key=lambda x: x[0])])
 
-        provenance_unit = np.zeros(shape=(self.n_qubits,), dtype=int)
-        provenance_unit[missing_prov] = 1
+        msb_unit_vec = np.zeros(shape=(self.n_qubits,), dtype=int)
+        msb_unit_vec[missing_msb] = 1
 
-        self.mask = utils.binary_back_substitute(upper_triangular_matrix, provenance_unit).tolist()
+        self.mask = utils.binary_back_substitute(upper_triangular_matrix, msb_unit_vec).tolist()
 
     def _add_to_dict_of_indep_bit_vectors(self, z):
         """
@@ -283,9 +290,10 @@ class Simon(object):
 
         :param z: array containing the bit-vector
         :return: None
+        :rtype: NoneType
         """
         if all(np.asarray(z) == 0) or all(np.asarray(z) == 1):
-            return
+            return None
         msb_z = utils.most_significant_bit(z)
 
         # try to add bitstring z to samples dictionary directly
@@ -299,12 +307,12 @@ class Simon(object):
             conflict_z = self._dict_of_linearly_indep_bit_vectors[msb_z]
             not_z = [xor(conflict_z[idx], z[idx]) for idx in range(len(z))]
             if all(np.asarray(not_z) == 0):
-                return
+                return None
             msb_not_z = utils.most_significant_bit(not_z)
             if msb_not_z not in self._dict_of_linearly_indep_bit_vectors.keys():
                 self._dict_of_linearly_indep_bit_vectors[msb_not_z] = not_z
 
-    def _add_missing_provenance_vector(self):
+    def _add_missing_msb_vector(self):
         """
         Finds the missing provenance value in the collection of :math:`n-1` linearly independent
         bit vectors and adds a unit vector corresponding to the missing provenance to the collection
@@ -312,18 +320,18 @@ class Simon(object):
         :return: Missing provenance value as int
         :rtype: Int
         """
-        missing_prov = None
+        missing_msb = None
         for idx in range(self.n_qubits):
             if idx not in self._dict_of_linearly_indep_bit_vectors.keys():
-                missing_prov = idx
+                missing_msb = idx
 
-        if missing_prov is None:
+        if missing_msb is None:
             raise ValueError("Expected a missing provenance, but didn't find one.")
 
         augment_vec = np.zeros(shape=(self.n_qubits,))
-        augment_vec[missing_prov] = 1
-        self._dict_of_linearly_indep_bit_vectors[missing_prov] = augment_vec.astype(int).tolist()
-        return missing_prov
+        augment_vec[missing_msb] = 1
+        self._dict_of_linearly_indep_bit_vectors[missing_msb] = augment_vec.astype(int).tolist()
+        return missing_msb
 
     def _check_mask_correct(self):
         """
@@ -331,6 +339,7 @@ class Simon(object):
         algorithm. This can be done in :math:`O(n)` as it is a simple list traversal.
 
         :return: True if mask reproduces the input function
+        :rtype: Bool
         """
         mask_str = ''.join([str(b) for b in self.mask])
         return all([self.bit_map[k] == self.bit_map[utils.bitwise_xor(k, mask_str)]
