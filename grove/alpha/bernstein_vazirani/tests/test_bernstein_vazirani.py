@@ -8,34 +8,38 @@ from mock import patch
 from pyquil.api import SyncConnection
 from pyquil.quil import Program
 
-from grove.alpha.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani
+from grove.alpha.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
 
 
-def _create_expected_prog():
-    expected_prog = Program()
-    expected_prog.inst("X 3")
-    expected_prog.inst("H 3")
-    expected_prog.inst("H 0")
-    expected_prog.inst("H 1")
-    expected_prog.inst("H 2")
-    expected_prog.inst("X 3")
-    expected_prog.inst("CNOT 2 3")
-    expected_prog.inst("CNOT 1 3")
-    expected_prog.inst("H 0")
-    expected_prog.inst("H 1")
-    expected_prog.inst("H 2")
-    return expected_prog
+def test_bv_bitmap_generator():
+    expected_bit_map = {
+        '000': '1',
+        '001': '1',
+        '010': '0',
+        '011': '0',
+        '100': '0',
+        '101': '0',
+        '110': '1',
+        '111': '1'
+    }
+    a = '110'
+    b = '1'
+    actual_bitmap = create_bv_bitmap(a, b)
+
+    assert actual_bitmap == expected_bit_map
 
 
-def _create_expected_oracle_prog():
-    expected_prog = Program()
-    expected_prog.inst("X 3")
-    expected_prog.inst("CNOT 2 3")
-    expected_prog.inst("CNOT 1 3")
-    return expected_prog
-
-
-def test_bv_class():
+def test_bv_class_with_bitmap():
+    bit_map = {
+        '000': '1',
+        '001': '1',
+        '010': '0',
+        '011': '0',
+        '100': '0',
+        '101': '0',
+        '110': '1',
+        '111': '1'
+    }
 
     with patch("pyquil.api.SyncConnection") as qvm:
         # Need to mock multiple returns as an iterable
@@ -45,17 +49,79 @@ def test_bv_class():
         ]
 
     bv = BernsteinVazirani()
-    bv_a, bv_b = bv.with_oracle_for_vector([1, 1, 0], 1).run(qvm)
+    bv.run(qvm, bit_map).check_solution()
+    bv_a, bv_b = bv.solution
+    assert bv_a == '110'
+    assert bv_b == '1'
 
-    assert bv_a == [1, 1, 0]
-    assert bv_b == 1
-    assert bv.full_bv_circuit.__str__() == _create_expected_prog().__str__()
+
+def test_bv_class_with_check_results():
+    a = '1011'
+    b = '0'
+
+    bit_map = create_bv_bitmap(a, b)
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            ([1, 1, 0, 1], ),
+            ([0], )
+        ]
+
+    bv = BernsteinVazirani()
+    bv.run(qvm, bit_map).check_solution()
+    bv_a, bv_b = bv.solution
+    assert bv_a == a
+    assert bv_b == b
 
 
-def test_bv_class_oracle():
+def test_bv_class_with_return_solution():
+    a = '1011'
+    b = '0'
 
-    bv = BernsteinVazirani().with_oracle_for_vector([1, 1, 0], 1)
-    assert bv.n_qubits == 3
-    assert bv.computational_qubits == [0, 1, 2]
-    assert bv.ancilla == 3
-    assert bv.bv_oracle_circuit.__str__() == _create_expected_oracle_prog().__str__()
+    bit_map = create_bv_bitmap(a, b)
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            ([1, 1, 0, 1], ),
+            ([0], )
+        ]
+
+    bv = BernsteinVazirani()
+    bv_a, bv_b = bv.run(qvm, bit_map).get_solution()
+    assert bv_a == a
+    assert bv_b == b
+
+
+def test_bv_unitary_generator():
+    expected_transition_dct = {
+        '000': '100',
+        '001': '101',
+        '010': '010',
+        '011': '011',
+        '100': '000',
+        '101': '001',
+        '110': '110',
+        '111': '111'
+    }
+    expected_unitary = [
+        [0., 0., 0., 0., 1., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 1., 0., 0.],
+        [0., 0., 1., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 1., 0., 0., 0., 0.],
+        [1., 0., 0., 0., 0., 0., 0., 0.],
+        [0., 1., 0., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 0., 1., 0.],
+        [0., 0., 0., 0., 0., 0., 0., 1.]
+    ]
+
+    bit_map = {
+        '00': '1',
+        '01': '1',
+        '10': '0',
+        '11': '0',
+    }
+    actual_unitary, actual_dct = BernsteinVazirani()._compute_unitary_oracle_matrix(bit_map)
+    assert expected_transition_dct == actual_dct
+    np.testing.assert_equal(actual_unitary, expected_unitary)

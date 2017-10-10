@@ -23,8 +23,39 @@ For more information, see [Loceff2015]_
 .. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
 """
 
+import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import H, X, CNOT
+from pyquil.gates import H, X
+from grove.alpha.bernstein_vazirani import utils
+from collections import defaultdict
+
+
+def create_bv_bitmap(a, b):
+    """
+    This function creates a map from bitstring to function value for a boolean formula :math:`f`
+    with
+
+        .. math::
+
+           f:\\{0,1\\}^n\\rightarrow \\{0,1\\}
+
+           \\mathbf{x}\\rightarrow \\mathbf{a}\\cdot\\mathbf{x}+b\\pmod{2}
+
+           (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
+    :param String a: a string of 0's and 1's that represents the dot-product partner in :math:`f`
+    :param String b: 0 or 1 as a string representing the bias term in :math:`f`
+    :return: A dictionary containing all possible bitstring of length equal to :math:`a` and the
+    function value :math:`f`
+    :rtype: Dict[String, String]
+    """
+    n_bits = len(a)
+    bit_map = {}
+    for bit_val in range(2 ** n_bits):
+        bit_map[np.binary_repr(bit_val, width=n_bits)] = \
+            str((int(utils.bitwise_dot_product(
+                np.binary_repr(bit_val, width=n_bits), a)) + int(b, 2)) % 2)
+
+    return bit_map
 
 
 class BernsteinVazirani(object):
@@ -40,14 +71,15 @@ class BernsteinVazirani(object):
         self.n_ancillas = 1
         self.computational_qubits = None
         self.ancilla = None
-        self.bv_oracle_circuit = None
-        self.full_bv_circuit = None
+        self.bv_circuit = None
+        self.solution = None
+        self.input_bitmap = None
 
-    def _create_bv_oracle_program(self, a, b):
+    @staticmethod
+    def _compute_unitary_oracle_matrix(bitstring_map):
         """
-        Creates a black box oracle for a function to be used in the Bernstein-Vazirani algorithm.
-
-        For a function :math:`f` such that
+        Computes the unitary matrix that encodes the oracle function  used in the Bernstein-Vazirani
+        algorithm. It generates a dense matrix for a function :math:`f`
 
         .. math::
 
@@ -57,53 +89,39 @@ class BernsteinVazirani(object):
 
            (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
 
-        where :math:`(\\cdot)` is the bitwise dot product,
-        this function defines a program that performs
-        the following unitary transformation:
+        where :math:`(\\cdot)` is the bitwise dot product, that represents the transition-matrix
+        elements of the corresponding qubit and ancilla subsystems.
 
-        .. math::
-
-            \\vert \\mathbf{x}\\rangle\\vert y\\rangle \\rightarrow
-            \\vert \\mathbf{x}\\rangle
-            \\vert f(\\mathbf{x}) \\text{ xor } y\\rangle
-
-        where :math:`\\text{xor}` is taken bitwise.
-
-        Allocates one scratch bit.
-
-        :param List[Int] a: a vector of length :math:`n`
-                                    containing only ones and zeros.
-                                    The order is taken to be
-                                    most to least significant bit.
-        :param Int b: a 0 or 1 as additive bias
-        :return: A program that performs the above unitary transformation.
-        :rtype: Program
+        :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
+        dictionary format
+        :return: a dense matrix containing the permutation of the bit strings and a dictionary
+        containing the indices of the non-zero elements of the computed permutation matrix as
+        key-value-pairs
+        :rtype: Tuple[2darray, Dict[String, String]]
         """
-        bv_oracle_circuit = pq.Program()
-        if b == 1:
-            bv_oracle_circuit.inst(X(self.ancilla))
-        for i in range(self.n_qubits):
-            if a[i] == 1:
-                bv_oracle_circuit.inst(CNOT(self.computational_qubits[self.n_qubits - 1 - i],
-                                            self.ancilla))
-        return bv_oracle_circuit
+        n_bits = len(list(bitstring_map.keys())[0])
+        n_ancillas = 1
 
-    def with_oracle_for_vector(self, a, b=0):
-        """
-        builder method that constructs an oracle for the given mask vector and bias term
+        # We instantiate an empty matrix of size n_bits + 1 to encode the mapping from n qubits
+        # to one ancillas, which explains the additional +1 overhead.
+        # To construct the matrix we go through all possible state transitions and pad the index
+        # according to all possible states the ancilla-subsystem could be in
+        ufunc = np.zeros(shape=(2 ** (n_bits + 1), 2 ** (n_bits + 1)))
+        index_mapping_dct = defaultdict(dict)
+        for b in range(2**n_ancillas):
+            # padding according to ancilla state
+            pad_str = np.binary_repr(b, width=1)
+            for k, v in bitstring_map.items():
+                # add mapping from initial state to the state in the ancilla system.
+                # pad_str corresponds to the initial state of the ancilla system.
+                index_mapping_dct[pad_str + k] = utils.bitwise_xor(pad_str, v) + k
+                # calculate matrix indices that correspond to the transition-matrix-element
+                # of the oracle unitary
+                i, j = int(pad_str+k, 2), int(utils.bitwise_xor(pad_str, v) + k, 2)
+                ufunc[i, j] = 1
+        return ufunc, index_mapping_dct
 
-        :param List[Int] a: list of integers (0 and 1) for the bitwise dot-product
-        :param Int b: additive bias (0 or 1) for the function. Default: 0
-        :return: self
-        :rtype: BernsteinVazirani
-        """
-        self.n_qubits = len(a)
-        self.computational_qubits = list(range(self.n_qubits))
-        self.ancilla = self.n_qubits  # is the highest index now.
-        self.bv_oracle_circuit = self._create_bv_oracle_program(a, b)
-        return self
-
-    def _hadarmard_walsh_wrapper(self, oracle_circuit):
+    def _create_bv_circuit(self, bit_map):
         """
         Implementation of the Bernstein-Vazirani Algorithm.
 
@@ -114,17 +132,21 @@ class BernsteinVazirani(object):
         :param Program oracle_circuit: Program representing unitary application of function
         :rtype: Program
         """
+        unitary, _ = self._compute_unitary_oracle_matrix(bit_map)
         full_bv_circuit = pq.Program()
+
+        full_bv_circuit.defgate("BV-ORACLE", unitary)
 
         # Put ancilla bit into minus state
         full_bv_circuit.inst(X(self.ancilla), H(self.ancilla))
 
         full_bv_circuit.inst([H(i) for i in self.computational_qubits])
-        full_bv_circuit += oracle_circuit
+        full_bv_circuit.inst(
+            tuple(["BV-ORACLE"] + sorted(self.computational_qubits + [self.ancilla], reverse=True)))
         full_bv_circuit.inst([H(i) for i in self.computational_qubits])
         return full_bv_circuit
 
-    def run(self, cxn):
+    def run(self, cxn, bitstring_map):
         """
         Runs the Bernstein-Vazirani algorithm.
 
@@ -132,16 +154,50 @@ class BernsteinVazirani(object):
         function represented by the oracle.
 
         :param Connection cxn: the QVM connection to use to run the programs
-        :rtype: tuple
+        :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
+        whose dot-product vector and bias is to be found
+        :rtype: BernsteinVazirani
         """
 
-        self.full_bv_circuit = self._hadarmard_walsh_wrapper(self.bv_oracle_circuit)
+        # initialize all attributes
+        self.input_bitmap = bitstring_map
+        self.n_qubits = len(list(bitstring_map.keys())[0])
+        self.computational_qubits = list(range(self.n_qubits))
+        self.ancilla = self.n_qubits  # is the highest index now.
+
+        # construct BV circuit
+        self.bv_circuit = self._create_bv_circuit(bitstring_map)
 
         # find vector by running the full bv circuit
-        results = cxn.run_and_measure(self.full_bv_circuit, self.computational_qubits)
+        results = cxn.run_and_measure(self.bv_circuit, self.computational_qubits)
         bv_vector = results[0][::-1]
 
         # To get the bias term we skip the Walsh-Hadamard transform
-        results = cxn.run_and_measure(self.bv_oracle_circuit, [self.ancilla])
+        results = cxn.run_and_measure(self.bv_circuit, [self.ancilla])
         bv_bias = results[0][0]
-        return bv_vector, bv_bias
+
+        self.solution = ''.join([str(b) for b in bv_vector]), str(bv_bias)
+        return self
+
+    def get_solution(self):
+        """
+        Returns the solution of the BV algorithm
+
+        :return: a tuple of string corresponding to the dot-product partner vector and the bias term
+        :rtype: Tuple[String, String]
+        """
+        if self.solution is None:
+            raise AssertionError("You need to `run` this algorithm first")
+        return self.solution
+
+    def check_solution(self):
+        """
+        Checks if the the found solution correctly reproduces the input.
+
+        :return: True if solution correctly reproduces input bitstring map
+        :rtype: Bool
+        """
+        if self.solution is None:
+            raise AssertionError("You need to `run` this algorithm first")
+        assert_map = create_bv_bitmap(*self.solution)
+        return all([assert_map[k] == v for k, v in self.input_bitmap.items()])
