@@ -7,7 +7,6 @@ and Quantum Information" by Neilson and Chuang.
 import pyquil.quil as pq
 from pyquil.gates import *
 import numpy as np
-from six.moves import input
 
 
 def oracle_function(unitary_funct, qubits, ancilla):
@@ -103,7 +102,7 @@ def unitary_function(mappings):
 
     elif sum(mappings) == 2 ** (n - 1):  # Half of the entries were 0, half 1
         unitary_funct = np.zeros(shape=(2 ** n, 2 ** n))
-        index_lists = [range(2 ** (n - 1)), range(2 ** (n - 1), 2 ** n)]
+        index_lists = [list(range(2 ** (n - 1))), list(range(2 ** (n - 1), 2 ** n))]
         for j in range(2 ** n):
             i = index_lists[mappings[j]].pop()
             unitary_funct[i, j] = 1
@@ -151,7 +150,7 @@ if __name__ == "__main__":
     print("Enter f(x) for the following n-bit inputs:")
     mappings = []
     for i in range(2 ** n):
-        val = int(input(integer_to_bitstring(i, n) + ': '))
+        val = int(eval(input(integer_to_bitstring(i, n) + ': ')))
         assert val in [0, 1], "f(x) must return only 0 and 1"
         mappings.append(val)
 
@@ -167,6 +166,5 @@ if __name__ == "__main__":
     print(deutsch_program)
     qvm = SyncConnection()
     results = qvm.run_and_measure(deutsch_program, [q.index() for q in qubits])
-    print("Results:", results)
-    print("f(x) is", "balanced" if 1 in results[0] else "constant")
-
+    print(("Results:", results))
+    print(("f(x) is", "balanced" if 1 in results[0] else "constant"))

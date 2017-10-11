@@ -21,7 +21,7 @@ from grove.pyvqe.vqe import VQE
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.paulis import exponential_map, PauliSum
-from functools import reduce
+import functools
 
 
 class QAOA(object):
@@ -190,7 +190,7 @@ class QAOA(object):
         stacked_params = np.hstack((self.betas, self.gammas))
         vqe = VQE(self.minimizer, minimizer_args=self.minimizer_args,
                   minimizer_kwargs=self.minimizer_kwargs)
-        cost_ham = reduce(lambda x, y: x + y, self.cost_ham)
+        cost_ham = functools.reduce(lambda x, y: x + y, self.cost_ham)
         # maximizing the cost function!
         param_prog = self.get_parameterized_program()
         result = vqe.vqe_run(param_prog, cost_ham, stacked_params, qvm=self.qvm,
@@ -230,8 +230,6 @@ class QAOA(object):
         angles.  If you have not done this you will be returning the output for
         a random set of angles.
 
-        :param betas: List of beta angles
-        :param gammas: List of gamma angles
         :param samples: (int, Optional) number of samples to get back from the
                         QVM.
         :returns: tuple representing the bitstring, Counter object from
@@ -245,9 +243,7 @@ class QAOA(object):
         for i in range(self.n_qubits):
             sampling_prog.measure(i, [i])
 
-        bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     range(self.n_qubits),
-                                                     trials=samples)
+        bitstring_samples = self.qvm.run_and_measure(sampling_prog, list(range(self.n_qubits)), trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
         most_frequent_bit_string = max(freq, key=lambda x: freq[x])

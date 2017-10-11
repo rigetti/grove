@@ -104,7 +104,7 @@ if __name__ == "__main__":
     betas, gammas = inst.get_angles()
     probs = inst.probabilities(np.hstack((betas, gammas)))
     for state, prob in zip(inst.states, probs):
-        print(state, prob)
+        print((state, prob))
 
     print("Most frequent bitstring from sampling")
     most_freq_string, sampling_results = inst.get_string(

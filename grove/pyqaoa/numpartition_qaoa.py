@@ -28,7 +28,6 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
 
     :param asset_list: list to binary parition
     :param A: (float) optional constant for level separation. Default=1.
-    :param minimizer_kwargs: Arguments for the QAOA minimizer
     :param steps: (int) number of steps approximating the solution.
     """
     cost_operators = []
@@ -64,7 +63,7 @@ if __name__ == "__main__":
     print(gammas)
     probs = inst.probabilities(np.hstack((betas, gammas)))
     for state, prob in zip(inst.states, probs):
-        print(state, prob)
+        print((state, prob))
 
     print("Most frequent bitstring from sampling")
     most_freq_string, sampling_results = inst.get_string(

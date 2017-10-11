@@ -13,7 +13,6 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.api import SyncConnection
 from pyquil.gates import *
-from six.moves import input
 
 
 def get_uniformly_controlled_rotation_matrix(k):
@@ -201,7 +200,7 @@ def create_arbitrary_state(vector, qubits=None):
     n = max(1, int(np.ceil(np.log2(len(vec_norm)))))  # number of qubits needed
 
     if qubits is None:
-        qubits = range(n)
+        qubits = list(range(n))
 
     N = 2 ** n  # number of coefficients
     while len(vec_norm) < N:
@@ -264,10 +263,10 @@ def create_arbitrary_state(vector, qubits=None):
 
             # just retain upper left square
             # for the next iteration (one less control)
-            M = M[0:int(len(M) / 2), 0:int(len(M) / 2)] * 2
+            M = M[0:len(M) / 2, 0:len(M) / 2] * 2
 
             # update next set of controls (one less control)
-            rotation_cnots = rotation_cnots[:int(len(rotation_cnots) / 2)]
+            rotation_cnots = rotation_cnots[:len(rotation_cnots) / 2]
             rotation_cnots[-1] -= 1
 
         reversed_step_prog += prob_prog
@@ -291,7 +290,7 @@ def create_arbitrary_state(vector, qubits=None):
 
 if __name__ == "__main__":
     print("Example list: -3.2+1j, -7, -0.293j, 1, 0, 0")
-    v = input("Input a comma separated list of complex numbers:\n")
+    v = eval(input("Input a comma separated list of complex numbers:\n"))
     if isinstance(v, int):
         v = [v]
     else:
@@ -299,8 +298,8 @@ if __name__ == "__main__":
     p = create_arbitrary_state(v)
     qvm = SyncConnection()
     wf, _ = qvm.wavefunction(p)
-    print("Normalized Vector: ", list(v / np.linalg.norm(v)))
-    print("Generated Wavefunction: ", wf)
+    print(("Normalized Vector: ", list(v / np.linalg.norm(v))))
+    print(("Generated Wavefunction: ", wf))
     if input("Show Program? (y/n): ") == 'y':
         print("----------Quil Code Used----------")
-        print(p.out())
+        print((p.out()))
