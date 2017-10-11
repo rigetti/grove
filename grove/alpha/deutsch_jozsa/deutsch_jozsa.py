@@ -60,9 +60,9 @@ def deutsch_jozsa(oracle, qubits, ancilla):
     p.inst(X(ancilla), H(ancilla))
 
     # Apply Hadamard, Unitary function, and Hadamard again
-    p.inst(list(map(H, qubits)))
+    p.inst([H(qubit) for qubit in qubits])
     p += oracle
-    p.inst(list(map(H, qubits)))
+    p.inst([H(qubit) for qubit in qubits])
     return p
 
 
