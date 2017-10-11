@@ -17,12 +17,21 @@
 Module for  Simon's Algorithm.
 For more information, see [Simon1995]_, [Loceff2015]_, [Watrous2006]_
 
-.. [Simon1995] Simon, D.R. (1995), `"On the power of quantum computation"`_, 35th Annual Symposium on Foundations of Computer Science, Proceedings, p. 116-123.
-.. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_, Volume 1, Chapter 18, p 484-541.
-.. [Watrous2006] Watrous, J. (2006), `"Simon's Algorithm"`_, University of Calgary CPSC 519/619: Quantum Computation, Lecture 6.
+.. [Simon1995] Simon, D.R. (1995), `"On the power of quantum computation"`_,
+ 35th Annual Symposium on Foundations of Computer Science, Proceedings, p. 116-123.
 
-.. _`"On the power of quantum computation"`: https://courses.cs.washington.edu/courses/cse599/01wi/papers/simon_qc.pdf
-.. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+.. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_,
+ Volume 1, Chapter 18, p 484-541.
+
+.. [Watrous2006] Watrous, J. (2006), `"Simon's Algorithm"`_, University of Calgary CPSC 519/619:
+ Quantum Computation, Lecture 6.
+
+.. _`"On the power of quantum computation"`: https://courses.cs.washington.edu/courses/cse599/01wi/
+ papers/simon_qc.pdf
+
+.. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/
+ wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+
 .. _`"Simon's Algorithm"`: https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf
 """
 
@@ -105,14 +114,14 @@ def create_valid_2to1_bitmap(mask, random_seed=None):
 
     list_of_bitstring_tuples = sorted([(k, v) for k, v in bit_map.items()], key=lambda x: x[0])
 
-    periodic_bit_map_dct = {}
+    bit_map_dct = {}
     for cnt in range(n_samples):
         bitstring_tup = list_of_bitstring_tuples[cnt]
         val = range_of_2to1_map[cnt]
-        periodic_bit_map_dct[bitstring_tup[0]] = val
-        periodic_bit_map_dct[bitstring_tup[1]] = val
+        bit_map_dct[bitstring_tup[0]] = val
+        bit_map_dct[bitstring_tup[1]] = val
 
-    return periodic_bit_map_dct
+    return bit_map_dct
 
 
 class Simon(object):
@@ -131,7 +140,6 @@ class Simon(object):
         self.computational_qubits = None
         self.ancillas = None
         self.simon_circuit = None
-        self.oracle_circuit = None
         self._dict_of_linearly_indep_bit_vectors = {}
         self.mask = None
         self.bit_map = None
@@ -221,9 +229,9 @@ class Simon(object):
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
         whose period is  to be found.
 
-        :return: Returns the mask of the bitstring map or raises and Exception if the mask cannot be
+        :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
         found.
-        :rtype: NoneType
+        :rtype: String
         """
         self._init_attr(bitstring_map)
 
