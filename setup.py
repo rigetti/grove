@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
     name="quantum-grove",
-    version="1.1.0",
+    version="1.2.0",
     author="Rigetti Computing",
     author_email="softapps@rigetti.com",
     description="A collection of quantum algorithms built using pyQuil and Forest",
