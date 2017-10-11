@@ -7,6 +7,10 @@ matplotlib
 funcsigs
 six
 
+# demos
+jupyter
+jupyter_contrib_nbextensions
+
 # test dependencies
 tox
 pytest >= 3.0.0
