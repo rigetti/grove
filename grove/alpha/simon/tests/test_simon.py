@@ -1,248 +1,333 @@
 """Test class for helper methods found simon"""
 
 import numpy as np
-import pyquil.api as api
-import pytest
-
-from grove.alpha.simon.simon import (
-    find_mask,
-    unitary_function,
-    oracle_function,
-    is_unitary,
-    most_significant_bit,
-    check_two_to_one,
-    insert_into_row_echelon_binary_matrix,
-    make_square_row_echelon,
-    binary_back_substitute
-)
-
-
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
-class TestFindMask(object):
-    def test_one_qubit_two_to_one(self):
-        _find_mask_test_helper([1, 1], 1)
-
-    def test_two_qubits_two_to_one(self):
-        _find_mask_test_helper([0, 2, 0, 2], 2)
-
-    def test_three_qubits_two_to_one_mask_one(self):
-        _find_mask_test_helper([0, 0, 7, 7, 4, 4, 2, 2], 1)
-
-    def test_three_qubits_two_to_one_mask_five(self):
-        _find_mask_test_helper([3, 0, 1, 7, 0, 3, 7, 1], 5)
-
-    def test_four_qubits_two_to_one(self):
-        _find_mask_test_helper([0, 1, 2, 3, 4, 5, 6, 7,
-                                7, 6, 5, 4, 3, 2, 1, 0], 15)
-
-    def test_one_qubit_one_to_one(self):
-        _find_mask_test_helper([1, 0])
-
-    def test_two_qubits_one_to_one(self):
-        _find_mask_test_helper([0, 1, 2, 3])
-
-    def test_three_qubits_one_to_one_odds_even(self):
-        _find_mask_test_helper([1, 3, 5, 7, 0, 2, 4, 6])
-
-    def test_three_qubits_one_to_one_random(self):
-        _find_mask_test_helper([3, 0, 2, 7, 1, 6, 5, 4])
-
-    def test_four_qubits_one_to_one(self):
-        _find_mask_test_helper([9, 10, 5, 6, 12, 1, 2, 8, 14,
-                                0, 13, 3, 11, 4, 7, 15])
-
-
-def _find_mask_test_helper(mappings, mask=None):
-    n = int(np.log2(len(mappings)))
-    qvm = api.SyncConnection()
-
-    qubits = range(n)
-    ancillas = range(n, 2 * n)
-
-    unitary_funct = unitary_function(mappings)
-    oracle = oracle_function(unitary_funct, qubits, ancillas)
-
-    s, iterations, simon_program = find_mask(qvm, oracle, qubits)
-    two_to_one = check_two_to_one(qvm, oracle, ancillas, s)
-
-    found_mask = int(s, 2)
-    assert (mappings[0] == mappings[found_mask]) == two_to_one
-
-    if two_to_one:
-        assert found_mask == mask
-
-
-class TestIsUnitary(object):
-    def test_unitary_two_by_two(self):
-        hadamard = np.array([[1., 1.], [1., -1.]])
-        hadamard *= 1 / np.sqrt(2)
-        assert is_unitary(hadamard)
-
-    def test_unitary_eight_by_eight(self):
-        matrix = np.zeros(shape=(8, 8))
-        one_locations = [(0, 5), (1, 7), (2, 0), (3, 4),
-                         (4, 1), (5, 2), (6, 6), (7, 3)]
-        for loc in one_locations:
-            matrix[loc[0], loc[1]] = 1
-        assert is_unitary(matrix)
-
-    def test_not_unitary_rectangular(self):
-        matrix = np.array([[0, 1, 0], [1, 0, 1]])
-        assert not is_unitary(matrix)
-
-    def test_not_unitary_four_by_four(self):
-        matrix = np.zeros(shape=(4, 4))
-        matrix[0, 1] = 1
-        matrix[1, 0] = 1
-        matrix[2, 2] = 1
-        matrix[3, 2] = 1
-        assert not is_unitary(matrix)
-
-
-class TestMostSignificantBits(object):
-    def test_single_one(self):
-        assert most_significant_bit(np.array([1])) == 0
-
-    def test_single_one_leading_zeroes(self):
-        assert most_significant_bit(np.array([0, 1, 0, 0])) == 1
-
-    def test_multiple_ones_leading_zeroes(self):
-        assert most_significant_bit(np.array([0, 0, 1, 1, 0, 1])) == 2
-
-
-class TestInsertIntoBinaryMatrix(object):
-    def test_no_substitution(self):
-        W = np.array([[1, 0, 1, 0, 0],
-                      [0, 1, 0, 0, 0],
-                      [0, 0, 0, 1, 0]])
-        z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows
-
-        W = insert_into_row_echelon_binary_matrix(W, z)
-
-        W_expected = np.array([[1, 0, 1, 0, 0],
-                               [0, 1, 0, 0, 0],
-                               [0, 0, 0, 1, 0]])
-
-        assert np.allclose(W, W_expected)
-
-    def test_insert_directly(self):
-        W = np.array([[1, 1, 0, 0, 0],
-                      [0, 1, 0, 1, 0]])
-        z = np.array([0, 0, 1, 0, 1])
-
-        W = insert_into_row_echelon_binary_matrix(W, z)
-        W_expected = np.array([[1, 1, 0, 0, 0],
-                               [0, 1, 0, 1, 0],
-                               [0, 0, 1, 0, 1]])
-
-        assert np.allclose(W, W_expected)
-
-    def test_insert_after_xor(self):
-        W = np.array([[1, 0, 0, 0, 0, 0],
-                      [0, 1, 1, 0, 0, 0]])
-
-        z = np.array([1, 0, 1, 0, 1, 1])
-
-        W = insert_into_row_echelon_binary_matrix(W, z)
-        W_expected = np.array([[1, 0, 0, 0, 0, 0],
-                               [0, 1, 1, 0, 0, 0],
-                               [0, 0, 1, 0, 1, 1]])
-
-        assert np.allclose(W, W_expected)
-
-
-class TestMakeSquareRowEchelon(object):
-    def test_add_row_at_top(self):
-        W = np.array([[0, 1, 0, 1, 0],
-                      [0, 0, 1, 0, 0],
-                      [0, 0, 0, 1, 1],
-                      [0, 0, 0, 0, 1]])
-        W, insert_row_num = make_square_row_echelon(W)
-
-        W_expected = np.array([[1, 0, 0, 0, 0],
-                               [0, 1, 0, 1, 0],
-                               [0, 0, 1, 0, 0],
-                               [0, 0, 0, 1, 1],
-                               [0, 0, 0, 0, 1]])
-
-        assert insert_row_num == 0
-
-        assert np.allclose(W, W_expected)
-
-    def test_add_row_at_bottom(self):
-        W = np.array([[1, 0, 0, 0],
-                      [0, 1, 0, 1],
-                      [0, 0, 1, 0]])
-        W, insert_row_num = make_square_row_echelon(W)
-
-        W_expected = np.array([[1, 0, 0, 0],
-                               [0, 1, 0, 1],
-                               [0, 0, 1, 0],
-                               [0, 0, 0, 1]])
-
-        assert insert_row_num == 3
-
-        assert np.allclose(W, W_expected)
-
-    def test_add_row_in_middle(self):
-        W = np.array([[1, 1, 0, 0, 0],
-                      [0, 0, 1, 0, 1],
-                      [0, 0, 0, 1, 0],
-                      [0, 0, 0, 0, 1]])
-        W, insert_row_num = make_square_row_echelon(W)
-
-        W_expected = np.array([[1, 1, 0, 0, 0],
-                               [0, 1, 0, 0, 0],
-                               [0, 0, 1, 0, 1],
-                               [0, 0, 0, 1, 0],
-                               [0, 0, 0, 0, 1]])
-
-        assert insert_row_num == 1
-
-        assert np.allclose(W, W_expected)
-
-
-class TestBinaryBackSubstitute(object):
-    def test_one_at_top(self):
-        W = np.array([[1, 1, 0, 0, 0],
-                      [0, 1, 0, 0, 0],
-                      [0, 0, 1, 0, 1],
-                      [0, 0, 0, 1, 0],
-                      [0, 0, 0, 0, 1]])
-
-        s = np.array([1, 0, 0, 0, 0])
-        x = binary_back_substitute(W, s)
-
-        prod = np.dot(W, x)
-        prod = np.vectorize(lambda x: x % 2)(prod)
-
-        assert np.allclose(s, prod)
-
-    def test_one_at_bottom(self):
-        W = np.array([[1, 0, 0, 0],
-                      [0, 1, 0, 1],
-                      [0, 0, 1, 0],
-                      [0, 0, 0, 1]])
-
-        s = np.array([0, 0, 0, 1])
-        x = binary_back_substitute(W, s)
-
-        prod = np.dot(W, x)
-        prod = np.vectorize(lambda x: x % 2)(prod)
-
-        assert np.allclose(s, prod)
-
-    def test_one_at_middle(self):
-        W = np.array([[1, 1, 0, 0, 0],
-                      [0, 1, 0, 0, 0],
-                      [0, 0, 1, 0, 1],
-                      [0, 0, 0, 1, 0],
-                      [0, 0, 0, 0, 1]])
-
-        s = np.array([0, 1, 0, 0, 0])
-        x = binary_back_substitute(W, s)
-
-        prod = np.dot(W, x)
-        prod = np.vectorize(lambda x: x % 2)(prod)
-
-        assert np.allclose(s, prod)
+from grove.alpha.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap
+from pyquil.quil import Program
+
+from os.path import abspath, dirname
+from mock import patch
+
+package_path = abspath(dirname(dirname(__file__)))
+
+EXPECTED_SIMON_ORACLE = np.load(package_path + '/tests/data/simon_test_oracle.npy')
+
+
+def _create_expected_program():
+    expected_prog = Program()
+    expected_prog.defgate("SIMON_ORACLE", EXPECTED_SIMON_ORACLE)
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+    expected_prog.inst("H 2")
+
+    expected_prog.inst("SIMON_ORACLE 5 4 3 2 1 0")
+
+    expected_prog.inst("H 0")
+    expected_prog.inst("H 1")
+    expected_prog.inst("H 2")
+    return expected_prog
+
+
+def test_simon_class():
+    """Test is based on worked example of Watrous lecture
+    https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf"""
+    simon_algo = Simon()
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            (np.asarray([1, 1, 1], dtype=int), ),
+            (np.asarray([1, 1, 1], dtype=int), ),
+            (np.asarray([1, 0, 0], dtype=int), ),
+            (np.asarray([1, 1, 1], dtype=int), ),
+            (np.asarray([0, 0, 0], dtype=int), ),
+            (np.asarray([0, 1, 1], dtype=int), ),
+        ]
+
+    bit_string_mapping = {
+        '000': '101',
+        '001': '010',
+        '010': '000',
+        '011': '110',
+
+        '100': '000',
+        '101': '110',
+        '110': '101',
+        '111': '010'
+    }
+
+    mask = simon_algo.find_mask(qvm, bit_string_mapping)
+
+    assert simon_algo.n_qubits == 3
+    assert simon_algo.n_ancillas == 3
+    assert simon_algo._qubits == [0, 1, 2, 3, 4, 5]
+    assert simon_algo.computational_qubits == [0, 1, 2]
+    assert simon_algo.ancillas == [3, 4, 5]
+
+    assert mask == [1, 1, 0]
+    assert simon_algo.simon_circuit.__str__() == _create_expected_program().__str__()
+
+
+def test_unitary_function_return():
+    simon_algo = Simon()
+    bit_string_mapping = {
+        '000': '101',
+        '001': '010',
+        '010': '000',
+        '011': '110',
+
+        '100': '000',
+        '101': '110',
+        '110': '101',
+        '111': '010'
+    }
+
+    actual_return = simon_algo._compute_unitary_oracle_matrix(bit_string_mapping)
+    np.testing.assert_equal(actual_return[0], EXPECTED_SIMON_ORACLE)
+
+
+def test_unitary_oracle_func_computer():
+    bit_string_mapping = {
+            '0': '1',
+            '1': '0',
+        }
+    np.testing.assert_equal(Simon()._compute_unitary_oracle_matrix(bit_string_mapping)[0],
+                            [[0., 0., 1., 0.],
+                             [0., 1., 0., 0.],
+                             [1., 0., 0., 0.],
+                             [0., 0., 0., 1.]]
+                            )
+
+
+def test_unitary_oracle_func_computer_2():
+    bit_string_mapping = {
+            '00': '10',
+            '01': '11',
+            '10': '00',
+            '11': '01'
+        }
+    np.testing.assert_equal(Simon()._compute_unitary_oracle_matrix(bit_string_mapping)[0],
+                            [[0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
+                             [0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.],
+                             [0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.],
+                             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0.]]
+                            )
+
+
+def test_no_substitution():
+    simon_algo = Simon()
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
+    z = np.array([1, 1, 1, 0, 0])  # linear combination of first two rows hence won't add
+
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+
+    W_expected = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_simple_conflict():
+    simon_algo = Simon()
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        3: [0, 0, 0, 1, 0]
+    }
+    z = np.array([1, 0, 0, 0, 1])  # conflict with first row.
+
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+
+    W_expected = {
+        0: [1, 0, 1, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0]
+    }
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_insert_directly():
+    simon_algo = Simon()
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 1, 0]
+    }
+    z = np.array([0, 0, 1, 0, 1])
+
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 1, 0],
+        2: [0, 0, 1, 0, 1]
+    }
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_insert_after_xor():
+    simon_algo = Simon()
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 0, 0, 0, 0],
+        1: [0, 1, 1, 0, 0, 0]
+    }
+
+    z = np.array([0, 0, 1, 0, 1, 1])
+
+    simon_algo._add_to_dict_of_indep_bit_vectors(z)
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0, 0, 0],
+        1: [0, 1, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1, 1]
+    }
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_add_row_at_top():
+    simon_algo = Simon()
+    simon_algo.n_qubits = 4
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
+    insert_row_num = simon_algo._add_missing_msb_vector()
+
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
+
+    assert insert_row_num == 0
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_add_row_at_bottom():
+    simon_algo = Simon()
+    simon_algo.n_qubits = 4
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0]
+    }
+    insert_row_num = simon_algo._add_missing_msb_vector()
+
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 0, 0, 0],
+        1: [0, 1, 0, 1],
+        2: [0, 0, 1, 0],
+        3: [0, 0, 0, 1]
+    }
+    assert insert_row_num == 3
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_add_row_in_middle():
+    simon_algo = Simon()
+    simon_algo.n_qubits = 5
+    simon_algo._dict_of_linearly_indep_bit_vectors = {
+        0: [1, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0],
+        4: [0, 0, 0, 0, 1]
+    }
+    insert_row_num = simon_algo._add_missing_msb_vector()
+
+    W_actual = simon_algo._dict_of_linearly_indep_bit_vectors
+    W_expected = {
+        0: [1, 1, 0, 0, 0],
+        1: [0, 1, 0, 0, 0],
+        2: [0, 0, 1, 0, 1],
+        3: [0, 0, 0, 1, 0],
+        4: [0, 0, 0, 0, 1]
+    }
+
+    assert insert_row_num == 1
+
+    np.testing.assert_equal(W_actual, W_expected)
+
+
+def test_bit_map_generation():
+    mask = '101'
+    expected_map = {
+        '000': '101',
+        '001': '100',
+        '010': '111',
+        '011': '110',
+        '100': '001',
+        '101': '000',
+        '110': '011',
+        '111': '010'
+    }
+    actual_map = create_1to1_bitmap(mask)
+    assert actual_map == expected_map
+
+
+def test_2to1_bit_map_generation():
+    mask = '101'
+    expected_map = {
+        '000': '001',
+        '101': '001',
+        '001': '101',
+        '100': '101',
+        '010': '000',
+        '111': '000',
+        '011': '111',
+        '110': '111'
+    }
+    # need to patch numpy as random seed behaves differently on
+    # py27 vs. py36
+    with patch("numpy.random.choice") as rd_fake:
+        rd_fake.return_value = ['001', '101', '000', '111']
+
+        actual_map = create_valid_2to1_bitmap(mask)
+        assert actual_map == expected_map
+
+
+def test_check_mask_correct():
+    sa = Simon()
+
+    sa.mask = [1, 1, 0]
+    sa.bit_map = {
+        '000': '101',
+        '001': '010',
+        '010': '000',
+        '011': '110',
+
+        '100': '000',
+        '101': '110',
+        '110': '101',
+        '111': '010'
+    }
+
+    assert sa._check_mask_correct()
