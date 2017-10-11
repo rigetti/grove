@@ -19,10 +19,10 @@ Module for the Bernstein-Vazirani Algorithm.
 For more information, see [Loceff2015]_
 
 .. [Loceff2015] Loceff, M. (2015), `"A Course in Quantum Computing for the Community College"`_,
-Volume 1, Chapter 18, p 484-541.
+ Volume 1, Chapter 18, p 484-541.
 
 .. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/
-wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
+ wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
 """
 
 from collections import defaultdict
