@@ -15,4 +15,5 @@ pytest-cov
 codeclimate-test-reporter
 
 # docs
+sphinx
 sphinx_rtd_theme
