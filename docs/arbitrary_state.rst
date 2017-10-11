@@ -63,7 +63,7 @@ Here you can find documentation for the different submodules in arbitrary_state.
 grove.arbitrary_state.arbitrary_state
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.arbitrary_state.arbitrary_state
+.. automodule:: grove.alpha.arbitrary_state.arbitrary_state
     :members:
     :undoc-members:
     :show-inheritance:
@@ -71,7 +71,7 @@ grove.arbitrary_state.arbitrary_state
 grove.arbitrary_state.unitary_operator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.arbitrary_state.unitary_operator
+.. automodule:: grove.alpha.arbitrary_state.unitary_operator
     :members:
     :undoc-members:
     :show-inheritance:

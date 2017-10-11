@@ -19,7 +19,7 @@ Here you can find documentation for the different submodules in deutsch-jozsa.
 grove.deutsch_jozsa.deutsch_jozsa.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.deutsch_jozsa.deutsch_jozsa
+.. automodule:: grove.alpha.deutsch_jozsa.deutsch_jozsa
     :members:
     :undoc-members:
     :show-inheritance:
