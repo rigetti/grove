@@ -45,7 +45,7 @@ class Grover(object):
         oracle = pq.Program()
         oracle_name = "GROVER_ORACLE"
         oracle.defgate(oracle_name, self.unitary_function_mapping)
-        qubits = [oracle.alloc() for _ in range(self.n_qubits / 2)]
+        qubits = [oracle.alloc() for _ in range(int(self.n_qubits / 2))]
         oracle.inst(tuple([oracle_name] + qubits))
         self.grover_circuit = self.oracle_grover(oracle, qubits)
 
