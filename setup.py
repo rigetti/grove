@@ -31,7 +31,6 @@ setup(
         "grove.qft",
         "grove.alpha",
         "grove.alpha.phaseestimation",
-        "grove.alpha.teleport",
         "grove.alpha.deutsch_jozsa",
         "grove.alpha.arbitrary_state",
         "grove.alpha.bernstein_vazirani",
