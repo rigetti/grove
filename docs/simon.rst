@@ -68,7 +68,7 @@ Here you can find documentation for the different submodules in simon.
 grove.simon.simon
 ~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.alpha.simon.simon
+.. automodule:: grove.simon.simon
     :members:
     :undoc-members:
     :show-inheritance:

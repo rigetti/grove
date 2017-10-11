@@ -21,7 +21,6 @@ of which has its own self-contained documentation.
    :maxdepth: 2
 
    installation
-   teleportation
    vqe
    qaoa
    qft
@@ -31,7 +30,6 @@ of which has its own self-contained documentation.
    simon
    deutsch_jozsa
    arbitrary_state
-   alpha
 
 Indices and Tables
 __________________

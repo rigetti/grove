@@ -1,6 +1,6 @@
 import numpy as np
 
-from grove.alpha.simon import utils as u
+from grove.simon import utils as u
 
 
 def test_unitary_two_by_two():

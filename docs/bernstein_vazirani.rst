@@ -29,7 +29,7 @@ Here you can find documentation for the different submodules in bernstein_vazira
 grove.bernstein_vazirani.bernstein_vazirani
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.alpha.bernstein_vazirani.bernstein_vazirani
+.. automodule:: grove.bernstein_vazirani.bernstein_vazirani
     :members:
     :undoc-members:
     :show-inheritance:

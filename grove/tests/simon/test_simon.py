@@ -1,15 +1,16 @@
 """Test class for helper methods found simon"""
 
+from os.path import abspath, dirname
+
 import numpy as np
-from grove.alpha.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap
+from mock import patch
 from pyquil.quil import Program
 
-from os.path import abspath, dirname
-from mock import patch
+from grove.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap
 
 package_path = abspath(dirname(dirname(__file__)))
 
-EXPECTED_SIMON_ORACLE = np.load(package_path + '/tests/data/simon_test_oracle.npy')
+EXPECTED_SIMON_ORACLE = np.load(package_path + '/simon/data/simon_test_oracle.npy')
 
 
 def _create_expected_program():

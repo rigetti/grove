@@ -20,7 +20,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, Z
 
-from grove.alpha.utility_programs import ControlledProgramBuilder
+from grove.utils.utility_programs import ControlledProgramBuilder
 
 
 def basis_selector_oracle(qubits, bitstring):

@@ -1,6 +1,6 @@
 import pytest
 
-from grove.alpha.bernstein_vazirani import utils as u
+from grove.bernstein_vazirani import utils as u
 
 
 def test_bitwise_dot_product():

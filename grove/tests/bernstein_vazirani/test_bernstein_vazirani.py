@@ -1,7 +1,7 @@
-from mock import patch
 import numpy as np
+from mock import patch
 
-from grove.alpha.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
+from grove.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
 
 
 def test_bv_bitmap_generator():
