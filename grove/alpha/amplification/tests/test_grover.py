@@ -1,12 +1,11 @@
 import numpy as np
 import pytest
 from mock import patch
-
-from pyquil.quil import Program
 from pyquil.gates import X, Z, H
+from pyquil.quil import Program
 
 from grove.alpha.amplification.grover import Grover
-from grove.test_utilities import prog_equality, synthesize_programs
+from grove.tests.test_utilities import prog_equality, synthesize_programs
 
 identity_oracle = Program()
 """Does nothing on all inputs."""

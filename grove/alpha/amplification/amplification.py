@@ -27,9 +27,10 @@ from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 from grove.alpha.utility_programs import ControlledProgramBuilder
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
+X_GATE = np.array([[0, 1], [1, 0]])
 
 
-def amplify(algorithm, oracle, qubits, num_iter):
+def amplification_circuit(algorithm, oracle, qubits, num_iter):
     """
     Returns a program that does n rounds of amplification, given a measurement-less algorithm,
     an oracle, and a list of qubits to operate on.
@@ -46,15 +47,15 @@ def amplify(algorithm, oracle, qubits, num_iter):
 
     prog = pq.Program()
 
-    uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
+    uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
     prog += uniform_superimposer
 
     for _ in range(num_iter):
-        prog += oracle + algorithm.dagger() + diffusion_operator(qubits) + algorithm
+        prog += oracle + algorithm.dagger() + diffusion_program(qubits) + algorithm
     return prog
 
 
-def diffusion_operator(qubits):
+def diffusion_program(qubits):
     """Constructs the diffusion operator used in Grover's Algorithm, acted on both sides by an
      a Hadamard gate on each qubit. Note that this means that the matrix representation of this
      operator is diag(1, -1, ..., -1).
@@ -74,10 +75,11 @@ def diffusion_operator(qubits):
         diffusion_program.inst(list(map(X, qubits)))
         diffusion_program.inst(H(qubits[-1]))
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
-        x_gate = np.array([[0, 1], [1, 0]])
-        diffusion_program += ControlledProgramBuilder().with_controls(
-            qubits[:-1]).with_target(qubits[-1]).with_operation(x_gate).with_gate_name(
-            "NOT").build()
+        diffusion_program += (ControlledProgramBuilder()
+                              .with_controls(qubits[:-1])
+                              .with_target(qubits[-1])
+                              .with_operation(X_GATE)
+                              .with_gate_name("NOT").build())
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
         diffusion_program.inst(H(qubits[-1]))
         diffusion_program.inst(list(map(X, qubits)))

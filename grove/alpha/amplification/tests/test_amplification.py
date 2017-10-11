@@ -17,8 +17,8 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H, RZ, CZ
 
-from grove.alpha.amplification.amplification import amplify, diffusion_operator
-from grove.test_utilities import prog_equality
+from grove.alpha.amplification.amplification import amplification_circuit, diffusion_program
+from grove.tests.test_utilities import prog_equality
 
 triple_hadamard = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
 cz_gate = pq.Program(CZ(0, 1))
@@ -31,7 +31,7 @@ def test_diffusion_operator():
     """
     Checks that the diffusion operator outputs the correct operation
     """
-    created = diffusion_operator([0, 1])
+    created = diffusion_program([0, 1])
     desired = pq.Program()
     for def_gate in created.defined_gates:
         desired.defgate(def_gate.name, def_gate.matrix)
@@ -54,9 +54,9 @@ def test_amplify():
     """
 
     # Essentially Grover's to select 011 or 111
-    desired = triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_operator(
-        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_operator(qubits) + triple_hadamard
-    created = amplify(triple_hadamard, cz_gate, qubits, iters)
+    desired = triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(
+        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
+    created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     prog_equality(desired, created)
 
@@ -66,8 +66,8 @@ def test_amplify_init():
     Test the usage of amplify without init
     """
     # Essentially Grover's to select 011 or 111
-    desired = cz_gate + triple_hadamard.dagger() + diffusion_operator(
-        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_operator(qubits) + triple_hadamard
-    created = amplify(triple_hadamard, cz_gate, qubits, iters)
+    desired = cz_gate + triple_hadamard.dagger() + diffusion_program(
+        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
+    created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     prog_equality(desired, created)

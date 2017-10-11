@@ -1,3 +1,18 @@
+##############################################################################
+# Copyright 2016-2017 Rigetti Computing
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+##############################################################################
 """Module for Grover's algorithm.
 """
 
@@ -7,10 +22,12 @@ import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
-from grove.alpha.amplification.amplification import amplify
+from grove.alpha.amplification.amplification import amplification_circuit
 
 
 class Grover(object):
+    """This class contains an implementation of Grover's algorithm using pyQuil. For a reference
+    """
     def __init__(self):
         self.unitary_function_mapping = None
         self.n_qubits = None
@@ -91,6 +108,6 @@ class Grover(object):
         if num_iter is None:
             num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
 
-        uniform_superimposer = pq.Program().inst(list(map(H, qubits)))
-        amp_prog = amplify(uniform_superimposer, oracle, qubits, num_iter)
+        uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
+        amp_prog = amplification_circuit(uniform_superimposer, oracle, qubits, num_iter)
         return amp_prog
