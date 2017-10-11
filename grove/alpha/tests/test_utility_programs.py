@@ -1,8 +1,8 @@
 import numpy as np
 from pyquil.quil import Program
 
+from grove.alpha.tests.utils_for_testing import non_action_insts, prog_len
 from grove.alpha.utility_programs import ControlledProgramBuilder
-from grove.tests.test_utilities import non_action_insts, prog_len
 
 SIGMA_Z = np.array([[1, 0], [0, -1]])
 

@@ -72,7 +72,7 @@ def diffusion_program(qubits):
     if len(qubits) == 1:
         diffusion_program.inst(Z(qubits[0]))
     else:
-        diffusion_program.inst(list(map(X, qubits)))
+        diffusion_program.inst([X(q) for q in qubits])
         diffusion_program.inst(H(qubits[-1]))
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
         diffusion_program += (ControlledProgramBuilder()
@@ -82,5 +82,5 @@ def diffusion_program(qubits):
                               .with_gate_name("NOT").build())
         diffusion_program.inst(RZ(-np.pi)(qubits[0]))
         diffusion_program.inst(H(qubits[-1]))
-        diffusion_program.inst(list(map(X, qubits)))
+        diffusion_program.inst([X(q) for q in qubits])
     return diffusion_program
