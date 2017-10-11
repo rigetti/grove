@@ -1,5 +1,5 @@
 Grover's Search Algorithm and Amplitude Amplification
-=========================
+=====================================================
 
 Overview
 --------
