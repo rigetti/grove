@@ -1,83 +1,120 @@
+from mock import patch
 import numpy as np
-import pyquil.api as api
-import pyquil.quil as pq
-import pytest
-from pyquil.gates import X
 
-from grove.alpha.bernstein_vazirani.bernstein_vazirani import bernstein_vazirani, oracle_function
+from grove.alpha.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
 
 
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
-class TestOracleFunction(object):
-    def test_one_qubit(self):
-        vec_a = np.array([1])
-        b = 0
-        for x in range(2 ** len(vec_a)):
-            _oracle_test_helper(vec_a, b, x)
+def test_bv_bitmap_generator():
+    expected_bit_map = {
+        '000': '1',
+        '001': '1',
+        '010': '0',
+        '011': '0',
+        '100': '0',
+        '101': '0',
+        '110': '1',
+        '111': '1'
+    }
+    a = '110'
+    b = '1'
+    actual_bitmap = create_bv_bitmap(a, b)
 
-    def test_two_qubits(self):
-        vec_a = np.array([1, 0])
-        b = 1
-        for x in range(2 ** len(vec_a)):
-            _oracle_test_helper(vec_a, b, x)
-
-    def test_three_qubits(self):
-        vec_a = np.array([0, 0, 0])
-        b = 0
-        for x in range(2 ** len(vec_a)):
-            _oracle_test_helper(vec_a, b, x)
-
-    def test_four_qubits(self):
-        vec_a = np.array([1, 1, 1, 1])
-        b = 1
-        for x in range(2 ** len(vec_a)):
-            _oracle_test_helper(vec_a, b, x)
+    assert actual_bitmap == expected_bit_map
 
 
-@pytest.mark.skip(reason="Must add support for Forest connections in testing")
-class TestBernsteinVazirani(object):
-    def test_one_qubit_all_zeros(self):
-        _bv_test_helper(np.array([0]), 0)
+def test_bv_class_with_bitmap():
+    bit_map = {
+        '000': '1',
+        '001': '1',
+        '010': '0',
+        '011': '0',
+        '100': '0',
+        '101': '0',
+        '110': '1',
+        '111': '1'
+    }
 
-    def test_two_qubit_all_ones(self):
-        _bv_test_helper(np.array([1, 1]), 1)
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            ([0, 1, 1], ),
+            ([1], )
+        ]
 
-    def test_four_qubit_symmetric(self):
-        _bv_test_helper(np.array([1, 0, 0, 1]), 1)
-
-    def test_five_qubits_asymmetric(self):
-        _bv_test_helper(np.array([0, 0, 1, 0, 1]), 0)
-
-
-def _bv_test_helper(vec_a, b, trials=1):
-    qubits = range(len(vec_a))
-    ancilla = len(vec_a)
-    oracle = oracle_function(vec_a, b, qubits, ancilla)
-    bv_program = bernstein_vazirani(oracle, qubits, ancilla)
-    cxn = api.SyncConnection()
-    results = cxn.run_and_measure(bv_program, qubits, trials)
-    for result in results:
-        bv_a = result[::-1]
-        assert bv_a == list(vec_a)
+    bv = BernsteinVazirani()
+    bv.run(qvm, bit_map).check_solution()
+    bv_a, bv_b = bv.solution
+    assert bv_a == '110'
+    assert bv_b == '1'
 
 
-def _oracle_test_helper(vec_a, b, x, trials=1):
-    qubits = range(len(vec_a))
-    ancilla = len(vec_a)
+def test_bv_class_with_check_results():
+    a = '1011'
+    b = '0'
 
-    cxn = api.SyncConnection()
-    bitstring = np.binary_repr(x, len(qubits))
-    p = pq.Program()
+    bit_map = create_bv_bitmap(a, b)
 
-    for i in range(len(bitstring)):
-        if bitstring[-1 - i] == '1':
-            p.inst(X(i))
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            ([1, 1, 0, 1], ),
+            ([0], )
+        ]
 
-    oracle = oracle_function(vec_a, b, qubits, ancilla)
-    p += oracle
-    results = cxn.run_and_measure(p, [ancilla], trials)
-    a_dot_x = np.binary_repr(int(''.join(list(map(str, vec_a))), 2) & x).count("1")
-    expected = (a_dot_x + b) % 2
-    for result in results:
-        y = result[0]
-        assert y == expected
+    bv = BernsteinVazirani()
+    bv.run(qvm, bit_map).check_solution()
+    bv_a, bv_b = bv.solution
+    assert bv_a == a
+    assert bv_b == b
+
+
+def test_bv_class_with_return_solution():
+    a = '1011'
+    b = '0'
+
+    bit_map = create_bv_bitmap(a, b)
+
+    with patch("pyquil.api.SyncConnection") as qvm:
+        # Need to mock multiple returns as an iterable
+        qvm.run_and_measure.side_effect = [
+            ([1, 1, 0, 1], ),
+            ([0], )
+        ]
+
+    bv = BernsteinVazirani()
+    bv_a, bv_b = bv.run(qvm, bit_map).get_solution()
+    assert bv_a == a
+    assert bv_b == b
+
+
+def test_bv_unitary_generator():
+    expected_transition_dct = {
+        '000': '100',
+        '001': '101',
+        '010': '010',
+        '011': '011',
+        '100': '000',
+        '101': '001',
+        '110': '110',
+        '111': '111'
+    }
+    expected_unitary = [
+        [0., 0., 0., 0., 1., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 1., 0., 0.],
+        [0., 0., 1., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 1., 0., 0., 0., 0.],
+        [1., 0., 0., 0., 0., 0., 0., 0.],
+        [0., 1., 0., 0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0., 0., 1., 0.],
+        [0., 0., 0., 0., 0., 0., 0., 1.]
+    ]
+
+    bit_map = {
+        '00': '1',
+        '01': '1',
+        '10': '0',
+        '11': '0',
+    }
+    actual_unitary, actual_dct = BernsteinVazirani()._compute_unitary_oracle_matrix(bit_map)
+    assert expected_transition_dct == actual_dct
+    np.testing.assert_equal(actual_unitary, expected_unitary)
