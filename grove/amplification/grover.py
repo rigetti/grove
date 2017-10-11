@@ -20,6 +20,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.quilbase import Qubit
+from pyquil.api import JobConnection
 
 from grove.amplification.amplification import amplification_circuit
 
@@ -30,7 +31,7 @@ class Grover(object):
     def __init__(self):
         self.unitary_function_mapping = None
         self.n_qubits = None
-        self.n_ancillas = None
+        self.qubits = None
         self.grover_circuit = None
         self.bit_map = None
 
@@ -61,9 +62,8 @@ class Grover(object):
         oracle = pq.Program()
         oracle_name = "GROVER_ORACLE"
         oracle.defgate(oracle_name, self.unitary_function_mapping)
-        qubits = [oracle.alloc() for _ in range(int(self.n_qubits / 2))]
-        oracle.inst(tuple([oracle_name] + qubits))
-        self.grover_circuit = self.oracle_grover(oracle, qubits)
+        oracle.inst(tuple([oracle_name] + self.qubits))
+        self.grover_circuit = self.oracle_grover(oracle, self.qubits)
 
     def _init_attr(self, bitstring_map):
         """Initializes an instance of Grover's Algorithm given a bitstring_map.
@@ -76,18 +76,30 @@ class Grover(object):
         self.bit_map = bitstring_map
         self.unitary_function_mapping = self._compute_grover_oracle_matrix(bitstring_map)
         self.n_qubits = self.unitary_function_mapping.shape[0]
+        print self.unitary_function_mapping
+        self.qubits = list(range(int(np.log2(self.n_qubits))))
         self._construct_grover_circuit()
 
-    def construct_grover_program(self, bitstring_map):
-        """Returns an instance of Grover's Algorithm for the given bitstring_map.
+    def find_bitstring(self, cxn, bitstring_map):
+        """
+        Runs Grover's Algorithm to find the bitstring that is designated by ``bistring_map``.
 
-        :param dict bitstring_map: dict with string keys corresponding to bitstrings, and integer
-         values corresponding to the desired phase on the output state.
-        :return: The corresponding instance of Grover's Algorithm.
-        :rtype: Program
+        In particular, this will prepare an initial state in the uniform superposition over all bit-
+        strings, an then use Grover's Algorithm to pick out the desired bitstring.
+
+        :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
+        :param Dict[String, Int] bitstring_map: a mapping from bitstrings to the phases that the
+         oracle should impart on them. If the oracle should "look" for a bitstring, it should have a
+         ``-1``, otherwise it should have a ``1``.
+        :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
+        found.
+        :rtype: String
         """
         self._init_attr(bitstring_map)
-        return self.grover_circuit
+        print self.grover_circuit
+        sampled_bitstring = np.array(cxn.run_and_measure(self.grover_circuit, self.qubits),
+                                     dtype=int)
+        return sampled_bitstring
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):
