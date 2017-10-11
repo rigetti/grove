@@ -104,14 +104,16 @@ def create_valid_2to1_bitmap(mask, random_seed=None):
     :return: dictionary containing the truth table of a valid 2-to-1 boolean function
     :rtype: Dict[String, String]
     """
-    if random_seed:
+    if random_seed is not None:
         rd.seed(random_seed)
     bit_map = create_1to1_bitmap(mask)
     n_samples = int(len(bit_map.keys()) / 2)
 
     # We create a 2-to-1 mapping and hence need to generate a list with exactly half the possible
     # bit-strings. We do this by randomly sampling the set of all possible bit-strings.
-    range_of_2to1_map = list(rd.choice(list(bit_map.keys()), replace=False, size=n_samples))
+    # Moreover we sort the keys as the return order is not guaranteed and we want to remove
+    # this randomness
+    range_of_2to1_map = list(rd.choice(list(sorted(bit_map.keys())), replace=False, size=n_samples))
 
     list_of_bitstring_tuples = sorted([(k, v) for k, v in bit_map.items()], key=lambda x: x[0])
 

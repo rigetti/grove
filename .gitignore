@@ -90,3 +90,6 @@ ENV/
 
 # Pycharm
 .idea/
+
+# converted Ipynb files
+examples/*.py
