@@ -31,11 +31,13 @@ X_GATE = np.array([[0, 1], [1, 0]])
 
 def amplification_circuit(algorithm, oracle, qubits, num_iter):
     """
-    Returns a program that does n rounds of amplification, given a measurement-less algorithm,
-    an oracle, and a list of qubits to operate on.
+    Returns a program that does ``num_iter`` rounds of amplification, given a measurement-less
+    algorithm, an oracle, and a list of qubits to operate on.
 
     :param Program algorithm: A program representing a measurement-less algorithm run on qubits.
-    :param Program oracle: An oracle maps any basis vector to either |0> or |1>.
+    :param Program oracle: An oracle maps any basis vector ``|psi>`` to either ``+|psi>`` or
+    ``-|psi>`` depending on whether ``|psi>`` is in the desirable subspace or the undesirable
+    subspace.
     :param Sequence qubits: the qubits to operate on
     :param int num_iter: number of iterations of amplifications to run
     :return: The amplified algorithm.
