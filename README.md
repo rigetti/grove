@@ -9,7 +9,6 @@ Grove is licensed under the [Apache 2.0 license](https://github.com/rigetticompu
 
 Grove currently includes:
 
-* [Quantum Teleportation](http://grove-docs.readthedocs.io/en/latest/teleportation.html)
 * [The Variational-Quantum-Eigensolver (VQE)](http://grove-docs.readthedocs.io/en/latest/vqe.html)
 * [The Quantum Approximate Optimization Algorithm (QAOA)](http://grove-docs.readthedocs.io/en/latest/qaoa.html)
 * [The Quantum Fourier Transform (QFT)](http://grove-docs.readthedocs.io/en/latest/qft.html)
