@@ -15,29 +15,17 @@
 #    limitations under the License.
 ##############################################################################
 
-from setuptools import setup
+from setuptools import setup, find_packages
+from grove import __version__
 
 setup(
     name="quantum-grove",
-    version="1.2.0",
+    version=__version__,
     author="Rigetti Computing",
     author_email="softapps@rigetti.com",
     description="A collection of quantum algorithms built using pyQuil and Forest",
     url="https://github.com/rigetticomputing/grove.git",
-    packages=[
-        "grove",
-        "grove.pyqaoa",
-        "grove.pyvqe",
-        "grove.qft",
-        "grove.bernstein_vazirani",
-        "grove.simon",
-        "grove.amplification",
-        "grove.alpha",
-        "grove.alpha.phaseestimation",
-        "grove.alpha.deutsch_jozsa",
-        "grove.alpha.arbitrary_state",
-        "grove.alpha.fermion_transforms"
-    ],
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=[
         'numpy',
         'scipy',
@@ -48,6 +36,7 @@ setup(
     ],
     setup_requires=['pytest-runner'],
     tests_require=[
+        'tox',
         'pytest >= 3.0.0',
         'mock'
     ],
