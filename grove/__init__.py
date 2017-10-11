@@ -13,6 +13,4 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
-# init for grove
-from grove.pyvqe.vqe import VQE
+__version__ = '1.2.0'
