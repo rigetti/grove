@@ -20,11 +20,10 @@
  <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
 """
 import numpy as np
-
 import pyquil.quil as pq
 from pyquil.gates import H, X, Z, RZ, STANDARD_GATES
 
-from grove.alpha.utility_programs import ControlledProgramBuilder
+from grove.utils.utility_programs import ControlledProgramBuilder
 
 STANDARD_GATE_NAMES = list(STANDARD_GATES.keys())
 X_GATE = np.array([[0, 1], [1, 0]])

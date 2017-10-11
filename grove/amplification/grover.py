@@ -17,12 +17,11 @@
 """
 
 import numpy as np
-
 import pyquil.quil as pq
 from pyquil.gates import H
 from pyquil.quilbase import Qubit
 
-from grove.alpha.amplification.amplification import amplification_circuit
+from grove.amplification.amplification import amplification_circuit
 
 
 class Grover(object):

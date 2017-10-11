@@ -31,7 +31,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H, X
 
-from grove.alpha.bernstein_vazirani import utils
+from grove.bernstein_vazirani import utils
 
 
 def create_bv_bitmap(dot_product_vector, dot_product_bias):

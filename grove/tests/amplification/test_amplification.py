@@ -17,8 +17,8 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H, RZ, CZ
 
-from grove.alpha.amplification.amplification import amplification_circuit, diffusion_program
-from grove.alpha.tests.utils_for_testing import prog_equality
+from grove.amplification.amplification import amplification_circuit, diffusion_program
+from grove.tests.utils.utils_for_testing import prog_equality
 
 triple_hadamard = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
 cz_gate = pq.Program(CZ(0, 1))

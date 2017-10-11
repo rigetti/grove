@@ -1,8 +1,7 @@
 import pytest
-
 from pyquil.quil import Program
 
-from grove.alpha.amplification.oracles import basis_selector_oracle
+from grove.amplification.oracles import basis_selector_oracle
 
 
 def test_basis_selector_oracle():

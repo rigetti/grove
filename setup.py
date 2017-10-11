@@ -29,13 +29,13 @@ setup(
         "grove.pyqaoa",
         "grove.pyvqe",
         "grove.qft",
+        "grove.bernstein_vazirani",
+        "grove.simon",
+        "grove.amplification",
         "grove.alpha",
         "grove.alpha.phaseestimation",
         "grove.alpha.deutsch_jozsa",
         "grove.alpha.arbitrary_state",
-        "grove.alpha.bernstein_vazirani",
-        "grove.alpha.simon",
-        "grove.alpha.amplification",
         "grove.alpha.fermion_transforms"
     ],
     install_requires=[

@@ -43,7 +43,7 @@ import numpy.random as rd
 import pyquil.quil as pq
 from pyquil.gates import H
 
-import grove.alpha.simon.utils as utils
+import grove.simon.utils as utils
 
 
 def create_1to1_bitmap(mask):
