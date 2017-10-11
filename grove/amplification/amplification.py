@@ -60,7 +60,9 @@ def diffusion_program(qubits):
      operator is diag(1, -1, ..., -1).
 
     See C. Lavor, L.R.U. Manssur, and R. Portugal (2003) `Grover's Algorithm: Quantum Database
-    Search<https://arxiv.org/abs/quant-ph/0301079>`_ for more information.
+    Search`_ for more information.
+
+    .. _`Grover's Algorithm: Quantum Database Search`: https://arxiv.org/abs/quant-ph/0301079
 
     :param qubits: A list of ints corresponding to the qubits to operate on.
                    The operator operates on bistrings of the form

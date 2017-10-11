@@ -83,17 +83,18 @@ def create_valid_2to1_bitmap(mask, random_seed=None):
     where :math:`m` is a bit mask and :math:`\oplus` denotes the bit wise XOR operation. An example
     of such a function is the truth-table
 
-    ==== ====
-     x   f(x)
-    ==== ====
-    000  101
-    001  010
-    010  000
-    011  110
-    100  000
-    101  110
-    110  101
-    111  010
+    ====  ====
+     x    f(x)
+    ====  ====
+    000   101
+    001   010
+    010   000
+    011   110
+    100   000
+    101   110
+    110   101
+    111   010
+    ====  ====
 
     Note that, e.g. both `000` and `110` map to the same value `101` and
     :math:`000 \oplus 110 = 110`. The same holds true for other pairs.
