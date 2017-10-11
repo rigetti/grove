@@ -1,2 +1,4 @@
 [run]
-omit = grove/*/test*
+omit =
+ grove/*/test*
+ grove/tests/*
