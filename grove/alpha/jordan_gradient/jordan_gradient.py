@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 from pyquil.gates import X, H, CPHASE
 import pyquil.quil as pq
@@ -38,25 +39,25 @@ def initialize_system(d_i, precision_i, precision_o):
     ics = pq.Program(ic_in + ic_out) + ft_out
     return ics, input_qubits, ancilla_qubits
 
-def oracle(f, x, eval_ndx, qubits, ancilla):    
+def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):    
     N_q = len(qubits)
-    dx = 2*(x[eval_ndx+1] - x[eval_ndx])
-    y_1 = f[eval_ndx+1]
-    scale = real_to_binary(y_1 / dx)
+    dx = x[eval_ndx+eval_shift] - x[eval_ndx]
+    y_1 = f[eval_ndx+eval_shift]
+    scale = real_to_binary(y_1 / dx, precision=precision)
     cR = []
     for register, a_bit in enumerate(ancilla):
-        angle = 2 * np.pi * int(scale[register])
+        angle = int(scale[register]) # 2 * np.pi * 
         cR.append(CPHASE(angle)(qubits[N_q - 1 - register], a_bit))
     return cR
 
-def gradient_estimator(function, x, p_ev, precision=3):
+def gradient_estimator(function, x, p_ev, precision=16, eval_shift=1):
     d = function.ndim
 
     # initialize registers
     ic, q_i, q_a = initialize_system(d, precision, precision)
 
     # feed function and circuit into oracle
-    p_oracle = oracle(function, x, p_ev, q_i, q_a)
+    p_oracle = oracle(function, x, p_ev, q_i, q_a, precision, eval_shift)
 
     # qft result
     p_iqft = inverse_qft(q_i)
@@ -64,24 +65,30 @@ def gradient_estimator(function, x, p_ev, precision=3):
     # combine steps of algorithm into one program
     p_gradient = pq.Program(ic + p_oracle) + p_iqft
 
-    # measure output registers
+    # measure input registers
     for q in q_i:
-        p_gradient.measure(q, q)
+       p_gradient.measure(q, q)
 
     return p_gradient
 
-import pyquil.api as api
-qvm = api.SyncConnection()
+
+import IPython
+from pyquil.api import JobConnection
+job_qvm = JobConnection(endpoint="https://job.rigetti.com/beta")
+
+from pyquil.api import SyncConnection
+qvm = SyncConnection()
 
 x = np.linspace(0, .1, 100)
 y = 1.2*x
 
 p_eval = 0
-precision = 12
-p_g = gradient_estimator(y, x, p_eval, precision=precision)
+eval_shift = 99
+precision = 8
+p_g = gradient_estimator(y, x, p_eval, precision=precision,
+        eval_shift=eval_shift)
 
-import IPython
+ca = list(range(precision))
+
 IPython.embed()
 
-# wf = qvm.wavefunction(p_g)[0]
-# print (wf)
