@@ -7,7 +7,7 @@
 #
 #        http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
+#    Unless required by applicable lzaw or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
@@ -26,7 +26,10 @@ from grove.amplification.amplification import amplification_circuit
 
 
 class Grover(object):
-    """This class contains an implementation of Grover's algorithm using pyQuil. For a reference
+    """This class contains an implementation of Grover's algorithm using pyQuil. See `these notes`_
+     by Dave Bacon for more information.
+
+    .. _these notes: https://courses.cs.washington.edu/courses/cse599d/06wi/lecturenotes12.pdf
     """
     def __init__(self):
         self.unitary_function_mapping = None
@@ -39,8 +42,9 @@ class Grover(object):
     def _compute_grover_oracle_matrix(bitstring_map):
         """Computes the unitary matrix that encodes the oracle function for Grover's algorithm
 
-        :param dict bitstring_map: dict with string keys corresponding to bitstrings, and integer
-         values corresponding to the desired phase on the output state.
+        :param bitstring_map: dict with string keys corresponding to bitstrings,
+         and integer values corresponding to the desired phase on the output state.
+        :type bitstring_map: dict[str, int]
         :return: a numpy array corresponding to the unitary matrix for oracle for the given
          bitstring_map
         :rtype: numpy.ndarray
@@ -68,8 +72,9 @@ class Grover(object):
     def _init_attr(self, bitstring_map):
         """Initializes an instance of Grover's Algorithm given a bitstring_map.
 
-        :param dict bitstring_map: dict with string keys corresponding to bitstrings, and integer
+        :param bitstring_map: dict with string keys corresponding to bitstrings, and integer
          values corresponding to the desired phase on the output state.
+        :type bitstring_map: dict[str, int]
         :return: None
         :rtype: NoneType
         """
@@ -87,12 +92,13 @@ class Grover(object):
         strings, an then use Grover's Algorithm to pick out the desired bitstring.
 
         :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
-        :param Dict[String, Int] bitstring_map: a mapping from bitstrings to the phases that the
+        :param bitstring_map: a mapping from bitstrings to the phases that the
          oracle should impart on them. If the oracle should "look" for a bitstring, it should have a
          ``-1``, otherwise it should have a ``1``.
+        :type bitstring_map: dict[str, int]
         :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
         found.
-        :rtype: String
+        :rtype: str
         """
         self._init_attr(bitstring_map)
         print self.grover_circuit
@@ -102,11 +108,10 @@ class Grover(object):
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):
-        """Implementation of Grover's Algorithm for a given oracle. The query qubit will be left in
-         the zero state afterwards.
+        """Implementation of Grover's Algorithm for a given oracle.
 
         :param Program oracle: An oracle defined as a Program. It should send |x> to (-1)^f(x)|x>,
-                               where the range of f is {0, 1}.
+         where the range of f is {0, 1}.
         :param qubits: List of qubits for Grover's Algorithm.
         :type qubits: list[int or Qubit]
         :param int num_iter: The number of iterations to repeat the algorithm for.
@@ -117,7 +122,6 @@ class Grover(object):
         """
         if num_iter is None:
             num_iter = int(round(np.pi * 2 ** (len(qubits) / 2.0 - 2.0)))
-
         uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
         amp_prog = amplification_circuit(uniform_superimposer, oracle, qubits, num_iter)
         return amp_prog
