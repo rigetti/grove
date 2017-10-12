@@ -76,7 +76,6 @@ class Grover(object):
         self.bit_map = bitstring_map
         self.unitary_function_mapping = self._compute_grover_oracle_matrix(bitstring_map)
         self.n_qubits = self.unitary_function_mapping.shape[0]
-        print self.unitary_function_mapping
         self.qubits = list(range(int(np.log2(self.n_qubits))))
         self._construct_grover_circuit()
 
