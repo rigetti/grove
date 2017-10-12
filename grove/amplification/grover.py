@@ -43,7 +43,7 @@ class Grover(object):
 
         :param bitstring_map: dict with string keys corresponding to bitstrings,
          and integer values corresponding to the desired phase on the output state.
-        :type bitstring_map: dict[str, int]
+        :type bitstring_map: Dict[String, Int]
         :return: a numpy array corresponding to the unitary matrix for oracle for the given
          bitstring_map
         :rtype: numpy.ndarray
@@ -73,7 +73,7 @@ class Grover(object):
 
         :param bitstring_map: dict with string keys corresponding to bitstrings, and integer
          values corresponding to the desired phase on the output state.
-        :type bitstring_map: dict[str, int]
+        :type bitstring_map: Dict[String, Int]
         :return: None
         :rtype: NoneType
         """
@@ -94,7 +94,7 @@ class Grover(object):
         :param bitstring_map: a mapping from bitstrings to the phases that the
          oracle should impart on them. If the oracle should "look" for a bitstring, it should have a
          ``-1``, otherwise it should have a ``1``.
-        :type bitstring_map: dict[str, int]
+        :type bitstring_map: Dict[String, Int]
         :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
         found.
         :rtype: str
