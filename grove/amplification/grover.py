@@ -101,7 +101,6 @@ class Grover(object):
         :rtype: str
         """
         self._init_attr(bitstring_map)
-        print self.grover_circuit
         sampled_bitstring = np.array(cxn.run_and_measure(self.grover_circuit, self.qubits),
                                      dtype=int)
         return sampled_bitstring
