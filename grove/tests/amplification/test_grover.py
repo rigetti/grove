@@ -115,12 +115,14 @@ def test_find_bistring():
     bitstring_map = {"0": 1, "1": -1}
     builder = Grover()
     with patch("pyquil.api.SyncConnection") as qvm:
-        expected_bitstring = np.asarray([0, 1], dtype=int)
-        qvm.run_and_measure.return_value = expected_bitstring
-    bitstring = builder.find_bitstring(qvm, bitstring_map)
+        expected_bitstring = [0, 1]
+        qvm.run_and_measure.return_value = [expected_bitstring, ]
+    returned_bitstring = builder.find_bitstring(qvm, bitstring_map)
     prog = builder.grover_circuit
     # Make sure it only defines the one ORACLE gate.
     assert len(prog.defined_gates) == 1
     # Make sure that it produces the oracle we expect.
     assert (prog.defined_gates[0].matrix == np.array([[1, 0], [0, -1]])).all()
-    assert (bitstring == expected_bitstring).all()
+    expected_bitstring = "".join([str(bit) for bit in expected_bitstring])
+    returned_bitstring = "".join([str(bit) for bit in returned_bitstring])
+    assert expected_bitstring == returned_bitstring
