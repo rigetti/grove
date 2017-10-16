@@ -51,6 +51,7 @@ def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):
     :param int eval_shift: Number indicies over which function is linear.
     :return Program p_cR: Quil program that encodes gradient values via cRz.
     """
+
     N_q = len(qubits)
     dx = x[eval_ndx+eval_shift] - x[eval_ndx]
     y_1 = f[eval_ndx+eval_shift] - y[eval_ndx]
@@ -74,6 +75,7 @@ def gradient_estimator(f, x, eval_ndx, precision=16, eval_shift=1):
     :param int eval_shift: Number indicies over which function is linear.
     :return Program p_gradient: Quil program to estimate gradient of f.
     """
+
     d = f.ndim
     # initialize registers
     p_ic, q_i, q_a = initialize_system(d, precision, precision)
