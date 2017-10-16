@@ -45,7 +45,6 @@ from grove import __version__
 # specify which docstring to use for autoclass
 autoclass_content = 'init'
 
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
