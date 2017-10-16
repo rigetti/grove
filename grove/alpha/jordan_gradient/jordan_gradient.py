@@ -49,7 +49,7 @@ def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):
     :param list ancilla: Indices of ancilla qubits.
     :param int precision: Bit precision of gradient.
     :param int eval_shift: Number indicies over which function is linear.
-    :return Program p_cR: Quil program that encodes gradient values into cU.
+    :return Program p_cR: Quil program that encodes gradient values via cRz.
     """
     N_q = len(qubits)
     dx = x[eval_ndx+eval_shift] - x[eval_ndx]
@@ -57,9 +57,8 @@ def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):
     scale = real_to_binary(y_1 / dx, precision=precision)
     cR = []
     for bit_ndx, a_bit in enumerate(ancilla):
-        angle = 2**(bit_ndx / precision) * np.pi * int(scale[bit_ndx])
+        angle = np.pi * int(scale[bit_ndx]) # 2**(1+bit_ndx-precision)
         gate = CPHASE(angle)(qubits[-1*(1+bit_ndx)], a_bit)
-        print (gate)
         cR.append(gate)
     p_cR = pq.Program(cR)
     return p_cR
@@ -101,11 +100,13 @@ if __name__ == '__main__':
     p_gradient = gradient_estimator(y, x, p_eval, precision=precision,
             eval_shift=eval_shift)
     measurements = []
-    for m in range(50):
+    for m in range(1000):
         measurements.append(qvm.run_and_measure(p_gradient, ca)[0])
     m = np.vstack(measurements)
     
-    expectation = m.sum(axis=0)[::-1] / m.shape[0]
-    print (expectation)
-    estimate = ''.join(str(int(np.round(i))) for i in expectation)
+    probability_m = m.sum(axis=0)[::-1] / m.shape[0]
+    print (probability_m)
+    probability_m[probability_m < .5] = 0
+    probability_m[probability_m > 0] = 1
+    estimate = ''.join(str(int(np.round(i))) for i in probability_m)
     print (estimate)
