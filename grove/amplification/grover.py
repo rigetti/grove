@@ -91,18 +91,16 @@ class Grover(object):
         strings, an then use Grover's Algorithm to pick out the desired bitstring.
 
         :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
-        :param bitstring_map: a mapping from bitstrings to the phases that the
-         oracle should impart on them. If the oracle should "look" for a bitstring, it should have a
-         ``-1``, otherwise it should have a ``1``.
+        :param bitstring_map: a mapping from bitstrings to the phases that the oracle should impart
+         on them. If the oracle should "look" for a bitstring, it should have a ``-1``, otherwise
+          it should have a ``1``.
         :type bitstring_map: Dict[String, Int]
-        :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
-        found.
+        :return: Returns the bitstring resulting from measurement after Grover's Algorithm.
         :rtype: str
         """
         self._init_attr(bitstring_map)
-        sampled_bitstring = np.array(cxn.run_and_measure(self.grover_circuit, self.qubits),
-                                     dtype=int)
-        return sampled_bitstring
+        sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)[0]
+        return ''.join([str(b) for b in sampled_bitstring])
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):
