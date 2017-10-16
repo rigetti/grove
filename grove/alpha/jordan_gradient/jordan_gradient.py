@@ -25,9 +25,9 @@ def initialize_system(d_i, precision_i, precision_o):
     Output qubits to plane wave state
 
     :param int d_i: Number of dimensions of function domain.
-    :param int precision_i: Precision of input qubits.
-    :param int precision_o: Precision of output qubits.
-    :return list ics: list of gates needed to prepare IC state 
+    :param int precision_i: Bit precision of input qubits.
+    :param int precision_o: Bit precision of output qubits.
+    :return list ics: List of gates needed to prepare IC state.
     """
 
     N_qi = d_i * precision_i
@@ -40,23 +40,46 @@ def initialize_system(d_i, precision_i, precision_o):
     return ics, input_qubits, ancilla_qubits
 
 def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):    
+    """ Phase kickback of gradient values
+
+    :param np.array f: Oracle outputs.
+    :param np.array x: Domain of f.
+    :param int eval_ndx: Index of domain value to shift over linear regime.
+    :param list qubits: Indices of input qubits.
+    :param list ancilla: Indices of ancilla qubits.
+    :param int precision: Bit precision of gradient.
+    :param int eval_shift: Number indicies over which function is linear.
+    :return Program p_cR: Quil program that encodes gradient values into cU.
+    """
     N_q = len(qubits)
     dx = x[eval_ndx+eval_shift] - x[eval_ndx]
     y_1 = f[eval_ndx+eval_shift] - y[eval_ndx]
     scale = real_to_binary(y_1 / dx, precision=precision)
     cR = []
     for bit_ndx, a_bit in enumerate(ancilla):
-        angle = np.pi * int(scale[bit_ndx])
+        angle = 2**(bit_ndx / precision) * np.pi * int(scale[bit_ndx])
         gate = CPHASE(angle)(qubits[-1*(1+bit_ndx)], a_bit)
+        print (gate)
         cR.append(gate)
-    return pq.Program(cR)
+    p_cR = pq.Program(cR)
+    return p_cR
 
-def gradient_estimator(function, x, p_ev, precision=16, eval_shift=1):
-    d = function.ndim
+def gradient_estimator(f, x, eval_ndx, precision=16, eval_shift=1):
+    """ Gradient estimation via Jordan's algorithm
+    10.1103/PhysRevLett.95.050501
+
+    :param np.array f: Oracle outputs.
+    :param np.array x: Domain of f.
+    :param int eval_ndx: Index of domain value to shift over linear regime.
+    :param int precision: Bit precision of gradient.
+    :param int eval_shift: Number indicies over which function is linear.
+    :return Program p_gradient: Quil program to estimate gradient of f.
+    """
+    d = f.ndim
     # initialize registers
     p_ic, q_i, q_a = initialize_system(d, precision, precision)
     # feed function and circuit into oracle
-    p_oracle = oracle(function, x, p_ev, q_i, q_a, precision, eval_shift)
+    p_oracle = oracle(f, x, eval_ndx, q_i, q_a, precision, eval_shift)
     # qft result
     p_iqft = inverse_qft(q_i)
     # combine steps of algorithm into one program
@@ -78,10 +101,11 @@ if __name__ == '__main__':
     p_gradient = gradient_estimator(y, x, p_eval, precision=precision,
             eval_shift=eval_shift)
     measurements = []
-    for m in range(500):
+    for m in range(50):
         measurements.append(qvm.run_and_measure(p_gradient, ca)[0])
     m = np.vstack(measurements)
     
-    expectation = np.round(t.sum(axis=0) / t.shape[0])[::-1]
-    estimate = ''.join(str(int(i)) for i in expectation)
+    expectation = m.sum(axis=0)[::-1] / m.shape[0]
+    print (expectation)
+    estimate = ''.join(str(int(np.round(i))) for i in expectation)
     print (estimate)
