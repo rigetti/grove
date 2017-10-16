@@ -42,53 +42,46 @@ def initialize_system(d_i, precision_i, precision_o):
 def oracle(f, x, eval_ndx, qubits, ancilla, precision, eval_shift):    
     N_q = len(qubits)
     dx = x[eval_ndx+eval_shift] - x[eval_ndx]
-    y_1 = f[eval_ndx+eval_shift]
+    y_1 = f[eval_ndx+eval_shift] - y[eval_ndx]
     scale = real_to_binary(y_1 / dx, precision=precision)
     cR = []
-    for register, a_bit in enumerate(ancilla):
-        angle = int(scale[register]) # 2 * np.pi * 
-        cR.append(CPHASE(angle)(qubits[N_q - 1 - register], a_bit))
-    return cR
+    for bit_ndx, a_bit in enumerate(ancilla):
+        angle = np.pi * int(scale[bit_ndx])
+        gate = CPHASE(angle)(qubits[-1*(1+bit_ndx)], a_bit)
+        cR.append(gate)
+    return pq.Program(cR)
 
 def gradient_estimator(function, x, p_ev, precision=16, eval_shift=1):
     d = function.ndim
-
     # initialize registers
-    ic, q_i, q_a = initialize_system(d, precision, precision)
-
+    p_ic, q_i, q_a = initialize_system(d, precision, precision)
     # feed function and circuit into oracle
     p_oracle = oracle(function, x, p_ev, q_i, q_a, precision, eval_shift)
-
     # qft result
     p_iqft = inverse_qft(q_i)
-
     # combine steps of algorithm into one program
-    p_gradient = pq.Program(ic + p_oracle) + p_iqft
-
-    # measure input registers
-    for q in q_i:
-       p_gradient.measure(q, q)
-
+    p_gradient = p_ic + p_oracle + p_iqft
     return p_gradient
 
-
-import IPython
-from pyquil.api import JobConnection
-job_qvm = JobConnection(endpoint="https://job.rigetti.com/beta")
-
-from pyquil.api import SyncConnection
-qvm = SyncConnection()
-
-x = np.linspace(0, .1, 100)
-y = 1.2*x
-
-p_eval = 0
-eval_shift = 99
-precision = 8
-p_g = gradient_estimator(y, x, p_eval, precision=precision,
-        eval_shift=eval_shift)
-
-ca = list(range(precision))
-
-IPython.embed()
-
+if __name__ == '__main__':
+    from pyquil.api import SyncConnection
+    qvm = SyncConnection()
+    
+    x = np.linspace(0, .1, 100)
+    # test function with analytic gradient 0.011
+    y = .375*x 
+    
+    p_eval = 0
+    eval_shift = 99
+    precision = 3
+    ca = list(range(precision))
+    p_gradient = gradient_estimator(y, x, p_eval, precision=precision,
+            eval_shift=eval_shift)
+    measurements = []
+    for m in range(500):
+        measurements.append(qvm.run_and_measure(p_gradient, ca)[0])
+    m = np.vstack(measurements)
+    
+    expectation = np.round(t.sum(axis=0) / t.shape[0])[::-1]
+    estimate = ''.join(str(int(i)) for i in expectation)
+    print (estimate)
