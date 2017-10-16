@@ -18,7 +18,7 @@
 
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import X, Z
+from pyquil.gates import X, Z, CNOT
 
 from grove.utils.utility_programs import ControlledProgramBuilder
 
@@ -62,3 +62,31 @@ def basis_selector_oracle(qubits, bitstring):
         oracle_prog += n_qubit_controlled_z
         oracle_prog += bitflip_prog
     return oracle_prog
+
+
+def oracle_from_unitary(unitary_funct, qubits, ancilla):
+    """
+    Defines an oracle that performs the following unitary transformation:
+    :math:`|x\rangle |y\rangle \rightarrow |x\rangle|f(x) \otimes y\rangle`
+
+    Allocates one scratch bit.
+
+    :param np.array unitary_funct: Matrix representation of the function f, i.e. the
+     unitary transformation that must be applied to a state |x> to put f(x) in qubit 0, with
+     little endian notation, where f(x) returns either 0 or 1 for any n-bit string x.
+    :param list qubits: List of qubits that enter as input |x>.
+    :type qubits: list or Qubit
+    :param Qubit ancilla: Qubit to serve as input |y>.
+    :return: A program that performs the above unitary transformation.
+    :rtype: Program
+    """
+    unitary_prog = pq.Program()
+    p = pq.Program()
+    scratch_bit = p.alloc()
+    bits_for_funct = [scratch_bit] + qubits
+    unitary_prog.defgate("ORACLE", unitary_funct)
+    p += unitary_prog
+    p.inst(tuple(['FUNCT'] + bits_for_funct))
+    p.inst(CNOT(qubits[0], ancilla))
+    p += unitary_prog.dagger()
+    return p
