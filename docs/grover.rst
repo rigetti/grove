@@ -92,7 +92,7 @@ Algorithm:
 
   #. Measure :math:`\ket{x}`
 
-It can be shown [1]_ that if this process is iterate for :math:`\mathcal{O}(\sqrt{N})` iterations,
+It can be shown [1]_ that if this process is iterated for :math:`\mathcal{O}(\sqrt{N})` iterations,
 a measurement of :math:`\ket{x}` will result in one of :math:`\{y_i\}` with probability near one.
 
 Source Code Docs
