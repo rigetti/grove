@@ -20,7 +20,7 @@ with probability near one.
 
 As an example, take :math:`U_w: \ket{x}\ket{q} \to \ket{x\cdot\vec{1}}\ket{q\oplus x\cdot\vec{1}}`. 
 In this case, :math:`f(x)=1` iff :math:`x=1`, and so starting with the state :math:`\ket{s}` we hope
-end up with a state :math:`\psi` such that :math:`\braket{\psi}{\vec{1}}\approx1`.
+end up with a state :math:`\ket{\psi}` such that :math:`\braket{\psi}{\vec{1}}\approx1`.
 
 Algorithm and Details
 ---------------------
