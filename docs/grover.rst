@@ -74,19 +74,22 @@ desired index with respect to the other indices. See [2]_ for more.
 
 Given these definitions we can now describe Grover's Algorithm: 
 
-Input: :math:`n + 1` qubits
-    #. Initialize them to the state :math:`\ket{s}\ket{-}`.
+Input:
+  :math:`n + 1` qubits
 
-    #. Apply the oracle :math:`U_w` to the qubits, yielding :math:`\sum\limits^{N-1}_{0}(-1)^{f(x)}
-       \ket{x}\ket{-}`, where :math:`N = 2^n`
+Algorithm:
+  #. Initialize them to the state :math:`\ket{s}\ket{-}`.
 
-    #. Apply the n-fold Hadamard gate :math:`H^{\otimes n}` to :math:`\ket{x}`
+  #. Apply the oracle :math:`U_w` to the qubits, yielding 
+     :math:`\sum\limits^{N-1}_{0}(-1)^{f(x)}\ket{x}\ket{-}`, where :math:`N = 2^n`
 
-    #. Apply :math:`\mathcal{D}`
+  #. Apply the n-fold Hadamard gate :math:`H^{\otimes n}` to :math:`\ket{x}`
 
-    #. Apply :math:`H^{\otimes n}` to :math:`\ket{x}`
+  #. Apply :math:`\mathcal{D}`
 
-    #. Measure :math:`\ket{x}`
+  #. Apply :math:`H^{\otimes n}` to :math:`\ket{x}`
+
+  #. Measure :math:`\ket{x}`
 
 It can be shown [1]_ that if this process is iterate for :math:`\mathcal{O}(\sqrt{N})` iterations,
 a measurement of :math:`\ket{x}` will result in one of :math:`\{y_i\}` with probability near one.
