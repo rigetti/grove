@@ -18,9 +18,10 @@ given the uniform superposition :math:`\ket{s} = \frac{1}{\sqrt{N}}\sum\limits^{
 as input, produces a state :math:`\ket{s'}` that, when measured, produces a state :math:`\{y_i\}`
 with probability near one.
 
-As an example, take :math:`U_w: \ket{x}\ket{q} \to \ket{x\cdot\vec{1}}\ket{q\oplus x\cdot\vec{1}}`. 
+As an example, take :math:`U_w: \ket{x}\ket{q} \to \ket{x\cdot\vec{1}}\ket{q\oplus x\cdot\vec{1}}`.
 In this case, :math:`f(x)=1` iff :math:`x=1`, and so starting with the state :math:`\ket{s}` we hope
-end up with a state :math:`\ket{\psi}` such that :math:`\braket{\psi}{\vec{1}}\approx1`.
+end up with a state :math:`\ket{\psi}` such that :math:`\braket{\psi}{\vec{1}}\approx1`. In this
+example, :math:`\{y_i\}=\{\vec{1}\}`.
 
 Algorithm and Details
 ---------------------
