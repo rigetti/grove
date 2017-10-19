@@ -18,10 +18,11 @@ given the uniform superposition :math:`\ket{s} = \frac{1}{\sqrt{N}}\sum\limits^{
 as input, produces a state :math:`\ket{s'}` that, when measured, produces a state :math:`\{y_i\}`
 with probability near one.
 
-As an example, take :math:`U_w: \ket{x}\ket{q} \to \ket{x\cdot\vec{1}}\ket{q\oplus x\cdot\vec{1}}`.
-In this case, :math:`f(x)=1` iff :math:`x=1`, and so starting with the state :math:`\ket{s}` we hope
-end up with a state :math:`\ket{\psi}` such that :math:`\braket{\psi}{\vec{1}}\approx1`. In this
-example, :math:`\{y_i\}=\{\vec{1}\}`.
+As an example, take :math:`U_w: \ket{x}\ket{q} \to \ket{x}\ket{q\oplus (x\cdot\vec{1})}`, where
+\vec{1} is the vector of ones with the same dimension as \ket{x}.  In this case, :math:`f(x)=1` iff
+:math:`x=1`, and so starting with the state :math:`\ket{s}` we hope end up with a state
+:math:`\ket{\psi}` such that :math:`\braket{\psi}{\vec{1}}\approx1`. In this example,
+:math:`\{y_i\}=\{\vec{1}\}`.
 
 Algorithm and Details
 ---------------------
@@ -54,11 +55,16 @@ defined as:
    \end{bmatrix}
 
 This operator takes on its name from its similarity to a discretized version of the diffusion
-equation Namely, if we consider :math:`\frac{\partial\psi(t)}{\partial t} = \nabla\cdot\nabla\psi(t)`,
-and discretize our system such that at each time step a system of :math:`N` particles can diffuse to
-each of their :math:`N-1` neighbors, it can be shown that the equations takes on the form
+equation, which provided motivation for Grover [2]_. The diffusion equation is given by
+:math:`\frac{\partial\rho(t)}{\partial t} = \nabla\cdot\nabla\rho(t)`, where :math:`\rho` is a
+density diffusing through space. We can discretize this process, as is described in [2]_, by
+considering :math:`N` vertices on a complete graph, each of which can diffuse to :math:`N-1` other
+vertices in each time step. By considering this process, one arrives at an equation of the form
 :math:`\psi(t + \Delta t) = \mathcal{D}'\psi` where :math:`\mathcal{D}'` has a form similar to
-:math:`\mathcal{D}`.
+:math:`\mathcal{D}`. One might note that the diffusion equation is the same as the Schr\uodinger
+equation, up to a missing :math:`i`, and in many ways it describes the diffusion of the probability
+amplitude of a quantum state, but with slightly different properties. From this analogy one might be
+led to explore how this diffusion process can be taken advantage of in a computational setting.
       
 One property that :math:`\mathcal{D}` has is that it inverts the amplitudes of an input state about
 their mean. Thus, one way of viewing Grover's Algorithm is as follows. First, we flip the amplitude
@@ -90,8 +96,6 @@ Algorithm:
 
   #. Apply :math:`H^{\otimes n}` to :math:`\ket{x}`
 
-  #. Measure :math:`\ket{x}`
-
 It can be shown [1]_ that if this process is iterated for :math:`\mathcal{O}(\sqrt{N})` iterations,
 a measurement of :math:`\ket{x}` will result in one of :math:`\{y_i\}` with probability near one.
 
@@ -118,4 +122,5 @@ grove.amplification.grover
 
 .. [1] Nielsen, M.A. and Chuang, I.L. Quantum computation and quantum information. Cambridge
        University Press, 2000. Chapter 6.
-.. [2] https://arxiv.org/pdf/quant-ph/9605043.pdf
+.. [2] Lov K. Grover: “A fast quantum mechanical algorithm for database search”, 1996;
+       [http://arxiv.org/abs/quant-ph/9605043 arXiv:quant-ph/9605043].
