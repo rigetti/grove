@@ -92,8 +92,8 @@ class Grover(object):
 
         :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
         :param bitstring_map: a mapping from bitstrings to the phases that the oracle should impart
-         on them. If the oracle should "look" for a bitstring, it should have a ``-1``, otherwise
-          it should have a ``1``.
+            on them. If the oracle should "look" for a bitstring, it should have a ``-1``, otherwise
+            it should have a ``1``.
         :type bitstring_map: Dict[String, Int]
         :return: Returns the bitstring resulting from measurement after Grover's Algorithm.
         :rtype: str
@@ -104,14 +104,14 @@ class Grover(object):
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):
-        """Implementation of Grover's Algorithm for a given oracle.
+        r"""Implementation of Grover's Algorithm for a given oracle.
 
-        :param Program oracle: An oracle defined as a Program. It should send |x> to (-1)^f(x)|x>,
-         where the range of f is {0, 1}.
+        :param Program oracle: An oracle defined as a Program. It should send :math:`\ket{x}`
+            to :math:`(-1)^{f(x)}\ket{x}`, where the range of f is {0, 1}.
         :param qubits: List of qubits for Grover's Algorithm.
         :type qubits: list[int or Qubit]
         :param int num_iter: The number of iterations to repeat the algorithm for.
-                             The default is the integer closest to :math:`\\frac{\\pi}{4}\sqrt{N}`,
+                             The default is the integer closest to :math:`\frac{\pi}{4}\sqrt{N}`,
                              where :math:`N` is the size of the domain.
         :return: A program corresponding to the desired instance of Grover's Algorithm.
         :rtype: Program

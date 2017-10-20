@@ -61,7 +61,7 @@ def create_1to1_bitmap(mask):
 
     :param String mask: binary mask as a string of 0's and 1's
     :return: dictionary containing a mapping of all possible bit strings of the same length as the
-    mask's string and their mapped bit-string value
+        mask's string and their mapped bit-string value
     :rtype: Dict[String, String]
     """
     n_bits = len(mask)
@@ -230,10 +230,10 @@ class Simon(object):
 
         :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
-        whose period is  to be found.
+            whose period is  to be found.
 
         :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
-        found.
+            found.
         :rtype: String
         """
         self._init_attr(bitstring_map)

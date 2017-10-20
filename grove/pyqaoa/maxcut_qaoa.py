@@ -37,27 +37,18 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     Max cut set up method
 
     :param graph: Graph definition. Either networkx or list of tuples
-    :param steps: (Optional. Default=1) Trotterization order for the
-                  QAOA algorithm.
-    :param rand_seed: (Optional. Default=None) random seed when beta and
-                      gamma angles are not provided.
+    :param steps: (Optional. Default=1) Trotterization order for the QAOA algorithm.
+    :param rand_seed: (Optional. Default=None) random seed when beta and gamma angles
+        are not provided.
     :param connection: (Optional) connection to the QVM. Default is None.
     :param samples: (Optional. Default=None) VQE option. Number of samples
-                    (circuit preparation and measurement) to use in operator
-                    averaging.
-    :param initial_beta: (Optional. Default=None) Initial guess for beta
-                         parameters.
-    :param initial_gamma: (Optional. Default=None) Initial guess for gamma
-                          parameters.
-    :param minimizer_kwargs: (Optional. Default=None). Minimizer optional
-                             arguments.  If None set to
-                             {'method': 'Nelder-Mead',
-                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
-                                        'disp': False}
-    :param vqe_option: (Optional. Default=None). VQE optional
-                             arguments.  If None set to
-                       vqe_option = {'disp': print_fun, 'return_all': True,
-                       'samples': samples}
+        (circuit preparation and measurement) to use in operator averaging.
+    :param initial_beta: (Optional. Default=None) Initial guess for beta parameters.
+    :param initial_gamma: (Optional. Default=None) Initial guess for gamma parameters.
+    :param minimizer_kwargs: (Optional. Default=None). Minimizer optional arguments.  If None set to
+        ``{'method': 'Nelder-Mead', 'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2, 'disp': False}``
+    :param vqe_option: (Optional. Default=None). VQE optional arguments.  If None set to
+        ``vqe_option = {'disp': print_fun, 'return_all': True, 'samples': samples}``
 
     """
     if not isinstance(graph, nx.Graph) and isinstance(graph, list):
