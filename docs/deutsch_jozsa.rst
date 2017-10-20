@@ -35,15 +35,17 @@ one value, and on the other half :math:`f` takes on a different value.
 
 We can then describe the algorithm as follows:
 
-Input: :math:`n + 1` qubits
-#. Prepare the \textit{ancilla} (:math:`\ket{q}` above) in the :math:`\ket{1}` state by performing
-   an :math:`X` gate. This qubit is to serve as the :math:`\ket{q}` in the
-#. Perform the :math:`n + 1`-fold Hadamard gate :math:`H^{\otimes n + 1}` on the :math:`n + 1`
-   qubits
-#. Apply the circuit :math:`U_w`.
-#. Apply the :math:`n`-fold Hadmard gate :math:`H^{\otimes n}` on the data qubits, :math:`\ket{x}`.
-#. Measure :math:`\ket{x}`. If the result is all zeroes, then the function is constant. Otherwise, it
-   is balanced.
+Input:
+   :math:`n + 1` qubits
+Algorithm:
+  #. Prepare the \textit{ancilla} (:math:`\ket{q}` above) in the :math:`\ket{1}` state by performing
+     an :math:`X` gate.
+  #. Perform the :math:`n + 1`-fold Hadamard gate :math:`H^{\otimes n + 1}` on the :math:`n + 1`
+     qubits
+  #. Apply the circuit :math:`U_w`.
+  #. Apply the :math:`n`-fold Hadmard gate :math:`H^{\otimes n}` on the data qubits, :math:`\ket{x}`.
+  #. Measure :math:`\ket{x}`. If the result is all zeroes, then the function is constant. Otherwise, it
+     is balanced.
 
 Source Code Docs
 ----------------

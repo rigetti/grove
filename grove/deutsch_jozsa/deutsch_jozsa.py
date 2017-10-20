@@ -39,9 +39,9 @@ class DeutschJosza(object):
         self.deutsch_jozsa_circuit = None
 
     def is_constant(self, cxn, bitstring_map):
-        """Computes whether bitstring_map represents a constant function, given that it is constant or
-        balanced. Constant means all inputes map to the same value, balanced means half of the inputs
-        maps to one value, and half to the other.
+        """Computes whether bitstring_map represents a constant function, given that it is constant
+         or balanced. Constant means all inputes map to the same value, balanced means half of the
+         inputs maps to one value, and half to the other.
 
         :param JobConnection cxn: The connection object to the Rigetti cloud to run pyQuil programs.
         :param bitstring_map: A dictionary whose keys are bitstrings, and whose values are bits
