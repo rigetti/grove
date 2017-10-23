@@ -10,7 +10,7 @@ is constant or balanced, provided that it is one of the two. A constant function
 either 1 or 0, and a balanced function maps to 1 for half of the inputs and maps to 0 for the other
 half. Unlike any deterministic classical algorithm, the Deutsch-Jozsa Algorithm can solve this
 problem with a single iteration, regardless of the input size. It was one of the first known quantum
-algorithms that showed an exponential speedup, albeit it against a deterministic (non-probabilistic)
+algorithms that showed an exponential speedup, albeit against a deterministic (non-probabilistic)
 classical computer, and with access to a blackbox function that can evaluate inputs to the chosen
 function.
 
