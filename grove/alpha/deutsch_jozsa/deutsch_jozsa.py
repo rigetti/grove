@@ -11,17 +11,20 @@ from six.moves import input
 
 
 def oracle_function(unitary_funct, qubits, ancilla):
-    """
+    r"""
     Defines an oracle that performs the following unitary transformation:
-    |x>|y> -> |x>|f(x) xor y>
+
+    .. math::
+
+        \ket{x}\ket{y} \to \ket{x}\ket{f(x)\; \text{xor}\; y}
 
     Allocates one scratch bit.
 
     :param np.array unitary_funct: Matrix representation of the function f, i.e. the
-        unitary transformation that must be applied to a state |x> to put f(x) in qubit 0, where
-        f(x) returns either 0 or 1 for any n-bit string x
-    :param np.array qubits: List of qubits that enter as input |x>.
-    :param Qubit ancilla: Qubit to serve as input |y>.
+        unitary transformation that must be applied to a state :math:`\ket{x}` to put
+        f(x) in qubit 0, where f(x) returns either 0 or 1 for any n-bit string x
+    :param np.array qubits: List of qubits that enter as input :math:`\ket{x}`.
+    :param Qubit ancilla: Qubit to serve as input :math:`ket\{y}`.
     :return: A program that performs the above unitary transformation.
     :rtype: Program
     """
@@ -48,8 +51,8 @@ def deutsch_jozsa(oracle, qubits, ancilla):
     or balanced, provided that it is one of them.
 
     :param Program oracle: Program representing unitary application of function.
-    :param list qubits: List of qubits that enter as state |x>.
-    :param Qubit ancilla: Qubit to serve as input |y>.
+    :param list qubits: List of qubits that enter as state :math:`\\ket{x}`.
+    :param Qubit ancilla: Qubit to serve as input :math:`\\ket{y}`.
     :return: A program corresponding to the desired instance of the
              Deutsch-Jozsa Algorithm.
     :rtype: Program

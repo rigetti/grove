@@ -33,7 +33,7 @@ The input qubits are prepared with the ancilla qubits into the state
 $$(H^{\\otimes n} \\otimes I^{\\otimes n})\\vert 0\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n} = \\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
 and sent through a blackbox gate \\(U_f\\). Then, the Hadamard-Walsh transform
 \\(H^{\\otimes n}\\) is applied to the \\(n\\) input qubits, resulting in the state given by
- $$(H^{\\otimes n} \\otimes I^{\\otimes n})U_f\\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
+$$(H^{\\otimes n} \\otimes I^{\\otimes n})U_f\\vert +\\rangle^{\\otimes n}\\vert 0\\rangle^{\\otimes n}$$
 
 It turns out the resulting \\(n\\) input qubits are in a uniform random state
 over the space killed by (modulo \\(2\\), bitwise) dot product with \\(s\\).
