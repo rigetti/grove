@@ -10,15 +10,15 @@ is constant or balanced, provided that it is one of the two. A constant function
 either 1 or 0, and a balanced function maps to 1 for half of the inputs and maps to 0 for the other
 half. Unlike any deterministic classical algorithm, the Deutsch-Jozsa Algorithm can solve this
 problem with a single iteration, regardless of the input size. It was one of the first known quantum
-algorithms that showed an exponential speedup- albeit it against a deterministic (non-probabilistic)
-classical computerm and with access to a blackbox function that can evaluate inputs to the chosen
-funtion.
+algorithms that showed an exponential speedup, albeit it against a deterministic (non-probabilistic)
+classical computer, and with access to a blackbox function that can evaluate inputs to the chosen
+function.
 
 Algorithm and Details
---------------------- 
+---------------------
 
-This algorithm takes as input :math:`n` qubits, in state :math:`\ket{x}`, an ancillary qubit and
-additionally a quantum circuit :math:`U_w` that performs the following:
+This algorithm takes as input :math:`n` qubits in state :math:`\ket{x}`, an ancillary qubit in state
+:math:`\ket{q}`, and additionally a quantum circuit :math:`U_w` that performs the following:
 
 .. math::
    U_w: \ket{x}\ket{q}\to\ket{x}\ket{f(x)\oplus q}
@@ -28,10 +28,11 @@ bitstrings to bits:
 
 .. math::
    f: \{0,1\}^n\to\{0, 1\}
-   
-and is assumed to either be \textit{constant} or \textit{balanced}. Constant means that on all inputs
-:math:`f` takes on the same value, and balanced means that on half of the inputs :math:`f` takes on
-one value, and on the other half :math:`f` takes on a different value.
+
+and is assumed to either be \textit{constant} or \textit{balanced}. Constant means that on all
+inputs :math:`f` takes on the same value, and balanced means that on half of the inputs :math:`f`
+takes on one value, and on the other half :math:`f` takes on a different value. (Here the value is
+restricted to :math:`\{0, 1\}`)
 
 We can then describe the algorithm as follows:
 
@@ -41,9 +42,9 @@ Algorithm:
   #. Prepare the \textit{ancilla} (:math:`\ket{q}` above) in the :math:`\ket{1}` state by performing
      an :math:`X` gate.
   #. Perform the :math:`n + 1`-fold Hadamard gate :math:`H^{\otimes n + 1}` on the :math:`n + 1`
-     qubits
+     qubits.
   #. Apply the circuit :math:`U_w`.
-  #. Apply the :math:`n`-fold Hadmard gate :math:`H^{\otimes n}` on the data qubits, :math:`\ket{x}`.
+  #. Apply the :math:`n`-fold Hadamard gate :math:`H^{\otimes n}` on the data qubits, :math:`\ket{x}`.
   #. Measure :math:`\ket{x}`. If the result is all zeroes, then the function is constant. Otherwise, it
      is balanced.
 
@@ -55,7 +56,7 @@ Here you can find documentation for the different submodules in deutsch-jozsa.
 grove.deutsch_jozsa.deutsch_jozsa.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: grove.alpha.deutsch_jozsa.deutsch_jozsa
+.. automodule:: grove.deutsch_jozsa.deutsch_jozsa
     :members:
     :undoc-members:
     :show-inheritance:
