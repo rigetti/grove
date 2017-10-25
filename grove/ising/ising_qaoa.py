@@ -4,6 +4,7 @@ Finding the minimum energy for an Ising problem by QAOA.
 """
 import pyquil.api as api
 from pyquil.paulis import exponential_map, PauliSum, PauliTerm
+from functools import reduce
 import pyquil.quil as pq
 from pyquil.gates import H
 from grove.pyvqe.vqe import VQE
@@ -11,8 +12,34 @@ from scipy.optimize import minimize
 from collections import Counter
 from scipy import optimize
 import numpy as np
+import os
+import sys
 
 CXN = api.SyncConnection()
+
+
+class silence(object):
+    """
+    Class that makes functions silent.
+    """
+
+    def __init__(self, stdout=None, stderr=None):
+        self.devnull = open(os.devnull, 'w')
+        self._stdout = stdout or self.devnull or sys.stdout
+        self._stderr = stderr or self.devnull or sys.stderr
+
+    def __enter__(self):
+        self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
+        self.old_stdout.flush()
+        self.old_stderr.flush()
+        sys.stdout, sys.stderr = self._stdout, self._stderr
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._stdout.flush()
+        self._stderr.flush()
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+        self.devnull.close()
 
 
 class QAOA_ising(object):
@@ -221,7 +248,7 @@ class QAOA_ising(object):
 
         return circuit
 
-    def get_string(self, betas, gammas, samples=100):
+    def get_string(self, h, J, betas, gammas, samples=100):
         """
         Compute the most probable string.
 
@@ -277,7 +304,7 @@ class QAOA_ising(object):
 
 
 def print_fun(x):
-    print x
+    print(x)
 
 
 def ising_qaoa(h, J, steps=1, rand_seed=None, connection=None, samples=None,
@@ -286,7 +313,8 @@ def ising_qaoa(h, J, steps=1, rand_seed=None, connection=None, samples=None,
     """
     Ising set up method
 
-    :param graph: Graph definition. Either networkx or list of tuples
+    :param h: External magnectic term of the Ising problem. List.
+    :param J: Interaction term of the Ising problem. Dictionary.
     :param steps: (Optional. Default=1) Trotterization order for the
                   QAOA algorithm.
     :param rand_seed: (Optional. Default=None) random seed when beta and
@@ -347,24 +375,33 @@ def ising_qaoa(h, J, steps=1, rand_seed=None, connection=None, samples=None,
     return qaoa_inst
 
 
-if __name__ == "__main__":
-    # Sample run:
-    # Minimize the Ising problem h_i x_i+J_ij x_i*x_j = x0+x1-x2+x3-2 x0*x1 +3 x2*x3
-    J = {(0, 1): -2, (2, 3): 3}
-    h = [1, 1, -1, 1]
-    inst = ising_qaoa(h, J,
-                      steps=2 * (len(h) - 1), rand_seed=42, samples=None)
-    betas, gammas = inst.get_angles()
-    probs = inst.probabilities(np.hstack((betas, gammas)))
-    circ = inst.circuit(np.hstack((betas, gammas)))
-    print "Most frequent bitstring from sampling"
-    most_freq_string, sampling_results, energy_ising = inst.get_string(
-        betas, gammas)
-    print most_freq_string
-    print "Ising Energy of the most frequent bitstring"
-    print energy_ising
-    # Uncomment to print the circuit that solves the Ising problem
-    # print 'Circuit'
-    # print '------------------------'
-    # print circ
-    # print '------------------------'
+def ising(h, J, num_steps=0, verbose=True):
+    """
+    Ising method initialization
+
+    :param h: External magnectic term of the Ising problem. List.
+    :param J: Interaction term of the Ising problem. Dictionary.
+    :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
+                  QAOA algorithm.
+    :param verbose: (Optional.Default=True) Verbosity of the code.
+    """
+    if num_steps == 0:
+        num_steps = 2 * len(h)
+    if verbose:
+        inst = ising_qaoa(h, J,
+                          steps=num_steps, rand_seed=42, samples=None)
+        betas, gammas = inst.get_angles()
+        probs = inst.probabilities(np.hstack((betas, gammas)))
+        circ = inst.circuit(np.hstack((betas, gammas)))
+        most_freq_string, sampling_results, energy_ising = inst.get_string(
+            h, J, betas, gammas)
+    else:
+        with silence():
+            inst = ising_qaoa(h, J,
+                              steps=num_steps, rand_seed=42, samples=None)
+            betas, gammas = inst.get_angles()
+            probs = inst.probabilities(np.hstack((betas, gammas)))
+            circ = inst.circuit(np.hstack((betas, gammas)))
+            most_freq_string, sampling_results, energy_ising = inst.get_string(
+                h, J, betas, gammas)
+    return most_freq_string, energy_ising, circ
