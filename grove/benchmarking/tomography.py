@@ -64,28 +64,10 @@ import numpy as np
 import qutip as qt
 from scipy.sparse import (vstack as spvstack, csr_matrix, coo_matrix, kron as spkron)
 
-import grove.benchmarking.operator_utils as ut
-import pyquil as pq
+import grove.benchmarking.utils as ut
+from pyquil.quil import Program, Gate
+from pyquil.quilbase import unpack_qubit
 from itertools import product as cartesian_product
-
-
-def basis_state_preps(*qubits):
-    """
-    Generate a sequence of programs that prepares the measurement
-    basis states of some set of qubits in the order such that the qubit
-    with highest index is iterated over the most quickly:
-    E.g., for qubits=(0, 1), it returns the circuits::
-
-        I_0 I_1
-        I_0 X_1
-        X_0 I_1
-        X_0 X_1
-    """
-    for prep in cartesian_product(["I", "X"], repeat=len(qubits)):
-        p = pq.quil.Program()
-        for g, q in zip(prep, qubits):
-            p.inst(pq.gates.Gate(g, (), [pq.quilbase.unpack_qubit(q)]))
-        yield p
 
 
 def default_rotations_1q(q):
@@ -94,8 +76,8 @@ def default_rotations_1q(q):
     of a single qubit.
     """
     for g in ["I", "X-HALF", "Y-HALF", "X"]:
-        p = pq.quil.Program()
-        p.inst(pq.quil.Gate(g, (), [pq.quilbase.unpack_qubit(q)]))
+        p = Program()
+        p.inst(Gate(g, (), [unpack_qubit(q)]))
         yield p
 
 
@@ -105,7 +87,7 @@ def default_rotations(*qubits):
     of any number of qubits.
     """
     for programs in cartesian_product(*(default_rotations_1q(q) for q in qubits)):
-        p = pq.quil.Program()
+        p = Program()
         for pp in programs:
             p.inst(pp)
         yield p
@@ -122,7 +104,7 @@ def state_tomography_programs(state_prep, qubits=None, rotation_generator=defaul
     if qubits is None:
         qubits = state_prep.extract_qubits()
     for tp in rotation_generator(*qubits):
-        p = pq.quil.Program()
+        p = Program()
         p.inst(state_prep)
         p.inst(tp)
         yield p
@@ -130,8 +112,7 @@ def state_tomography_programs(state_prep, qubits=None, rotation_generator=defaul
 
 def process_tomography_programs(proc, qubits=None,
                                 pre_rotation_generator=default_rotations,
-                                post_rotation_generator=default_rotations
-                                ):
+                                post_rotation_generator=default_rotations):
     """
     Yield tomographic sequences that wrap a process encoded by a QUIL program `proc`
     in tomographic rotations on the specified `qubits`.
@@ -143,7 +124,7 @@ def process_tomography_programs(proc, qubits=None,
         qubits = proc.extract_qubits()
     for tp_pre in pre_rotation_generator(*qubits):
         for tp_post in post_rotation_generator(*qubits):
-            p = pq.quil.Program()
+            p = Program()
             p.inst(tp_pre)
             p.inst(proc)
             p.inst(tp_post)
@@ -457,15 +438,6 @@ class StateTomography(object):
         """
         return qt.fidelity(self.rho_est, other)
 
-    def plot_pauli_histogram(self, ax):
-        """
-        Plot the coefficients of the estimated state with respect to an expansion in the
-        Pauli-basis.
-
-        :param matplotlib.Axes ax: A matplotlib Axes object to plot into.
-        """
-        ut.plot_pauli_rep(self.rho_coeffs, ax, self.pauli_basis.labels, "Estimated State")
-
     def plot_state_histogram(self, ax):
         """
         Visualize the complex matrix elements of the estimated state.
@@ -481,11 +453,9 @@ class StateTomography(object):
         :return: The generated figure.
         :rtype: matplotlib.Figure
         """
-        f = plt.figure(figsize=(10, 4))
-        ax1 = f.add_subplot(122)
-        ax2 = f.add_subplot(121, projection="3d")
-        self.plot_pauli_histogram(ax1)
-        self.plot_state_histogram(ax2)
+        f = plt.figure(figsize=(10, 8))
+        ax = f.add_subplot(111, projection="3d")
+        self.plot_state_histogram(ax)
         return f
 
 
@@ -662,6 +632,6 @@ class ProcessTomography(object):
         :return: The generated figure.
         :rtype: matplotlib.Figure
         """
-        f, (ax1) = plt.subplots(1, 1, figsize=(10, 4))
+        f, (ax1) = plt.subplots(1, 1, figsize=(10, 8))
         self.plot_pauli_transfer_matrix(ax1)
         return f
