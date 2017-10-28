@@ -21,3 +21,7 @@ codeclimate-test-reporter
 # docs
 sphinx
 sphinx_rtd_theme
+
+# tomography
+qutip
+cvxpy
