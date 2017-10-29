@@ -10,79 +10,21 @@ from itertools import product as cartesian_product
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pyquil as pq
 import qutip as qt
-from pyquil.quil import Program, Gate
-from pyquil.quilbase import unpack_qubit
+from pyquil.quil import Program
+from pyquil.gates import I, X
 from scipy.sparse import hstack as sphstack, vstack as spvstack
 from scipy.sparse.linalg import norm as spnorm
 
 _log = logging.getLogger(__name__)
 
 # PAULI OPS
-X = qt.sigmax()
-Y = qt.sigmay()
-Z = qt.sigmaz()
-I = qt.qeye(2)
-
-TOMOGRAPHY_GATES = {
-    "X-HALF": (-1j * np.pi / 4 * X).expm(),
-    "Y-HALF": (-1j * np.pi / 4 * Y).expm(),
-    "X": (-1j * np.pi / 2 * X).expm(),
-    "Y": (-1j * np.pi / 2 * Y).expm(),
-    "MINUS-X-HALF": (1j * np.pi / 4 * X).expm(),
-    "MINUS-Y-HALF": (1j * np.pi / 4 * Y).expm(),
-    "MINUS-X": (1j * np.pi / 2 * X).expm(),
-    "MINUS-Y": (1j * np.pi / 2 * Y).expm(),
-    "I": qt.qeye(2)
-}
-"""
-Single qubit gates to be used for pre and post-rotation.
-"""
-
-
-TOMOGRAPHY_DEFCIRCUITS = [
-    pq.quil.DefGate(n, m.data.toarray())
-    for n, m in TOMOGRAPHY_GATES.items()
-]
-"""
-These DEFCIRCUIT statements can be appended to a program to ensure all the above gates are
-defined on the QVM.
-"""
-
+qX = qt.sigmax()
+qY = qt.sigmay()
+qZ = qt.sigmaz()
+qI = qt.qeye(2)
 
 EPS = 1e-8
-
-
-def quil_to_operator(program):
-    """
-    Convert a proto-Quil program consisting only of single qubit gates that appear in
-    ``TOMOGRAPHY-GATES`` to a ``qutip.Qobj operator``.
-
-    :param pyquil.quil.Program program: The program to convert.
-    :return: A unitary operator representation.
-    :rtype: qutip.Qobj
-    """
-
-    qubits = sorted(q for q in program.extract_qubits())
-    U = qt.qeye([2] * len(qubits))
-
-    for g in program.synthesize():
-
-        if not isinstance(g, Gate):  # pragma no coverage
-            raise ValueError("Unsupported Instruction: %s" % g)
-
-        if not len(g.arguments) == 1:  # pragma no coverage
-            raise ValueError("Only programs comprised of single qubit gates supported: %s" % g)
-
-        qt_op = TOMOGRAPHY_GATES[g.operator_name]
-
-        ops = [I] * len(qubits)
-        idx = qubits.index(g.arguments[0].index())
-        ops[idx] = qt_op
-
-        U = qt.tensor(*ops) * U
-    return U
 
 
 def sample_outcomes(probs, n):
@@ -108,10 +50,10 @@ def basis_state_preps(*qubits):
         X_0 I_1
         X_0 X_1
     """
-    for prep in cartesian_product(["I", "X"], repeat=len(qubits)):
+    for prep in cartesian_product([I, X], repeat=len(qubits)):
         p = Program()
         for g, q in zip(prep, qubits):
-            p.inst(Gate(g, (), [unpack_qubit(q)]))
+            p.inst(g(q))
         yield p
 
 
@@ -409,7 +351,7 @@ class OperatorBasis(object):
 
 
 PAULI_BASIS = OperatorBasis(
-    [("I", I / np.sqrt(2)), ("X", X / np.sqrt(2)), ("Y", Y / np.sqrt(2)), ("Z", Z / np.sqrt(2))])
+    [("I", qI / np.sqrt(2)), ("X", qX / np.sqrt(2)), ("Y", qY / np.sqrt(2)), ("Z", qZ / np.sqrt(2))])
 
 
 def gell_mann_basis(qudit_dim):
@@ -582,7 +524,7 @@ def to_realimag(Z):
 
 # using the Z-basis for POVM terms allows to easily identify multi-body contributions
 # Z_i Z_j ... Z_k to the readout signal. This should lead to sparsity vs the readout signal index
-POVM_Z_BASIS = OperatorBasis([("I", I), ("Z", Z)])
+POVM_Z_BASIS = OperatorBasis([("I", qI), ("Z", qZ)])
 
 # using the Pi-basis for POVM terms allows to easily associate the preparations with individual
 # multi-qubit projectors

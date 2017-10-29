@@ -1,22 +1,17 @@
-import itertools
-
 import numpy as np
 import pytest
 import qutip as qt
-from mock import patch, Mock
-
-
-from grove.benchmarking.utils import (
-    POVM_PI_BASIS, make_diagonal_povm, quil_to_operator,
-    n_qubit_ground_state, make_histogram, sample_bad_readout, TOMOGRAPHY_GATES, basis_state_preps,
-    estimate_assignment_probs)
 from grove.benchmarking.tomography import (DEFAULT_STATE_TOMO_SETTINGS,
                                            DEFAULT_PROCESS_TOMO_SETTINGS, StateTomography,
-                                           ProcessTomography, default_rotations,
-                                           state_tomography_programs, process_tomography_programs,
-                                           _SDP_SOLVER)
-from pyquil.quil import Program
+                                           ProcessTomography, state_tomography_programs,
+                                           process_tomography_programs,
+                                           _SDP_SOLVER, TOMOGRAPHY_GATES, default_channel_ops)
+from grove.benchmarking.utils import (
+    POVM_PI_BASIS, make_diagonal_povm, make_histogram, sample_bad_readout, basis_state_preps,
+    estimate_assignment_probs)
+from mock import patch, Mock
 from pyquil.gates import CNOT, H, CZ
+from pyquil.quil import Program
 from referenceqvm.api import SyncConnection
 from referenceqvm.gates import gate_matrix
 
@@ -54,8 +49,6 @@ def test_state_tomography(cxn):
     nq = len(prog.extract_qubits())
     d = 2 ** nq
 
-    tomo_channels = list(default_rotations(*range(nq)))
-
     tomo_seq = list(state_tomography_programs(prog))
     nsamples = 3000
 
@@ -70,7 +63,7 @@ def test_state_tomography(cxn):
         histograms[jj] = make_histogram(sample_bad_readout(p, nsamples, BAD_2Q_READOUT, cxn), d)
 
     povm = make_diagonal_povm(POVM_PI_BASIS ** nq, assignment_probs)
-    channel_ops = [quil_to_operator(tomo_q) for tomo_q in tomo_channels]
+    channel_ops = list(default_channel_ops(nq))
 
     for settings in [
         DEFAULT_STATE_TOMO_SETTINGS,
@@ -103,8 +96,6 @@ def test_process_tomography(cxn):
     nq = len(prog.extract_qubits())
     d = 2 ** nq
 
-    tomo_channels = list(default_rotations(*range(nq)))
-
     tomo_seq = list(process_tomography_programs(prog))
     nsamples = 3000
 
@@ -118,10 +109,10 @@ def test_process_tomography(cxn):
     for jj, p in enumerate(tomo_seq):
         histograms[jj] = make_histogram(sample_bad_readout(p, nsamples, BAD_2Q_READOUT, cxn), d)
 
-    histograms = histograms.reshape((len(tomo_channels), len(tomo_channels), d))
+    channel_ops = list(default_channel_ops(nq))
+    histograms = histograms.reshape((len(channel_ops), len(channel_ops), d))
 
     povm = make_diagonal_povm(POVM_PI_BASIS ** nq, assignment_probs)
-    channel_ops = [quil_to_operator(tomo_q) for tomo_q in tomo_channels]
     U_ideal = qt.cnot()
     for settings in [
         DEFAULT_PROCESS_TOMO_SETTINGS,

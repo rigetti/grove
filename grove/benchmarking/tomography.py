@@ -56,17 +56,19 @@ There are two important estimation problems for a full tomography experiment.
 """
 import itertools
 import logging
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import cvxpy
 import matplotlib.pyplot as plt
 import numpy as np
 import qutip as qt
+from grove.benchmarking.utils import qI, qX, qY
+from pyquil.gates import I, RX, RY
 from scipy.sparse import (vstack as spvstack, csr_matrix, coo_matrix, kron as spkron)
 
 import grove.benchmarking.utils as ut
 from pyquil.quil import Program, Gate
-from pyquil.quilbase import unpack_qubit
+from pyquil.quilbase import unpack_qubit, Gate
 from itertools import product as cartesian_product
 
 
@@ -75,9 +77,8 @@ def default_rotations_1q(q):
     Generate the QUIL programs for tomographic pre- and post-rotations
     of a single qubit.
     """
-    for g in ["I", "X-HALF", "Y-HALF", "X"]:
-        p = Program()
-        p.inst(Gate(g, (), [unpack_qubit(q)]))
+    for g in TOMOGRAPHY_GATES:
+        p = Program(g(q))
         yield p
 
 
@@ -86,11 +87,20 @@ def default_rotations(*qubits):
     Generate the QUIL programs for the tomographic pre- and post-rotations
     of any number of qubits.
     """
-    for programs in cartesian_product(*(default_rotations_1q(q) for q in qubits)):
+    for programs in cartesian_product(TOMOGRAPHY_GATES, repeat=len(qubits)):
         p = Program()
-        for pp in programs:
-            p.inst(pp)
+        for q, g in zip(qubits, programs):
+            p.inst(g(q))
         yield p
+
+
+def default_channel_ops(nqubits):
+    """
+    Generate the tomographic pre- and post-rotations
+    of any number of qubits as qutip operators.
+    """
+    for gates in cartesian_product(TOMOGRAPHY_GATES.values(), repeat=nqubits):
+        yield qt.tensor(*gates)
 
 
 def state_tomography_programs(state_prep, qubits=None, rotation_generator=default_rotations):
@@ -635,3 +645,11 @@ class ProcessTomography(object):
         f, (ax1) = plt.subplots(1, 1, figsize=(10, 8))
         self.plot_pauli_transfer_matrix(ax1)
         return f
+
+
+TOMOGRAPHY_GATES = OrderedDict([
+    (I, qI),
+    (RX(np.pi/2), (-1j * np.pi / 4 * qX).expm()),
+    (RY(np.pi/2), (-1j * np.pi / 4 * qY).expm()),
+    (RX(np.pi), (-1j * np.pi / 2 * qX).expm())
+])

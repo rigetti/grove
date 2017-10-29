@@ -1,12 +1,11 @@
+import grove.benchmarking.utils as ut
 import numpy as np
 import pytest
 import qutip as qt
 from mock import Mock, patch
-from scipy.sparse import csr_matrix
-
-import grove.benchmarking.utils as ut
+from pyquil.gates import X
 from pyquil.quil import Program
-from pyquil.gates import X, Y
+from scipy.sparse import csr_matrix
 
 
 def test_operator_basis():
@@ -30,7 +29,7 @@ def test_operator_basis():
     assert np.allclose(ut.PAULI_BASIS.basis_transform.T.toarray() * np.sqrt(2),
                        np.array([[1., 0, 0, 1], [0, 1, 1, 0], [0, 1j, -1j, 0], [1, 0, 0, -1]]))
 
-    sX = qt.to_super(ut.X)
+    sX = qt.to_super(ut.qX)
     tmX = ut.PAULI_BASIS.transfer_matrix(sX).toarray()
     assert np.allclose(tmX, np.diag([1,1,-1,-1.]))
     assert (sX - ut.PAULI_BASIS.super_from_tm(tmX)).norm('fro') < ut.EPS
@@ -59,15 +58,6 @@ def test_operator_basis():
     assert gmb4.is_orthonormal()
     assert gmb4.all_hermitian()
     assert gmb4.dim == 16
-
-
-def test_quil_to_operator():
-    pX = ut.quil_to_operator(Program(X(0)))
-    assert (pX - (-1j*np.pi/2*ut.X).expm()).norm('fro') < ut.EPS
-
-    pX0pY1 = ut.quil_to_operator(Program(X(0), Y(1)))
-    assert (pX0pY1 - qt.tensor((-1j*np.pi/2*ut.X).expm(),
-                               (-1j*np.pi/2*ut.Y).expm())).norm('fro') < ut.EPS
 
 
 def test_sample_outcomes_make_histogram():
@@ -117,7 +107,7 @@ def test_visualization():
     assert ax.view_init.called
     assert ax.set_title.called
 
-    ptX = ut.PAULI_BASIS.transfer_matrix(qt.to_super(ut.X)).toarray()
+    ptX = ut.PAULI_BASIS.transfer_matrix(qt.to_super(ut.qX)).toarray()
     ax = Mock()
     with patch("matplotlib.pyplot.colorbar"):
         ut.plot_pauli_transfer_matrix(ptX, ax, ut.PAULI_BASIS.labels, "bla")
@@ -127,7 +117,7 @@ def test_visualization():
 
 
 def test_product_basis():
-    X, Y, Z, I = ut.X, ut.Y, ut.Z, ut.I
+    X, Y, Z, I = ut.qX, ut.qY, ut.qZ, ut.qI
 
     assert ut.is_hermitian(X.data.toarray())
 
@@ -142,7 +132,7 @@ def test_product_basis():
 
 
 def test_super_operator_tools():
-    X, Y, Z, I = ut.X, ut.Y, ut.Z, ut.I
+    X, Y, Z, I = ut.qX, ut.qY, ut.qZ, ut.qI
     bs = (I, X, Y, Z)
 
     Xs = qt.sprepost(X, X)
@@ -175,7 +165,7 @@ def test_super_operator_tools():
 
 
 def test_states():
-    preparations = ut.X, ut.Y, ut.Z
+    preparations = ut.qX, ut.qY, ut.qZ
     states = ut.generated_states(ut.GS, preparations)
     assert (states[0] - ut.ES).norm('fro') < ut.EPS
     assert (states[1] - ut.ES).norm('fro') < ut.EPS
@@ -184,15 +174,15 @@ def test_states():
 
 
 def test_matrix_props():
-    assert ut.is_hermitian(ut.X)
-    assert ut.is_hermitian(ut.X.data)
-    assert ut.is_hermitian(ut.X.data.toarray())
+    assert ut.is_hermitian(ut.qX)
+    assert ut.is_hermitian(ut.qX.data)
+    assert ut.is_hermitian(ut.qX.data.toarray())
 
     assert ut.is_projector(ut.GS)
 
 
 def test_to_realimag():
-    op = ut.X + ut.Y
+    op = ut.qX + ut.qY
     res = ut.to_realimag(op)
     assert isinstance(res, csr_matrix)
     rd = res.toarray()
