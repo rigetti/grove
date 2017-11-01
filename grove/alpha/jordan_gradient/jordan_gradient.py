@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import X, H, CPHASE
+from pyquil.gates import X, H
 from grove.alpha.phaseestimation.phase_estimation import controlled
 from grove.qft.fourier import qft, inverse_qft
 
@@ -22,16 +22,17 @@ def initialize_system(input_qubits, ancilla_qubits):
     p_ic_in = pq.Program(ic_in)
     # combine programs
     p_ic = p_ic_out + p_ic_in
+    
     return p_ic
 
 def phase_kickback(f_h, input_qubits, ancilla_qubits, precision):
-    """ Phase kickback of f_h
+    """ Encode f_h into ancilla eigenvalue and kickback to input registers
 
     :param np.array f_h: Oracle outputs for function f at domain value h.
     :param list input_qubit: Qubits of input registers.
     :param list ancilla_qubits: Qubits of output register.
     :param int precision: Bit precision of gradient.
-    :return Program p_cR: Quil program to encode gradient values via cRz.
+    :return Program p_kickback: Quil program to perform phase kickback.
     """
     
     # encode f_h into CPHASE gate
@@ -44,10 +45,15 @@ def phase_kickback(f_h, input_qubits, ancilla_qubits, precision):
             U = np.dot(U, U)
         cU = controlled(U)
         name = "c-U{0}".format(2 ** i)
-        p.defgate(name, cU)
-        p.inst((name, i) + ancilla_qubits[0])
+        p_kickback.defgate(name, cU)
+        p_kickback.inst((name, i, ancilla_qubits[0]))
+
     # iqft to pull out fractional component of eigenphase
     p_kickback += inverse_qft(input_qubits)
+
+    for q_out in input_qubits:
+        p_kickback.measure(q_out, q_out)
+        
     return p_kickback
 
 def gradient_estimator(f_h, input_qubits, ancilla_qubits, precision=16):
@@ -59,12 +65,13 @@ def gradient_estimator(f_h, input_qubits, ancilla_qubits, precision=16):
     :param list ancilla_qubits: Qubits of output register.
     :param int precision: Bit precision of gradient.
     :return Program p_gradient: Quil program to estimate gradient of f.
-    """
-     
+    """    
+    
     # intialize input and output registers
     p_ic = initialize_system(input_qubits, ancilla_qubits)
     # encode oracle values into phase
     p_kickback = phase_kickback(f_h, input_qubits, ancilla_qubits, precision)
     # combine steps of algorithm into one program
     p_gradient = p_ic + p_kickback
+    
     return p_gradient
