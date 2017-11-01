@@ -4,7 +4,7 @@ from jordan_gradient import gradient_estimator
 def real_to_binary(number, precision=16):
     """ Convert real decimal to precision-bit binary fraction
     
-    :param float number: Real decimal over (0, 1].
+    :param float number: Real decimal over [0, 1).
     :param int precision: Number of bits of binary precision.
     :return float bf: Binary fraction representation of real decimal.
     """
