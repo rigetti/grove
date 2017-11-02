@@ -8,12 +8,14 @@ def real_to_binary(number, precision=16):
     :param int precision: Number of bits of binary precision.
     :return float bf: Binary fraction representation of real decimal.
     """
-    
+
+    n_sign = np.sign(number)
+    number = abs(number)
     bf = ''
     for val in range(precision):
         number = 2 * (number % 1)
         bf += str(int(number))
-    bf = float('.' + bf)
+    bf = n_sign * float('.' + bf)
     
     return bf
 
@@ -23,10 +25,19 @@ def binary_to_real(number):
     :param float number: Floating point representation of binary fraction.
     :return float deci: Real decimal representation of binary fraction.
     """    
-    
+   
+    if isinstance(number, str):
+        if number[0] == '-':
+            n_sign = -1
+        else:
+            n_sign = 1
+    elif isinstance(number, float):
+        n_sign = np.sign(number)
+
     deci = 0
     for ndx, val in enumerate(str(number).split('.')[-1]):
         deci += float(val) / 2**(ndx+1)
+    deci *= n_sign
         
     return deci
 
