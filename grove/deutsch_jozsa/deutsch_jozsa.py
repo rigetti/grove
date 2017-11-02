@@ -18,7 +18,7 @@ Module for the Deutsch-Jozsa Algorithm.
 """
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import *
+from pyquil.gates import X, H, CNOT
 
 
 SWAP_MATRIX = np.array([[1, 0, 0, 0],
@@ -26,6 +26,7 @@ SWAP_MATRIX = np.array([[1, 0, 0, 0],
                         [0, 1, 0, 0],
                         [0, 0, 0, 1]])
 r"""The matrix that performs \alpha\ket{ij}\to\alpha\ket{ji}"""
+
 ORACLE_GATE_NAME = "DEUTSCH_JOZSA_ORACLE"
 
 
@@ -92,7 +93,6 @@ class DeutschJosza(object):
         dj_prog.inst(X(self.ancillas[0]), H(self.ancillas[0]))
 
         # Apply Hadamard, Oracle, and Hadamard again
-
         dj_prog.inst([H(qubit) for qubit in self.computational_qubits])
 
         # Build the oracle

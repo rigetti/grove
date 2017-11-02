@@ -11,7 +11,7 @@ either 1 or 0, and a balanced function maps to 1 for half of the inputs and maps
 half. Unlike any deterministic classical algorithm, the Deutsch-Jozsa Algorithm can solve this
 problem with a single iteration, regardless of the input size. It was one of the first known quantum
 algorithms that showed an exponential speedup, albeit against a deterministic (non-probabilistic)
-classical computer, and with access to a blackbox function that can evaluate inputs to the chosen
+classical compuetwr, and with access to a blackbox function that can evaluate inputs to the chosen
 function.
 
 Algorithm and Details
@@ -47,6 +47,16 @@ Algorithm:
   #. Apply the :math:`n`-fold Hadamard gate :math:`H^{\otimes n}` on the data qubits, :math:`\ket{x}`.
   #. Measure :math:`\ket{x}`. If the result is all zeroes, then the function is constant. Otherwise, it
      is balanced.
+
+Implementation Notes
+--------------------
+
+The oracle in the :term:`Deutsch-Jozsa` module is not implemented in such a way that calling
+`Deutsch_Jozsa.is_constant()` will yield an exponential speedup over classical implementations.  To
+construct the quantum algorithm that is executing on the QPU we use a Quil `defgate`, which
+specifies the circuit :math:`U_w` as its action on the data qubits :math:`\ket{x}`. This matrix is
+exponentially large, and thus even generating the program will take exponential time.
+
 
 Source Code Docs
 ----------------
