@@ -1,35 +1,28 @@
-from grove.ising.ising_qaoa import ising_qaoa
-from grove.pyqaoa.utils import compare_progs
-from pyquil.quil import Program
-from pyquil.gates import H, CNOT, RZ
+from grove.ising.ising_qaoa import ising
+from grove.ising.ising_qaoa import energy_value
 import numpy as np
 from mock import patch
-import pyquil.api as qvm_mod
 
 
-def test_hamiltonians():
-    test_j = {(0, 1): 1}
-    test_h = [1, 1]
+def test_energy_value():
+    J = {(0, 1): 2.3}
+    h = [-2.4, 5.2]
+    sol = [1, -1]
+    ener_ising = energy_value(h, J, sol)
+
+    assert(np.isclose(ener_ising, -9.9))
+
+
+def test_ising_mock():
+    with patch("pyquil.api.SyncConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[1, 1, 0, 1]]
+        cxn.expectation.return_value = [-0.4893891813015294, 0.8876822987380573, -0.4893891813015292, -0.9333372094534063, -0.9859245403423198, 0.9333372094534065]
+
+    J = {(0, 1): -2, (2, 3): 3}
+    h = [1, 1, -1, 1]
     p = 1
-    inst = ising_qaoa(test_h, test_j, steps=p)
-    cost_ops, ref_func = inst.cost_ham, inst.ref_ham
-    for op in cost_ops:
-        for term in op.terms:
-            assert(np.isclose(np.abs(term.coefficient), 1.0))
+    most_freq_string_ising, energy_ising, circuit = ising(h, J, num_steps=p, vqe_option=None, connection=cxn)
 
-    assert len(ref_func) == 2
-    assert len(cost_ops) == 3
-
-
-def test_param_prog():
-    test_j = {(0, 1): 1}
-    test_h = [1, 1]
-    p = 1
-    with patch('grove.ising.ising_qaoa.api', spec=qvm_mod):
-        inst = ising_qaoa(test_h, test_j, steps=p)
-        param_prog = inst.get_parameterized_program()
-        trial_prog = param_prog([1.2, 3.4])
-        result_prog = Program().inst([H(0), H(1), CNOT(0, 1), RZ(6.8)(1), CNOT(0, 1),
-                                      RZ(6.8)(0), RZ(6.8)(1), H(0), RZ(-2.4)(0),
-                                      H(0), H(1), RZ(-2.4)(1), H(1)])
-        compare_progs(trial_prog, result_prog)
+    assert most_freq_string_ising == [-1, -1, 1, -1]
+    assert energy_ising == -9
