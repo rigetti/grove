@@ -18,7 +18,7 @@
 
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import X, Z
+from pyquil.gates import X, Z, CNOT
 
 from grove.utils.utility_programs import ControlledProgramBuilder
 
