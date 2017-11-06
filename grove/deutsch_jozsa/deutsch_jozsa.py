@@ -19,6 +19,7 @@ Module for the Deutsch-Jozsa Algorithm.
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H, CNOT
+from pyquil.job_results import wait_for_job
 
 
 SWAP_MATRIX = np.array([[1, 0, 0, 0],
@@ -53,9 +54,11 @@ class DeutschJosza(object):
         :rtype: bool
         """
         self._init_attr(bitstring_map)
-        bitstring = np.array(cxn.run_and_measure(self.deutsch_jozsa_circuit,
-                                                 self.computational_qubits),
-                             dtype=int)
+        job_result = wait_for_job(cxn.run_and_measure(self.deutsch_jozsa_circuit,
+                                                      self.computational_qubits))
+        # We are only running a single shot, so we are only interested in the first element.
+        returned_bitstring = job_result.result['result'][0]
+        bitstring = np.array(returned_bitstring, dtype=int)
         constant = all([bit == 0 for bit in bitstring])
         return constant
 
@@ -143,7 +146,7 @@ class DeutschJosza(object):
             index_lists = [list(range(2 ** (num_qubits - 1))),
                            list(range(2 ** (num_qubits - 1), 2 ** num_qubits))]
             for j in range(2 ** num_qubits):
-                bitstring = bin(j)[2:]
+                bitstring = np.binary_repr(j, num_qubits)
                 value = int(mappings[bitstring])
                 mappings.pop(bitstring)
                 i = index_lists[value].pop()
