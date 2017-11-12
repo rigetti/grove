@@ -99,7 +99,7 @@ parameters or write your own minimizer.
 
 .. code:: python
 
-    from grove import VQE
+    from grove.pyvqe.vqe import VQE
     from scipy.optimize import minimize
     import numpy as np
 
