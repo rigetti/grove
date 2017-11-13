@@ -47,7 +47,7 @@ def stats_to_bf(stats):
     :return float bf: Binary fraction representation of gradient estimate.
     """
     
-    stats_str = [str(int(i)) for i in np.ceil(stats[::-1][1:])]
+    stats_str = [str(int(i)) for i in np.round(stats[::-1][1:])]
     bf_str = '0.' + ''.join(stats_str)
     bf = float(bf_str)
     
