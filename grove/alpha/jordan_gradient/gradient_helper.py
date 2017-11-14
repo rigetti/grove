@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 
 def real_to_binary(number, precision=16):
@@ -10,10 +11,12 @@ def real_to_binary(number, precision=16):
 
     n_sign = np.sign(number)
     number = abs(number)
+    number = round(number, precision+2)
     bf = ''
     for val in range(precision):
-        number = 2 * (number % 1)
-        bf += str(int(number))
+        number *= 2
+        number, whole = np.modf(number)
+        bf += str(int(whole))
     bf = n_sign * float('.' + bf)
     
     return bf
@@ -52,4 +55,3 @@ def stats_to_bf(stats):
     bf = float(bf_str)
     
     return bf
-
