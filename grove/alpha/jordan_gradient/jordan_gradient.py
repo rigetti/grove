@@ -81,8 +81,7 @@ def gradient_estimator(f_h, input_qubits, ancilla_qubit):
         
     return perturbation_sign, p_gradient
 
-
-def estimate_gradient(f_h, precision, n_measurements=2000):
+def estimate_gradient(f_h, precision, qvm=False, n_measurements=500):
     """ Estimate the gradient from point of evaluation
         to point of perturbation, h
 
@@ -99,8 +98,9 @@ def estimate_gradient(f_h, precision, n_measurements=2000):
     perturbation_sign, p_gradient = gradient_estimator(f_h, input_qubits, ancilla_qubit)
     
     # run gradient program
-    from pyquil.api import SyncConnection
-    qvm = SyncConnection()
+    if not qvm:
+        from pyquil.api import SyncConnection
+        qvm = SyncConnection()
     measurement = qvm.run(p_gradient, input_qubits, n_measurements)
     measurements = np.array(measurement)
 
