@@ -36,8 +36,8 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
 
     :param Program algorithm: A program representing a measurement-less algorithm run on qubits.
     :param Program oracle: An oracle maps any basis vector ``|psi>`` to either ``+|psi>`` or
-    ``-|psi>`` depending on whether ``|psi>`` is in the desirable subspace or the undesirable
-    subspace.
+        ``-|psi>`` depending on whether ``|psi>`` is in the desirable subspace or the undesirable
+        subspace.
     :param Sequence qubits: the qubits to operate on
     :param int num_iter: number of iterations of amplifications to run
     :return: The amplified algorithm.
@@ -57,9 +57,10 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
 
 
 def diffusion_program(qubits):
-    """Constructs the diffusion operator used in Grover's Algorithm, acted on both sides by an
-     a Hadamard gate on each qubit. Note that this means that the matrix representation of this
-     operator is diag(1, -1, ..., -1).
+    """
+    Constructs the diffusion operator used in Grover's Algorithm, acted on both sides by an
+    a Hadamard gate on each qubit. Note that this means that the matrix representation of this
+    operator is diag(1, -1, ..., -1).
 
     See C. Lavor, L.R.U. Manssur, and R. Portugal (2003) `Grover's Algorithm: Quantum Database
     Search`_ for more information.
@@ -68,7 +69,7 @@ def diffusion_program(qubits):
 
     :param qubits: A list of ints corresponding to the qubits to operate on.
                    The operator operates on bistrings of the form
-                   |qubits[0], ..., qubits[-1]>.
+                   ``|qubits[0], ..., qubits[-1]>``.
     """
     diffusion_program = pq.Program()
 

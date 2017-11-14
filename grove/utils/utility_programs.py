@@ -103,7 +103,7 @@ class ControlledProgramBuilder(object):
         :param str gate_name: The gate name to format and extend.
         :return: The formatted gate name.
         """
-        formatted_gate_name = prefix + '[' + gate_name + ']'
+        formatted_gate_name = prefix + '-' + gate_name
         return formatted_gate_name
 
     def build(self):

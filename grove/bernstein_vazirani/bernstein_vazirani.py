@@ -48,10 +48,10 @@ def create_bv_bitmap(dot_product_vector, dot_product_bias):
            (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
 
     :param String dot_product_vector: a string of 0's and 1's that represents the dot-product
-    partner in :math:`f`
+        partner in :math:`f`
     :param String dot_product_bias: 0 or 1 as a string representing the bias term in :math:`f`
     :return: A dictionary containing all possible bitstring of length equal to :math:`a` and the
-    function value :math:`f`
+        function value :math:`f`
     :rtype: Dict[String, String]
     """
     n_bits = len(dot_product_vector)
@@ -165,7 +165,7 @@ class BernsteinVazirani(object):
 
         :param Connection cxn: connection to the QPU or QVM
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
-        whose dot-product vector and bias is to be found
+            whose dot-product vector and bias is to be found
         :rtype: BernsteinVazirani
         """
 

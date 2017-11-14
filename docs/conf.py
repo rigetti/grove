@@ -45,8 +45,6 @@ from grove import __version__
 # specify which docstring to use for autoclass
 autoclass_content = 'init'
 
-# for mathjaxs suppoort
-mathjax_path = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -153,7 +151,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -228,7 +226,7 @@ latex_elements = {
 #'pointsize': '10pt',
 
 # Additional stuff for the LaTeX preamble.
-#'preamble': '',
+'preamble': '',
 
 # Latex figure (float) alignment
 #'figure_align': 'htbp',
@@ -298,4 +296,24 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# Additional stuff for the LaTeX preamble.
+#####################################################
+# add LaTeX macros
+latex_elements['preamble'] = r'\usepackage{amsmath}\n\usepackage{amssymb}\n'
+
+with open('latex_macros.sty', "r") as f:
+
+    try:
+        imgmath_latex_preamble  # check whether this is alread$
+    except NameError:
+        imgmath_latex_preamble = ""
+
+    for macro in f:
+        # used when building latex and pdf versions
+        latex_elements['preamble'] += macro + '\n'
+        # used when building html version
+        imgmath_latex_preamble += macro + '\n'
+
+#####################################################
 
