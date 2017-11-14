@@ -18,7 +18,6 @@ import pyquil.quil as pq
 from pyquil.gates import X, H, RZ, CZ
 
 from grove.amplification.amplification import amplification_circuit, diffusion_program
-from grove.tests.utils.utils_for_testing import prog_equality
 
 triple_hadamard = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
 cz_gate = pq.Program(CZ(0, 1))
@@ -45,7 +44,7 @@ def test_diffusion_operator():
     desired.inst(H(1))
     desired.inst(X(0))
     desired.inst(X(1))
-    assert prog_equality(created, desired)
+    assert created == desired
 
 
 def test_amplify():
@@ -58,7 +57,7 @@ def test_amplify():
         qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
-    prog_equality(desired, created)
+    assert desired == created
 
 
 def test_amplify_init():
@@ -70,4 +69,4 @@ def test_amplify_init():
         qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
-    prog_equality(desired, created)
+    assert desired.out() == created.out()
