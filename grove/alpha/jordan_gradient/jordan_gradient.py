@@ -43,7 +43,7 @@ def gradient_estimator(f_h, ancilla_qubit):
     """    
 
     if not 0 <= f_h < 1:
-        raise ValueError('perturbation must be (0, 1]')
+        raise ValueError('perturbation value must be [0, 1)')
     
     # intialize input and output registers
     p_ic = initialize_system(ancilla_qubit)
