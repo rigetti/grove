@@ -1,7 +1,7 @@
 import numpy as np
 
 def real_to_binary(number, precision=16):
-    """ Convert real decimal to precision-bit binary fraction
+    """Convert real decimal to precision-bit binary fraction
     
     :param float number: Real decimal over [0, 1).
     :param int precision: Number of bits of binary precision.
@@ -22,7 +22,7 @@ def real_to_binary(number, precision=16):
     return bf
 
 def binary_to_real(number):
-    """ Convert binary fraction to real decimal
+    """Convert binary fraction to real decimal
     
     :param float number: Floating point representation of binary fraction.
     :return float deci: Real decimal representation of binary fraction.
@@ -44,7 +44,7 @@ def binary_to_real(number):
     return deci
 
 def measurements_to_bf(measurements):
-    """ Convert measurements into gradient binary fraction
+    """Convert measurements into gradient binary fraction
     
     :param list measurements: Output measurements of gradient program.
     :return float bf: Binary fraction representation of gradient estimate.

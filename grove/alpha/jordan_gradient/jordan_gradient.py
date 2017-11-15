@@ -3,10 +3,11 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H
 from grove.alpha.phaseestimation.phase_estimation import phase_estimation
-from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, binary_to_real, measurements_to_bf
+from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, \
+    binary_to_real, measurements_to_bf
 
 def initialize_system(ancilla_qubit):
-    """ Prepare initial state
+    """Prepare initial state
 
     :param list ancilla_qubit: Qubit of ancilla register.
     :return Program p_ic: Quil program to initialize this system.
@@ -19,7 +20,7 @@ def initialize_system(ancilla_qubit):
     return p_ic
 
 def phase_kickback(f_h, precision):
-    """ Encode f_h into ancilla eigenvalue and kickback to input registers
+    """Encode f_h into ancilla eigenvalue and kickback to input registers
 
     :param float f_h: Oracle output at perturbation h.
     :param int precision: Bit precision of gradient.
@@ -34,7 +35,7 @@ def phase_kickback(f_h, precision):
     return p_kickback
 
 def gradient_estimator(f_h, ancilla_qubit):
-    """ Gradient estimation via Jordan's algorithm
+    """Gradient estimation via Jordan's algorithm
     10.1103/PhysRevLett.95.050501
 
     :param float f_h: Oracle output at perturbation h.
@@ -57,13 +58,13 @@ def gradient_estimator(f_h, ancilla_qubit):
     return p_gradient
 
 def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
-    """ Estimate the gradient from point of evaluation
-        to point of perturbation, h
+    """Estimate the gradient using function evaluation at perturbation, h
 
     :param float f_h: Oracle output at perturbation h.
     :param int precision: Bit precision of gradient.
-    :param Connection cxn: connection to the QPU or QVM
     :param int n_measurements: Number of times to measure system.
+    :param Connection cxn: connection to the QPU or QVM
+    :return float deci_estimate: Decimal estimate of gradient.
     """
 
     # enumerate input and ancilla qubits
