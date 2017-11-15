@@ -21,7 +21,7 @@ def test_binary_to_real():
     assert(np.isclose(decimal_rep, decimal_convert))
 
 def test_measurements_to_bf():
-    measurements = [[1, 0, 0], [1, 0, 0], [0,1,0]]
+    measurements = [[1, 0, 0], [1, 0, 0], [1, 1, 0], [1, 0, 0]]
     true_bf = 0.01
 
     bf_from_measurements = measurements_to_bf(measurements)
