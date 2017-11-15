@@ -1,5 +1,6 @@
 import pytest
-from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, binary_to_real, measurements_to_bf
+from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, \
+    binary_to_real, measurements_to_bf
 import numpy as np
 
 def test_real_to_binary():

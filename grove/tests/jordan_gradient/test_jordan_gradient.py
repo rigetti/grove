@@ -16,4 +16,3 @@ def test_gradient_estimator():
             n_measurements=test_measurements, cxn=cxn) 
 
     assert(np.isclose(gradient_estimate, test_perturbation))
-
