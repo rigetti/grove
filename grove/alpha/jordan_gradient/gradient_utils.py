@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 
 def real_to_binary(number, precision=16):
@@ -15,9 +14,10 @@ def real_to_binary(number, precision=16):
     bf = ''
     for val in range(precision):
         number *= 2
-        number, whole = np.modf(number)
+        frac, whole = np.modf(number)
         bf += str(int(whole))
-    bf = n_sign * float('.' + bf)
+        number = frac
+    bf = float(n_sign * float('.' + bf))
     
     return bf
 
@@ -43,13 +43,15 @@ def binary_to_real(number):
         
     return deci
 
-def stats_to_bf(stats):
-    """ Convert measurement into gradient binary fraction
+def measurements_to_bf(measurements):
+    """ Convert measurements into gradient binary fraction
     
-    :param np.array stats: Output measurement statistics of gradient program.
+    :param list measurements: Output measurements of gradient program.
     :return float bf: Binary fraction representation of gradient estimate.
     """
-    
+
+    measurements = np.array(measurements)
+    stats = measurements.sum(axis=0) / len(measurements)
     stats_str = [str(int(i)) for i in np.round(stats[::-1][1:])]
     bf_str = '0.' + ''.join(stats_str)
     bf = float(bf_str)

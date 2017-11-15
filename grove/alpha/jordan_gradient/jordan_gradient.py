@@ -3,8 +3,7 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H
 from grove.alpha.phaseestimation.phase_estimation import phase_estimation
-from grove.qft.fourier import inverse_qft
-from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, binary_to_real, stats_to_bf
+from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, binary_to_real, measurements_to_bf
 
 def initialize_system(ancilla_qubit):
     """ Prepare initial state
@@ -57,12 +56,13 @@ def gradient_estimator(f_h, ancilla_qubit):
 
     return p_gradient
 
-def estimate_gradient(f_h, precision, qvm=False, n_measurements=50):
+def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     """ Estimate the gradient from point of evaluation
         to point of perturbation, h
 
     :param float f_h: Oracle output at perturbation h.
     :param int precision: Bit precision of gradient.
+    :param Connection cxn: connection to the QPU or QVM
     :param int n_measurements: Number of times to measure system.
     """
 
@@ -75,15 +75,13 @@ def estimate_gradient(f_h, precision, qvm=False, n_measurements=50):
     p_gradient = gradient_estimator(abs(f_h), ancilla_qubit)
     
     # run gradient program
-    if not qvm:
+    if not cxn:
         from pyquil.api import SyncConnection
-        qvm = SyncConnection()
-    measurement = qvm.run(p_gradient, input_qubits, n_measurements)
-    measurements = np.array(measurement)
+        cxn = SyncConnection()
+    measurements = cxn.run(p_gradient, input_qubits, n_measurements)
 
     # summarize measurements
-    stats = measurements.sum(axis=0) / len(measurements)
-    bf_estimate = perturbation_sign * stats_to_bf(stats)
+    bf_estimate = perturbation_sign * measurements_to_bf(measurements)
     bf_explicit = '{0:.16f}'.format(bf_estimate)
     deci_estimate = binary_to_real(bf_explicit)
         
