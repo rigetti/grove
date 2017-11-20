@@ -19,7 +19,6 @@
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H
-from pyquil.quilbase import Qubit
 
 from grove.amplification.amplification import amplification_circuit
 
