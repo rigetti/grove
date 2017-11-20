@@ -185,8 +185,9 @@ class ControlledProgramBuilder(object):
                                                                   control_qubits[:-1],
                                                                   target_qubit)
             controlled_subprogram += control_gate
-            controlled_subprogram += n_minus_one_toffoli.instructions
-            controlled_subprogram += control_gate.dagger()
             controlled_subprogram += n_minus_one_toffoli
+            controlled_subprogram += control_gate.dagger()
+            # We only add the instructions so that we don't redefine gates
+            controlled_subprogram += n_minus_one_toffoli.instructions
             controlled_subprogram += n_minus_one_controlled_sqrt
             return controlled_subprogram
