@@ -19,6 +19,7 @@
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H
+from pyquil.job_results import wait_for_job
 
 from grove.amplification.amplification import amplification_circuit
 
@@ -97,8 +98,10 @@ class Grover(object):
         :return: Returns the bitstring resulting from measurement after Grover's Algorithm.
         :rtype: str
         """
+
         self._init_attr(bitstring_map)
-        sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)[0]
+        res = wait_for_job(cxn.run_and_measure(self.grover_circuit, self.qubits))
+        sampled_bitstring = res.decode()[0]
         return ''.join([str(b) for b in sampled_bitstring])
 
     @staticmethod
