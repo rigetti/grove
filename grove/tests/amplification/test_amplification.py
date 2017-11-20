@@ -15,9 +15,11 @@
 ##############################################################################
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import X, H, RZ, CZ
+from pyquil.gates import X, H, RZ, CZ, CNOT
 
-from grove.amplification.amplification import amplification_circuit, decomposed_diffusion_program
+from grove.amplification.amplification import (amplification_circuit,
+                                               decomposed_diffusion_program,
+                                               diffusion_circuit)
 
 
 triple_hadamard = pq.Program().inst(H(2)).inst(H(1)).inst(H(0))
@@ -31,7 +33,7 @@ def test_diffusion_operator():
     """
     Checks that the diffusion operator outputs the correct operation
     """
-    created = decomposed_diffusion_program([0, 1])
+    created = decomposed_diffusion_program(qubits[:2])
     desired = pq.Program()
     for def_gate in created.defined_gates:
         desired.defgate(def_gate.name, def_gate.matrix)
@@ -39,20 +41,18 @@ def test_diffusion_operator():
     desired.inst(X(1))
     desired.inst(H(1))
     desired.inst(RZ(-np.pi, 0))
-    # There should be only one defined gate -- the CNOT.
-    desired.inst((created.defined_gates[0].name, 0, 1))
+    desired.inst(CNOT(0, 1))
     desired.inst(RZ(-np.pi, 0))
     desired.inst(H(1))
     desired.inst(X(0))
     desired.inst(X(1))
-    assert created == desired
+    assert desired == created
 
 
 def test_amplify():
     """
     Test the generic usage of amplify
     """
-
     # Essentially Grover's to select 011 or 111
     desired = (triple_hadamard.dagger()
                + cz_gate
@@ -66,22 +66,3 @@ def test_amplify():
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     assert desired == created
-
-
-def test_amplify_init():
-    """
-    Test the usage of amplify without init
-    """
-    # Essentially Grover's to select 011 or 111
-    desired = (triple_hadamard.dagger()
-               + cz_gate
-               + triple_hadamard.dagger()
-               + decomposed_diffusion_program(qubits)
-               + triple_hadamard
-               + cz_gate
-               + triple_hadamard.dagger()
-               + decomposed_diffusion_program(qubits)
-               + triple_hadamard)
-    created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
-
-    assert desired.out() == created.out()

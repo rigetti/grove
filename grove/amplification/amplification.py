@@ -31,6 +31,16 @@ X_GATE_LABEL = "NOT"
 HADAMARD_DIFFUSION_LABEL = "HADAMARD_DIFFUSION"
 
 
+def diffusion_circuit(qubits):
+    diffusion_program = pq.Program()
+    dim = 2 ** len(qubits)
+    hadamard_diffusion_matrix = np.diag([1.0] + [-1.0] * (dim - 1))
+    diffusion_program.defgate(HADAMARD_DIFFUSION_LABEL, hadamard_diffusion_matrix)
+    instruction_tuple = (HADAMARD_DIFFUSION_LABEL,) + tuple(qubits)
+    diffusion_program.inst(instruction_tuple)
+    return diffusion_program
+
+
 def amplification_circuit(algorithm, oracle, qubits, num_iter):
     """
     Returns a program that does ``num_iter`` rounds of amplification, given a measurement-less
@@ -42,6 +52,8 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
         subspace.
     :param Sequence qubits: the qubits to operate on
     :param int num_iter: number of iterations of amplifications to run
+    :param bool decompose_diffusion: If True, decompose the Grover diffusion gate into two qubit
+     gates. If False, use a defgate to define the gate.
     :return: The amplified algorithm.
     :rtype: Program
     """
@@ -52,13 +64,7 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
 
     uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
     prog += uniform_superimposer
-
-    diffusion_program = pq.Program()
-    dim = 2 ** len(qubits)
-    hadamard_diffusion_matrix = np.diag([1.0] + [-1.0] * (dim - 1))
-    diffusion_program.defgate(HADAMARD_DIFFUSION_LABEL, hadamard_diffusion_matrix)
-    instruction_tuple = (HADAMARD_DIFFUSION_LABEL,) + tuple(qubits)
-    diffusion_program.inst(instruction_tuple)
+    diffusion_program = diffusion_circuit(qubits)
     # To avoid redefining gates, we collect them before building our program.
     defined_gates = oracle.defined_gates + algorithm.defined_gates + diffusion_program.defined_gates
     for _ in range(num_iter):
