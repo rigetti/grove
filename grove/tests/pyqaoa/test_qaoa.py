@@ -66,6 +66,18 @@ def test_get_angles():
         assert gammas == [3.4, 4.3]
 
 
+def test_get_string():
+    qvm = qvm_module.SyncConnection()
+    qaoa = QAOA(qvm, n_qubits=1)
+    prog = Program()
+    prog.inst(X(0))
+    qaoa.get_parameterized_program = lambda: lambda angles: prog
+    samples = 10
+    bitstring, freq = qaoa.get_string(betas=None, gammas=None, samples=samples)
+    assert len(freq) <= samples
+    assert bitstring[0] == 1
+
+
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
     fakeQVM = Mock(spec=qvm_module.SyncConnection())
