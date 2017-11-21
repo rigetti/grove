@@ -57,9 +57,6 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
     :return: The amplified algorithm.
     :rtype: Program
     """
-    if num_iter <= 0:
-        raise ValueError("num_iter must be greater than zero")
-
     prog = pq.Program()
 
     uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])

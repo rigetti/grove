@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
-from mock import patch
+from mock import patch, Mock
 from pyquil.gates import X, Z, H
 from pyquil.quil import Program
+from pyquil.job_results import JobResult
 
 from grove.amplification.grover import Grover
 
@@ -108,13 +109,16 @@ def test_optimal_grover(x_oracle):
 def test_find_bistring():
     bitstring_map = {"0": 1, "1": -1}
     builder = Grover()
-    with patch("pyquil.api.QVMConnection") as qvm:
+    with patch("pyquil.api.JobConnection") as qvm:
         expected_bitstring = [0, 1]
-        qvm.run_and_measure.return_value = [expected_bitstring, ]
+        jobresult = Mock(JobResult)
+        jobresult.is_done.return_value = True
+        jobresult.decode.return_value = ["".join([str(bit) for bit in expected_bitstring])]
+        qvm.run_and_measure.return_value = jobresult
     returned_bitstring = builder.find_bitstring(qvm, bitstring_map)
     prog = builder.grover_circuit
-    # Make sure it only defines the one ORACLE gate.
-    assert len(prog.defined_gates) == 1
+    # Make sure it only defines the ORACLE gate and the DIFFUSION gate.
+    assert len(prog.defined_gates) == 2
     # Make sure that it produces the oracle we expect.
     assert (prog.defined_gates[0].matrix == np.array([[1, 0], [0, -1]])).all()
     expected_bitstring = "".join([str(bit) for bit in expected_bitstring])

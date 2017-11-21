@@ -15,7 +15,7 @@
 ##############################################################################
 import numpy as np
 import pyquil.quil as pq
-from pyquil.gates import X, H, RZ, CZ, CNOT
+from pyquil.gates import X, H, Z, RZ, CZ, CNOT
 
 from grove.amplification.amplification import (amplification_circuit,
                                                decomposed_diffusion_program,
@@ -66,3 +66,10 @@ def test_amplify():
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     assert desired == created
+
+
+def test_trivial_diffusion():
+    qubits = [0]
+    created = decomposed_diffusion_program(qubits)
+    desired = pq.Program().inst(Z(qubits[0]))
+    assert created == desired
