@@ -246,7 +246,7 @@ class QAOA(object):
             sampling_prog.measure(i, [i])
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     range(self.n_qubits),
+                                                     list(range(self.n_qubits)),
                                                      trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
