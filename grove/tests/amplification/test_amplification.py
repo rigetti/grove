@@ -19,7 +19,7 @@ from pyquil.gates import X, H, RZ, CZ
 
 from grove.amplification.amplification import amplification_circuit, diffusion_program
 
-triple_hadamard = pq.Program().inst(H(0)).inst(H(1)).inst(H(2))
+triple_hadamard = pq.Program().inst(H(2)).inst(H(1)).inst(H(0))
 cz_gate = pq.Program(CZ(0, 1))
 oracle = pq.Program().inst()
 qubits = [0, 1, 2]
@@ -53,8 +53,15 @@ def test_amplify():
     """
 
     # Essentially Grover's to select 011 or 111
-    desired = triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(
-        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
+    desired = (triple_hadamard.dagger()
+               + cz_gate
+               + triple_hadamard.dagger()
+               + diffusion_program(qubits)
+               + triple_hadamard
+               + cz_gate
+               + triple_hadamard.dagger()
+               + diffusion_program(qubits)
+               + triple_hadamard)
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     assert desired == created
@@ -65,8 +72,15 @@ def test_amplify_init():
     Test the usage of amplify without init
     """
     # Essentially Grover's to select 011 or 111
-    desired = cz_gate + triple_hadamard.dagger() + diffusion_program(
-        qubits) + triple_hadamard + cz_gate + triple_hadamard.dagger() + diffusion_program(qubits) + triple_hadamard
+    desired = (triple_hadamard.dagger()
+               + cz_gate
+               + triple_hadamard.dagger()
+               + diffusion_program(qubits)
+               + triple_hadamard
+               + cz_gate
+               + triple_hadamard.dagger()
+               + diffusion_program(qubits)
+               + triple_hadamard)
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
 
     assert desired.out() == created.out()
