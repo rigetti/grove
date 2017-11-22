@@ -8,7 +8,7 @@ from pyquil.paulis import PauliSum, PauliTerm
 from scipy.optimize import minimize
 import numpy as np
 
-CXN = api.SyncConnection()
+CXN = api.QVMConnection()
 
 
 def energy_value(h, J, sol):

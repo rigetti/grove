@@ -34,8 +34,8 @@ def test_probabilities():
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -1.17642098e-05 - 1j*7.67538040e-06])
-    fakeQVM = Mock(spec=qvm_module.SyncConnection())
-    fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf), 0))
+    fakeQVM = Mock(spec=qvm_module.QVMConnection())
+    fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf)))
     inst = QAOA(fakeQVM, n_qubits, steps=p,
                 rand_seed=42)
 
@@ -67,7 +67,7 @@ def test_get_angles():
 
 
 def test_get_string():
-    qvm = qvm_module.SyncConnection()
+    qvm = qvm_module.QVMConnection()
     qaoa = QAOA(qvm, n_qubits=1)
     prog = Program()
     prog.inst(X(0))
@@ -80,7 +80,7 @@ def test_get_string():
 
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
-    fakeQVM = Mock(spec=qvm_module.SyncConnection())
+    fakeQVM = Mock(spec=qvm_module.QVMConnection())
     inst = QAOA(fakeQVM, 2, driver_ref=ref_prog)
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])

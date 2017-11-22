@@ -182,8 +182,8 @@ class TestGetReversedUnificationProgram(object):
 def _state_generation_test_helper(v, qubits=None):
     # encode vector in quantum state
     p = create_arbitrary_state(v, qubits)
-    qvm = SyncConnection()
-    wf, _ = qvm.wavefunction(p)
+    qvm = QVMConnection()
+    wf = qvm.wavefunction(p)
 
     # normalize and pad with zeros
     v_norm = v / np.linalg.norm(v)

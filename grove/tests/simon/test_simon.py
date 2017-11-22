@@ -33,7 +33,7 @@ def test_simon_class():
     https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf"""
     simon_algo = Simon()
 
-    with patch("pyquil.api.SyncConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.side_effect = [
             (np.asarray([1, 1, 1], dtype=int), ),

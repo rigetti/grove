@@ -3,17 +3,9 @@ import pytest
 
 import numpy as np
 import pyquil.quil as pq
-from pyquil.api import JobResult
 from pyquil.gates import X, H, CNOT
 
 from grove.deutsch_jozsa.deutsch_jozsa import DeutschJosza, ORACLE_GATE_NAME
-
-
-def mock_job_result(result):
-    job_result = Mock(spec=JobResult)
-    job_result.is_done.return_value = True
-    job_result.result = {'result': [result]}
-    return job_result
 
 
 @pytest.mark.parametrize("bitmap, expected_bitstring",
@@ -23,8 +15,8 @@ def mock_job_result(result):
                           np.asarray([0, 0], dtype=int))])
 def test_deutsch_jozsa_one_qubit_exact_zeros(bitmap, expected_bitstring):
     dj = DeutschJosza()
-    with patch("pyquil.api.JobConnection") as qvm:
-        qvm.run_and_measure.return_value = mock_job_result(expected_bitstring)
+    with patch("pyquil.api.QVMConnection") as qvm:
+        qvm.run_and_measure.return_value = expected_bitstring
         is_constant = dj.is_constant(qvm, bitmap)
     assert is_constant
 
@@ -32,10 +24,10 @@ def test_deutsch_jozsa_one_qubit_exact_zeros(bitmap, expected_bitstring):
 def test_deutsch_jozsa_one_qubit_balanced():
     balanced_one_qubit_bitmap = {"0": "0", "1": "1"}
     dj = DeutschJosza()
-    with patch("pyquil.api.JobConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Should just be not the zero vector
         expected_bitstring = np.asarray([0, 1], dtype=int)
-        qvm.run_and_measure.return_value = mock_job_result(expected_bitstring)
+        qvm.run_and_measure.return_value = expected_bitstring
         is_constant = dj.is_constant(qvm, balanced_one_qubit_bitmap)
     assert not is_constant
 
@@ -44,17 +36,17 @@ def test_deutsch_jozsa_two_qubit_neither():
     exact_two_qubit_bitmap = {"00": "0", "01": "0", "10": "1", "11": "00"}
     dj = DeutschJosza()
     with pytest.raises(ValueError):
-        with patch("pyquil.api.JobConnection") as qvm:
+        with patch("pyquil.api.QVMConnection") as qvm:
             _ = dj.is_constant(qvm, exact_two_qubit_bitmap)
 
 
 def test_one_qubit_exact_zeros_circuit():
     exact_one_qubit_bitmap = {"0": "0", "1": "1"}
     dj = DeutschJosza()
-    with patch("pyquil.api.JobConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Should just be not the zero vector
         expected_bitstring = np.asarray([0, 1], dtype=int)
-        qvm.run_and_measure.return_value = mock_job_result(expected_bitstring)
+        qvm.run_and_measure.return_value = expected_bitstring
         _ = dj.is_constant(qvm, exact_one_qubit_bitmap)
     # Ordering doesn't matter, so we pop instructions from a set
     expected_prog = pq.Program()
