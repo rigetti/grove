@@ -19,7 +19,6 @@ Module for the Deutsch-Jozsa Algorithm.
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H, CNOT
-from pyquil.job_results import wait_for_job
 
 
 SWAP_MATRIX = np.array([[1, 0, 0, 0],
@@ -46,7 +45,7 @@ class DeutschJosza(object):
          or balanced. Constant means all inputs map to the same value, balanced means half of the
          inputs maps to one value, and half to the other.
 
-        :param JobConnection cxn: The connection object to the Rigetti cloud to run pyQuil programs.
+        :param QVMConnection cxn: The connection object to the Rigetti cloud to run pyQuil programs.
         :param bitstring_map: A dictionary whose keys are bitstrings, and whose values are bits
          represented as strings.
         :type bistring_map: Dict[String, String]
@@ -54,10 +53,8 @@ class DeutschJosza(object):
         :rtype: bool
         """
         self._init_attr(bitstring_map)
-        job_result = wait_for_job(cxn.run_and_measure(self.deutsch_jozsa_circuit,
-                                                      self.computational_qubits))
+        returned_bitstring = cxn.run_and_measure(self.deutsch_jozsa_circuit, self.computational_qubits)
         # We are only running a single shot, so we are only interested in the first element.
-        returned_bitstring = job_result.result['result'][0]
         bitstring = np.array(returned_bitstring, dtype=int)
         constant = all([bit == 0 for bit in bitstring])
         return constant

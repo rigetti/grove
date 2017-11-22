@@ -108,7 +108,7 @@ def test_optimal_grover(x_oracle):
 def test_find_bistring():
     bitstring_map = {"0": 1, "1": -1}
     builder = Grover()
-    with patch("pyquil.api.SyncConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         expected_bitstring = [0, 1]
         qvm.run_and_measure.return_value = [expected_bitstring, ]
     returned_bitstring = builder.find_bitstring(qvm, bitstring_map)
