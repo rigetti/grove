@@ -3,7 +3,6 @@
 import pytest
 
 from grove.alpha.arbitrary_state.arbitrary_state import *
-from grove.pyqaoa.utils import compare_progs
 
 
 @pytest.mark.skip(reason="Must add support for Forest connections in testing")
@@ -149,7 +148,7 @@ class TestGetReversedUnificationProgram(object):
             .inst(CNOT(3, 0)) \
             .inst(RZ(-np.pi / 4, 0))
 
-        compare_progs(reverse_prog, expected_prog)
+        assert reverse_prog == expected_prog
 
     def test_length_eight_magnitude_rotations(self):
         angles = [0, - np.pi / 12, np.pi / 15, -np.pi / 6,
@@ -177,14 +176,14 @@ class TestGetReversedUnificationProgram(object):
             .inst(RY(np.pi / 12, 4)) \
             .inst(CNOT(1, 4))
 
-        compare_progs(reverse_prog, expected_prog)
+        assert reverse_prog == expected_prog
 
 
 def _state_generation_test_helper(v, qubits=None):
     # encode vector in quantum state
     p = create_arbitrary_state(v, qubits)
-    qvm = SyncConnection()
-    wf, _ = qvm.wavefunction(p)
+    qvm = QVMConnection()
+    wf = qvm.wavefunction(p)
 
     # normalize and pad with zeros
     v_norm = v / np.linalg.norm(v)

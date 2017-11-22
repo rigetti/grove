@@ -226,7 +226,7 @@ class Simon(object):
         """
         Runs Simon's mask_array algorithm to find the mask.
 
-        :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
+        :param QVMConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
             whose period is  to be found.
 

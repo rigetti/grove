@@ -14,7 +14,7 @@ def test_energy_value():
 
 
 def test_ising_mock():
-    with patch("pyquil.api.SyncConnection") as cxn:
+    with patch("pyquil.api.QVMConnection") as cxn:
         # Mock the response
         cxn.run_and_measure.return_value = [[1, 1, 0, 1]]
         cxn.expectation.return_value = [-0.4893891813015294, 0.8876822987380573, -0.4893891813015292, -0.9333372094534063, -0.9859245403423198, 0.9333372094534065]

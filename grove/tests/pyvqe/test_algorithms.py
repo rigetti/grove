@@ -94,7 +94,7 @@ def test_expectation():
     minimizer.return_value = fake_result
 
     fake_qvm = Mock(spec=['wavefunction', 'expectation', 'run'])
-    fake_qvm.wavefunction.return_value = (Wavefunction(rotation_wavefunction(-2.5)), [0])
+    fake_qvm.wavefunction.return_value = (Wavefunction(rotation_wavefunction(-2.5)))
     fake_qvm.expectation.return_value = [0.28366219]
     # for testing expectation
     fake_qvm.run.return_value = [[0], [0]]

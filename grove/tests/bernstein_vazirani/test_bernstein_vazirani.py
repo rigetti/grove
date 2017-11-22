@@ -34,7 +34,7 @@ def test_bv_class_with_bitmap():
         '111': '1'
     }
 
-    with patch("pyquil.api.SyncConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.side_effect = [
             ([0, 1, 1], ),
@@ -54,7 +54,7 @@ def test_bv_class_with_check_results():
 
     bit_map = create_bv_bitmap(a, b)
 
-    with patch("pyquil.api.SyncConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.side_effect = [
             ([1, 1, 0, 1], ),
@@ -74,7 +74,7 @@ def test_bv_class_with_return_solution():
 
     bit_map = create_bv_bitmap(a, b)
 
-    with patch("pyquil.api.SyncConnection") as qvm:
+    with patch("pyquil.api.QVMConnection") as qvm:
         # Need to mock multiple returns as an iterable
         qvm.run_and_measure.side_effect = [
             ([1, 1, 0, 1], ),
