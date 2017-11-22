@@ -16,7 +16,6 @@
 
 import numpy as np
 from grove.pyqaoa.qaoa import QAOA
-from grove.pyqaoa.utils import compare_progs
 import pyquil.api as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
@@ -85,4 +84,4 @@ def test_ref_program_pass():
     inst = QAOA(fakeQVM, 2, driver_ref=ref_prog)
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
-    compare_progs(ref_prog, test_prog)
+    assert ref_prog == test_prog

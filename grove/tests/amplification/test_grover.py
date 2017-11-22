@@ -5,7 +5,6 @@ from pyquil.gates import X, Z, H
 from pyquil.quil import Program
 
 from grove.amplification.grover import Grover
-from grove.tests.utils.utils_for_testing import prog_equality, synthesize_programs
 
 identity_oracle = Program()
 """Does nothing on all inputs."""
@@ -34,9 +33,7 @@ def test_trivial_grover():
     trivial_grover.inst(H(qubit0))
     qubits = [qubit0]
     generated_trivial_grover = Grover().oracle_grover(identity_oracle, qubits, 1)
-    generated_trivial_grover.synthesize()
-    trivial_grover.synthesize()
-    assert prog_equality(generated_trivial_grover, trivial_grover)
+    assert generated_trivial_grover.out() == trivial_grover.out()
 
 
 def test_x_oracle_one_grover(x_oracle):
@@ -46,7 +43,7 @@ def test_x_oracle_one_grover(x_oracle):
     qubit0 = x_oracle_grover.alloc()
     qubits = [qubit0]
     oracle, query_qubit = x_oracle
-    with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
+    with patch("pyquil.quil.Program.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
     generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, 1)
     # First we put the input into uniform superposition.
@@ -57,8 +54,7 @@ def test_x_oracle_one_grover(x_oracle):
     x_oracle_grover.inst(H(qubit0))
     x_oracle_grover.inst(Z(qubit0))
     x_oracle_grover.inst(H(qubit0))
-    synthesize_programs(generated_x_oracle_grover, x_oracle_grover)
-    assert prog_equality(generated_x_oracle_grover, x_oracle_grover)
+    assert generated_x_oracle_grover == x_oracle_grover
 
 
 def test_x_oracle_two_grover(x_oracle):
@@ -68,7 +64,7 @@ def test_x_oracle_two_grover(x_oracle):
     qubit0 = x_oracle_grover.alloc()
     qubits = [qubit0]
     oracle, query_qubit = x_oracle
-    with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
+    with patch("pyquil.quil.Program.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
     generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, 2)
     # First we put the input into uniform superposition.
@@ -81,8 +77,7 @@ def test_x_oracle_two_grover(x_oracle):
         x_oracle_grover.inst(H(qubit0))
         x_oracle_grover.inst(Z(qubit0))
         x_oracle_grover.inst(H(qubit0))
-    synthesize_programs(generated_x_oracle_grover, x_oracle_grover)
-    assert prog_equality(generated_x_oracle_grover, x_oracle_grover)
+    assert generated_x_oracle_grover == x_oracle_grover
 
 
 def test_optimal_grover(x_oracle):
@@ -92,7 +87,7 @@ def test_optimal_grover(x_oracle):
     qubit0 = grover_precircuit.alloc()
     qubits = [qubit0]
     oracle, query_qubit = x_oracle
-    with patch("pyquil.quilbase.InstructionGroup.alloc") as mock_alloc:
+    with patch("pyquil.quil.Program.alloc") as mock_alloc:
         mock_alloc.return_value = qubit0
         generated_one_iter_grover = Grover().oracle_grover(oracle, qubits)
     # First we put the input into uniform superposition.
@@ -107,8 +102,7 @@ def test_optimal_grover(x_oracle):
     iter.inst(Z(qubit0))
     iter.inst(H(qubit0))
     one_iter_grover = grover_precircuit + iter
-    synthesize_programs(generated_one_iter_grover, one_iter_grover)
-    assert prog_equality(generated_one_iter_grover, one_iter_grover)
+    assert generated_one_iter_grover == one_iter_grover
 
 
 def test_find_bistring():
