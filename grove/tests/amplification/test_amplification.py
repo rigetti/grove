@@ -37,15 +37,17 @@ def test_diffusion_operator():
     desired = pq.Program()
     for def_gate in created.defined_gates:
         desired.defgate(def_gate.name, def_gate.matrix)
-    desired.inst(X(0))
-    desired.inst(X(1))
-    desired.inst(H(1))
-    desired.inst(RZ(-np.pi, 0))
-    desired.inst(CNOT(0, 1))
-    desired.inst(RZ(-np.pi, 0))
-    desired.inst(H(1))
-    desired.inst(X(0))
-    desired.inst(X(1))
+    qubit0 = qubits[0]
+    qubit1 = qubits[1]
+    desired.inst(X(qubit0))
+    desired.inst(X(qubit1))
+    desired.inst(H(qubit1))
+    desired.inst(RZ(-np.pi, qubit0))
+    desired.inst(CNOT(qubit0, qubit1))
+    desired.inst(RZ(-np.pi, qubit0))
+    desired.inst(H(qubit1))
+    desired.inst(X(qubit0))
+    desired.inst(X(qubit1))
     assert desired == created
 
 
@@ -57,14 +59,14 @@ def test_amplify():
     desired = (triple_hadamard.dagger()
                + cz_gate
                + triple_hadamard.dagger()
-               + decomposed_diffusion_program(qubits)
+               + diffusion_circuit(qubits)
                + triple_hadamard
                + cz_gate
                + triple_hadamard.dagger()
-               + decomposed_diffusion_program(qubits)
+               # We take care to only add the instructions, and not redefine the gate.
+               + diffusion_circuit(qubits).instructions
                + triple_hadamard)
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
-
     assert desired == created
 
 

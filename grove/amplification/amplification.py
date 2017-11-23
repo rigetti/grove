@@ -41,7 +41,7 @@ def diffusion_circuit(qubits):
     return diffusion_program
 
 
-def amplification_circuit(algorithm, oracle, qubits, num_iter):
+def amplification_circuit(algorithm, oracle, qubits, num_iter, decompose_diffusion=False):
     """
     Returns a program that does ``num_iter`` rounds of amplification, given a measurement-less
     algorithm, an oracle, and a list of qubits to operate on.
@@ -61,7 +61,10 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter):
 
     uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
     prog += uniform_superimposer
-    diffusion_program = diffusion_circuit(qubits)
+    if decompose_diffusion:
+        diffusion_program = decomposed_diffusion_program(qubits)
+    else:
+        diffusion_program = diffusion_circuit(qubits)
     # To avoid redefining gates, we collect them before building our program.
     defined_gates = oracle.defined_gates + algorithm.defined_gates + diffusion_program.defined_gates
     for _ in range(num_iter):
