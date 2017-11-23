@@ -99,8 +99,8 @@ class Grover(object):
         """
 
         self._init_attr(bitstring_map)
-        sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)
-        return ''.join([str(b) for b in sampled_bitstring])
+        sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)[0]
+        return "".join([str(bit) for bit in sampled_bitstring])
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):
