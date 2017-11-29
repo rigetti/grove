@@ -1,7 +1,8 @@
+import numpy as np
 import pytest
+
 from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
     measurements_to_bf
-import numpy as np
 
 def test_binary_to_real():
     precision = 9

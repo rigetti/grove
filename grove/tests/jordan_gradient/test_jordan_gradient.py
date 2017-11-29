@@ -1,8 +1,9 @@
+import numpy as np
 import pytest
-from grove.alpha.jordan_gradient.jordan_gradient import estimate_gradient
 from mock import patch
 import pyquil.quil as pq
-import numpy as np
+
+from grove.alpha.jordan_gradient.jordan_gradient import estimate_gradient
 
 def test_gradient_estimator():
     test_perturbation = .25

@@ -1,8 +1,10 @@
 from __future__ import division
+
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H
 from grove.alpha.phaseestimation.phase_estimation import phase_estimation
+
 from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
     measurements_to_bf
 
@@ -28,7 +30,7 @@ def phase_kickback(f_h, precision):
     :return: Quil program to perform phase kickback.
     :rtype: Program
     """
-    
+
     # encode f_h / 2 into CPHASE gate
     U = np.array([[np.exp(-1.0j * np.pi * f_h), 0],
                   [0, np.exp(-1.0j * np.pi * f_h)]])
@@ -44,7 +46,7 @@ def gradient_estimator(f_h, ancilla_qubit):
     :param list ancilla_qubits: Qubits of output register.
     :return: Quil program to estimate gradient of f.
     :rtype: Program
-    """    
+    """
 
     # intialize input and output registers
     p_ic = initialize_system(ancilla_qubit)
@@ -75,7 +77,7 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     # generate gradient program
     perturbation_sign = np.sign(f_h)
     p_gradient = gradient_estimator(f_h, ancilla_qubit)
-    
+
     # run gradient program
     if not cxn:
         from pyquil.api import QVMConnection
@@ -88,5 +90,5 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     bf_estimate = perturbation_sign * measurements_to_bf(measurements)
     bf_explicit = '{0:.16f}'.format(bf_estimate)
     deci_estimate = binary_to_real(bf_explicit)
-        
-    return deci_estimate    
+
+    return deci_estimate
