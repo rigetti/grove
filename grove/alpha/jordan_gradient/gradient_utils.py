@@ -4,7 +4,8 @@ def binary_to_real(number):
     """Convert binary fraction to real decimal
     
     :param float number: Floating point representation of binary fraction.
-    :return float deci: Real decimal representation of binary fraction.
+    :return: Real decimal representation of binary fraction.
+    :rtype: float
     """    
    
     if isinstance(number, str):
@@ -26,7 +27,8 @@ def measurements_to_bf(measurements):
     """Convert measurements into gradient binary fraction
     
     :param list measurements: Output measurements of gradient program.
-    :return float bf: Binary fraction representation of gradient estimate.
+    :return: Binary fraction representation of gradient estimate.
+    :rtype: float
     """
 
     measurements = np.array(measurements)

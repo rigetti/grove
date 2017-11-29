@@ -10,7 +10,8 @@ def initialize_system(ancilla_qubit):
     """Prepare initial state
 
     :param list ancilla_qubit: Qubit of ancilla register.
-    :return Program p_ic: Quil program to initialize this system.
+    :return: Quil program to initialize this system.
+    :rtype: Program
     """
 
     # ancilla qubit to plane wave state
@@ -24,7 +25,8 @@ def phase_kickback(f_h, precision):
 
     :param float f_h: Oracle output at perturbation h.
     :param int precision: Bit precision of gradient.
-    :return Program p_kickback: Quil program to perform phase kickback.
+    :return: Quil program to perform phase kickback.
+    :rtype: Program
     """
     
     # encode f_h / 2 into CPHASE gate
@@ -40,7 +42,8 @@ def gradient_estimator(f_h, ancilla_qubit):
 
     :param float f_h: Oracle output at perturbation h.
     :param list ancilla_qubits: Qubits of output register.
-    :return Program p_gradient: Quil program to estimate gradient of f.
+    :return: Quil program to estimate gradient of f.
+    :rtype: Program
     """    
 
     # intialize input and output registers
@@ -61,7 +64,8 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     :param int precision: Bit precision of gradient.
     :param int n_measurements: Number of times to measure system.
     :param Connection cxn: connection to the QPU or QVM
-    :return float deci_estimate: Decimal estimate of gradient.
+    :return: Decimal estimate of gradient.
+    :rtype: float
     """
 
     # enumerate input and ancilla qubits
