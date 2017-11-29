@@ -4,6 +4,7 @@ import pytest
 from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
     measurements_to_bf
 
+
 def test_binary_to_real():
     precision = 9
     decimal_rep = 0.345703125

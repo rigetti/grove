@@ -5,6 +5,7 @@ import pyquil.quil as pq
 
 from grove.alpha.jordan_gradient.jordan_gradient import estimate_gradient
 
+
 def test_gradient_estimator():
     test_perturbation = .25
     test_precision = 3

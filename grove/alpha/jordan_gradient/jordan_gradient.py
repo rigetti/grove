@@ -8,6 +8,7 @@ from grove.alpha.phaseestimation.phase_estimation import phase_estimation
 from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
     measurements_to_bf
 
+
 def initialize_system(ancilla_qubit):
     """Prepare initial state
 

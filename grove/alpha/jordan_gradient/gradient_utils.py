@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def binary_to_real(number):
     """Convert binary fraction to real decimal
     
