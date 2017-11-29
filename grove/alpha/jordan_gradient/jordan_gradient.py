@@ -3,8 +3,8 @@ import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import X, H
 from grove.alpha.phaseestimation.phase_estimation import phase_estimation
-from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, \
-    binary_to_real, measurements_to_bf
+from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
+    measurements_to_bf
 
 def initialize_system(ancilla_qubit):
     """Prepare initial state

@@ -1,16 +1,7 @@
 import pytest
-from grove.alpha.jordan_gradient.gradient_utils import real_to_binary, \
-    binary_to_real, measurements_to_bf
+from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
+    measurements_to_bf
 import numpy as np
-
-def test_real_to_binary():
-    precision = 9
-    decimal_rep = 0.345703125
-    binary_rep = 0.010110001
-
-    binary_convert = real_to_binary(decimal_rep, precision)
-
-    assert(np.isclose(binary_rep, binary_convert))
 
 def test_binary_to_real():
     precision = 9

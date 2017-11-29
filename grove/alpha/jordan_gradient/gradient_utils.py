@@ -1,26 +1,5 @@
 import numpy as np
 
-def real_to_binary(number, precision=16):
-    """Convert real decimal to precision-bit binary fraction
-    
-    :param float number: Real decimal over [0, 1).
-    :param int precision: Number of bits of binary precision.
-    :return float bf: Binary fraction representation of real decimal.
-    """
-
-    n_sign = np.sign(number)
-    number = abs(number)
-    number = round(number, precision+2)
-    bf = ''
-    for val in range(precision):
-        number *= 2
-        frac, whole = np.modf(number)
-        bf += str(int(whole))
-        number = frac
-    bf = float(n_sign * float('.' + bf))
-    
-    return bf
-
 def binary_to_real(number):
     """Convert binary fraction to real decimal
     
