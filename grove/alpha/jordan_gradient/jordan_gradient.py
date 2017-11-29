@@ -75,7 +75,7 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     # run gradient program
     if not cxn:
         from pyquil.api import QVMConnection
-        cxn = QVMConnection(async_endpoint="https://job.rigetti.com/beta")
+        cxn = QVMConnection()
     measurements = cxn.run(p_gradient, input_qubits, n_measurements)
     if isinstance(measurements, str):
         raise ValueError(measurements)
