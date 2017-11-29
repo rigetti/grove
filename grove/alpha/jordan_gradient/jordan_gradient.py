@@ -43,9 +43,6 @@ def gradient_estimator(f_h, ancilla_qubit):
     :return Program p_gradient: Quil program to estimate gradient of f.
     """    
 
-    if not 0 <= f_h < 1:
-        raise ValueError('perturbation value must be [0, 1)')
-    
     # intialize input and output registers
     p_ic = initialize_system(ancilla_qubit)
 
@@ -73,13 +70,15 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
 
     # generate gradient program
     perturbation_sign = np.sign(f_h)
-    p_gradient = gradient_estimator(abs(f_h), ancilla_qubit)
+    p_gradient = gradient_estimator(f_h, ancilla_qubit)
     
     # run gradient program
     if not cxn:
-        from pyquil.api import SyncConnection
-        cxn = SyncConnection()
+        from pyquil.api import QVMConnection
+        cxn = QVMConnection(async_endpoint="https://job.rigetti.com/beta")
     measurements = cxn.run(p_gradient, input_qubits, n_measurements)
+    if isinstance(measurements, str):
+        raise ValueError(measurements)
 
     # summarize measurements
     bf_estimate = perturbation_sign * measurements_to_bf(measurements)
