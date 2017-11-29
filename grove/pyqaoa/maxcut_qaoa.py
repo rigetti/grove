@@ -23,7 +23,7 @@ from pyquil.paulis import PauliTerm, PauliSum
 import networkx as nx
 from scipy.optimize import minimize
 from grove.pyqaoa.qaoa import QAOA
-CXN = api.SyncConnection()
+CXN = api.QVMConnection()
 
 
 def print_fun(x):

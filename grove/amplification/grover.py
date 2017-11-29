@@ -90,7 +90,7 @@ class Grover(object):
         In particular, this will prepare an initial state in the uniform superposition over all bit-
         strings, an then use Grover's Algorithm to pick out the desired bitstring.
 
-        :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
+        :param QVMConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
         :param bitstring_map: a mapping from bitstrings to the phases that the oracle should impart
             on them. If the oracle should "look" for a bitstring, it should have a ``-1``, otherwise
             it should have a ``1``.

@@ -17,8 +17,6 @@
 from pyquil.gates import *
 from grove.qft.fourier import inverse_qft
 import pyquil.quil as pq
-from grove.pyqaoa.utils import compare_progs # This would be nice to have in
-                                             # general purpose Util module
 
 
 def test_simple_inverse_qft():
@@ -29,7 +27,7 @@ def test_simple_inverse_qft():
     
     result_prog = pq.Program().inst([X(0), H(0)])
     
-    compare_progs(trial_prog, result_prog)
+    assert trial_prog == result_prog
 
 
 def test_multi_qubit_qft():
@@ -45,4 +43,4 @@ def test_multi_qubit_qft():
                                      H(1), CPHASE(-1.5707963267948966, 1, 2),
                                      H(2)])
     
-    compare_progs(trial_prog, result_prog)
+    assert trial_prog == result_prog

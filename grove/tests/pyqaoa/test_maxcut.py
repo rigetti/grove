@@ -17,7 +17,6 @@
 import pytest
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 from grove.pyqaoa.qaoa import QAOA
-from grove.pyqaoa.utils import compare_progs
 from pyquil.quil import Program
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import H, X, PHASE, CNOT, RZ
@@ -76,7 +75,7 @@ def test_param_prog_p1_barbell():
                                      PHASE(1.7)(0), CNOT(0, 1), RZ(3.4)(1),
                                      CNOT(0, 1), H(0), RZ(-2.4)(0), H(0), H(1),
                                      RZ(-2.4)(1), H(1)])
-        compare_progs(trial_prog, result_prog)
+        trial_prog == result_prog
 
 
 def test_psiref_bar_p2():
@@ -99,7 +98,7 @@ def test_psiref_bar_p2():
                                   H(0), RZ(-6.8)(0), H(0),
                                   H(1), RZ(-6.8)(1), H(1),
                                   ])
-    compare_progs(prog, result_prog)
+    assert prog == result_prog
 
 
 if __name__ == "__main__":

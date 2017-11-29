@@ -16,7 +16,6 @@
 
 import numpy as np
 from grove.pyqaoa.qaoa import QAOA
-from grove.pyqaoa.utils import compare_progs
 import pyquil.api as qvm_module
 from pyquil.paulis import PauliTerm, PauliSum
 from pyquil.gates import X, Y, Z
@@ -35,8 +34,8 @@ def test_probabilities():
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -7.67563580e-06 - 1j*7.07106781e-01,
                    -1.17642098e-05 - 1j*7.67538040e-06])
-    fakeQVM = Mock(spec=qvm_module.SyncConnection())
-    fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf), 0))
+    fakeQVM = Mock(spec=qvm_module.QVMConnection())
+    fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf)))
     inst = QAOA(fakeQVM, n_qubits, steps=p,
                 rand_seed=42)
 
@@ -67,10 +66,23 @@ def test_get_angles():
         assert gammas == [3.4, 4.3]
 
 
+def test_get_string():
+    with patch('pyquil.api.SyncConnection') as cxn:
+        cxn.run_and_measure.return_value = [[1] * 10]
+        qaoa = QAOA(cxn, n_qubits=1)
+        prog = Program()
+        prog.inst(X(0))
+        qaoa.get_parameterized_program = lambda: lambda angles: prog
+        samples = 10
+        bitstring, freq = qaoa.get_string(betas=None, gammas=None, samples=samples)
+        assert len(freq) <= samples
+        assert bitstring[0] == 1
+
+
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
-    fakeQVM = Mock(spec=qvm_module.SyncConnection())
+    fakeQVM = Mock(spec=qvm_module.QVMConnection())
     inst = QAOA(fakeQVM, 2, driver_ref=ref_prog)
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
-    compare_progs(ref_prog, test_prog)
+    assert ref_prog == test_prog
