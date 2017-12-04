@@ -19,7 +19,7 @@ from pyquil.gates import X, H, Z, RZ, CZ, CNOT
 
 from grove.amplification.amplification import (amplification_circuit,
                                                decomposed_diffusion_program,
-                                               diffusion_circuit)
+                                               diffusion_program)
 
 
 triple_hadamard = pq.Program().inst(H(2)).inst(H(1)).inst(H(0))
@@ -59,12 +59,12 @@ def test_amplify():
     desired = (triple_hadamard.dagger()
                + cz_gate
                + triple_hadamard.dagger()
-               + diffusion_circuit(qubits)
+               + diffusion_program(qubits)
                + triple_hadamard
                + cz_gate
                + triple_hadamard.dagger()
                # We take care to only add the instructions, and not redefine the gate.
-               + diffusion_circuit(qubits).instructions
+               + diffusion_program(qubits).instructions
                + triple_hadamard)
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
     assert desired == created

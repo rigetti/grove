@@ -31,7 +31,7 @@ X_GATE_LABEL = "NOT"
 HADAMARD_DIFFUSION_LABEL = "HADAMARD_DIFFUSION"
 
 
-def diffusion_circuit(qubits):
+def diffusion_program(qubits):
     diffusion_program = pq.Program()
     dim = 2 ** len(qubits)
     hadamard_diffusion_matrix = np.diag([1.0] + [-1.0] * (dim - 1))
@@ -57,25 +57,25 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter, decompose_diffusi
     :return: The amplified algorithm.
     :rtype: Program
     """
-    prog = pq.Program()
+    program = pq.Program()
 
     uniform_superimposer = pq.Program().inst([H(qubit) for qubit in qubits])
-    prog += uniform_superimposer
+    program += uniform_superimposer
     if decompose_diffusion:
-        diffusion_program = decomposed_diffusion_program(qubits)
+        diffusion = decomposed_diffusion_program(qubits)
     else:
-        diffusion_program = diffusion_circuit(qubits)
+        diffusion = diffusion_program(qubits)
     # To avoid redefining gates, we collect them before building our program.
     defined_gates = oracle.defined_gates + algorithm.defined_gates + diffusion_program.defined_gates
     for _ in range(num_iter):
-        prog += (oracle.instructions
+        program += (oracle.instructions
                  + algorithm.dagger().instructions
-                 + diffusion_program.instructions
+                 + diffusion.instructions
                  + algorithm.instructions)
     # We redefine the gates in the new program.
     for gate in defined_gates:
-        prog.defgate(gate.name, gate.matrix)
-    return prog
+        program.defgate(gate.name, gate.matrix)
+    return program
 
 
 def decomposed_diffusion_program(qubits):
@@ -95,20 +95,19 @@ def decomposed_diffusion_program(qubits):
                    The operator operates on bistrings of the form
                    ``|qubits[0], ..., qubits[-1]>``.
     """
-    diffusion_program = pq.Program()
-
+    program = pq.Program()
     if len(qubits) == 1:
-        diffusion_program.inst(Z(qubits[0]))
+        program.inst(Z(qubits[0]))
     else:
-        diffusion_program.inst([X(q) for q in qubits])
-        diffusion_program.inst(H(qubits[-1]))
-        diffusion_program.inst(RZ(-np.pi)(qubits[0]))
-        diffusion_program += (ControlledProgramBuilder()
+        program.inst([X(q) for q in qubits])
+        program.inst(H(qubits[-1]))
+        program.inst(RZ(-np.pi)(qubits[0]))
+        program += (ControlledProgramBuilder()
                               .with_controls(qubits[:-1])
                               .with_target(qubits[-1])
                               .with_operation(X_GATE)
                               .with_gate_name(X_GATE_LABEL).build())
-        diffusion_program.inst(RZ(-np.pi)(qubits[0]))
-        diffusion_program.inst(H(qubits[-1]))
-        diffusion_program.inst([X(q) for q in qubits])
-    return diffusion_program
+        program.inst(RZ(-np.pi)(qubits[0]))
+        program.inst(H(qubits[-1]))
+        program.inst([X(q) for q in qubits])
+    return program
