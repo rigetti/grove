@@ -66,7 +66,7 @@ def amplification_circuit(algorithm, oracle, qubits, num_iter, decompose_diffusi
     else:
         diffusion = diffusion_program(qubits)
     # To avoid redefining gates, we collect them before building our program.
-    defined_gates = oracle.defined_gates + algorithm.defined_gates + diffusion_program.defined_gates
+    defined_gates = oracle.defined_gates + algorithm.defined_gates + diffusion.defined_gates
     for _ in range(num_iter):
         program += (oracle.instructions
                  + algorithm.dagger().instructions
