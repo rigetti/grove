@@ -1,4 +1,4 @@
-import grove.benchmarking.utils as ut
+import grove.tomography.utils as ut
 import numpy as np
 import pytest
 import qutip as qt
@@ -86,7 +86,7 @@ def test_sample_bad_readout():
     assignment_probs /= assignment_probs.sum(axis=0)[np.newaxis, :]
     cxn = Mock()
     cxn.wf.ravel.return_value = 0.5j*np.ones(4)
-    with patch("grove.benchmarking.utils.sample_outcomes") as so:
+    with patch("grove.tomography.utils.sample_outcomes") as so:
         ut.sample_bad_readout(Program(X(0), X(1), X(0), X(1)), 10000, assignment_probs, cxn)
         assert cxn.run.called
         assert np.allclose(so.call_args[0][0], 0.25 * assignment_probs.sum(axis=1))

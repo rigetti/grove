@@ -26,6 +26,16 @@ qI = qt.qeye(2)
 
 EPS = 1e-8
 
+from matplotlib.colors import LinearSegmentedColormap
+THREE_COLOR_MAP = ['#48737F', '#FFFFFF', '#D6619E']
+rigetti_3_color_cm = LinearSegmentedColormap.from_list(
+    "Rigetti", THREE_COLOR_MAP[::-1], N=100)
+
+# TODO: Make these exact
+FIVE_COLOR_MAP = ['#C671A2', '#545253', '#85B5BE', '#ECE9CC', '#C671A2']
+rigetti_4_color_cm = LinearSegmentedColormap.from_list(
+    "Rigetti", FIVE_COLOR_MAP[::-1], N=100)
+
 
 def sample_outcomes(probs, n):
     """
@@ -106,7 +116,7 @@ def estimate_assignment_probs(bitstring_prep_histograms):
     return p
 
 
-def state_histogram(state, ax, title):
+def state_histogram(state, ax, title, xlabels=None, ylabels=None):
     """
     Visualize a quantum state in some specific axes instance and set a title.
 
@@ -115,7 +125,12 @@ def state_histogram(state, ax, title):
     :param str title: The title for the plot.
     """
 
-    qt.matrix_histogram_complex(state, limits=[-1, 1], ax=ax)
+    matrix_histogram_complex(state,
+                             limits=[0, 0.5],
+                             ax=ax,
+                             xlabels=xlabels,
+                             ylabels=ylabels,
+                             threshold=0.01)
     ax.view_init(azim=-55, elev=45)
     ax.set_title(title)
 
@@ -129,14 +144,14 @@ def plot_pauli_transfer_matrix(ptransfermatrix, ax, labels, title):
     :param labels: The labels for the operator basis states.
     :param title: The title for the plot
     """
-    im = ax.imshow(ptransfermatrix, interpolation="nearest", cmap="RdBu", vmin=-1, vmax=1)
+    im = ax.imshow(ptransfermatrix, interpolation="nearest", cmap=rigetti_3_color_cm, vmin=-1, vmax=1)
     dim = len(labels)
     plt.colorbar(im, ax=ax)
     ax.set_xticks(xrange(dim))
-    ax.set_xlabel("Input Pauli Operator")
+    ax.set_xlabel("Input Pauli Operator", fontsize=20)
     ax.set_yticks(xrange(dim))
-    ax.set_ylabel("Output Pauli Operator")
-    ax.set_title(title)
+    ax.set_ylabel("Output Pauli Operator", fontsize=20)
+    ax.set_title(title, fontsize=25)
     ax.set_xticklabels(labels, rotation=45)
     ax.set_yticklabels(labels)
     ax.grid(False)
@@ -521,6 +536,134 @@ def to_realimag(Z):
     if not is_hermitian(Z):  # pragma no coverage
         raise ValueError("Need a hermitian matrix Z")
     return spvstack([sphstack([Z.real, Z.imag]), sphstack([Z.imag.T, Z.real])]).tocsr()
+
+
+def matrix_histogram_complex(M, xlabels=None, ylabels=None,
+                             title=None, limits=None, phase_limits=None,
+                             colorbar=True, fig=None, ax=None,
+                             threshold=None):
+    """
+    Ported from qt.matrix_histogram_complex so that colors may be modified. See
+    http://qutip.org/docs/3.1.0/apidoc/functions.html#qutip.visualization.matrix_histogram_complex
+
+    Original docs:
+    Draw a histogram for the amplitudes of matrix M, using the argument
+    of each element for coloring the bars, with the given x and y labels
+    and title.
+
+    Parameters
+    ----------
+    M : Matrix of Qobj
+        The matrix to visualize
+
+    xlabels : list of strings
+        list of x labels
+
+    ylabels : list of strings
+        list of y labels
+
+    title : string
+        title of the plot (optional)
+
+    limits : list/array with two float numbers
+        The z-axis limits [min, max] (optional)
+
+    phase_limits : list/array with two float numbers
+        The phase-axis (colorbar) limits [min, max] (optional)
+
+    ax : a matplotlib axes instance
+        The axes context in which the plot will be drawn.
+
+    threshold: float (None)
+        Threshold for when bars of smaller height should be transparent. If
+        not set, all bars are colored according to the color map.
+
+    Returns
+    -------
+    fig, ax : tuple
+        A tuple of the matplotlib figure and axes instances used to produce
+        the figure.
+
+    Raises
+    ------
+    ValueError
+        Input argument is not valid.
+
+    """
+
+    if isinstance(M, qt.Qobj):
+        # extract matrix data from Qobj
+        M = M.full()
+
+    n = np.size(M)
+    xpos, ypos = np.meshgrid(range(M.shape[0]), range(M.shape[1]))
+    xpos = xpos.T.flatten() - 0.5
+    ypos = ypos.T.flatten() - 0.5
+    zpos = np.zeros(n)
+    dx = dy = 0.8 * np.ones(n)
+    Mvec = M.flatten()
+    dz = abs(Mvec)
+
+    # make small numbers real, to avoid random colors
+    idx, = np.where(abs(Mvec) < 0.001)
+    Mvec[idx] = abs(Mvec[idx])
+
+    if phase_limits:  # check that limits is a list type
+        phase_min = phase_limits[0]
+        phase_max = phase_limits[1]
+    else:
+        phase_min = -np.pi
+        phase_max = np.pi
+
+    norm = mpl.colors.Normalize(phase_min, phase_max)
+    cmap = rigetti_4_color_cm
+
+    colors = cmap(norm(np.angle(Mvec)))
+    if threshold is not None:
+        colors[:, 3] = 1 * (dz > threshold)
+
+    if ax is None:
+        fig = plt.figure()
+        ax = Axes3D(fig, azim=-35, elev=35)
+
+    ax.bar3d(xpos, ypos, zpos, dx, dy, dz, color=colors)
+
+    # TODO: Set title font size
+    if title and fig:
+        ax.set_title(title)
+
+    # x axis
+    # TODO: Set xlabel font size
+    ax.axes.w_xaxis.set_major_locator(plt.IndexLocator(1, -0.5))
+    if xlabels:
+        ax.set_xticklabels(xlabels)
+    ax.tick_params(axis='x', labelsize=12)
+
+    # y axis
+    # TODO: Set ylabel font size
+    ax.axes.w_yaxis.set_major_locator(plt.IndexLocator(1, -0.5))
+    if ylabels:
+        ax.set_yticklabels(ylabels)
+    ax.tick_params(axis='y', labelsize=12)
+
+    # z axis
+    # TODO: Set zlabel font size
+    if limits and isinstance(limits, list):
+        ax.set_zlim3d(limits)
+    else:
+        ax.set_zlim3d([0, 1])  # use min/max
+    # ax.set_zlabel('abs')
+
+    # color axis
+    if colorbar:
+        cax, kw = mpl.colorbar.make_axes(ax, shrink=.75, pad=.0)
+        cb = mpl.colorbar.ColorbarBase(cax, cmap=cmap, norm=norm)
+        cb.set_ticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
+        cb.set_ticklabels(
+            (r'$-\pi$', r'$-\pi/2$', r'$0$', r'$\pi/2$', r'$\pi$'))
+        cb.set_label('arg')
+
+    return fig, ax
 
 # using the Z-basis for POVM terms allows to easily identify multi-body contributions
 # Z_i Z_j ... Z_k to the readout signal. This should lead to sparsity vs the readout signal index

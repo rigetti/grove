@@ -62,14 +62,15 @@ import cvxpy
 import matplotlib.pyplot as plt
 import numpy as np
 import qutip as qt
-from grove.benchmarking.utils import qI, qX, qY
+from grove.tomography.utils import qI, qX, qY
 from pyquil.gates import I, RX, RY
 from scipy.sparse import (vstack as spvstack, csr_matrix, coo_matrix, kron as spkron)
 
-import grove.benchmarking.utils as ut
+import grove.tomography.utils as ut
 from pyquil.quil import Program, Gate
 from pyquil.quilbase import unpack_qubit, Gate
 from itertools import product as cartesian_product
+
 
 
 def default_rotations_1q(q):
@@ -124,14 +125,19 @@ def process_tomography_programs(proc, qubits=None,
                                 pre_rotation_generator=default_rotations,
                                 post_rotation_generator=default_rotations):
     """
-    Yield tomographic sequences that wrap a process encoded by a QUIL program `proc`
+    Generator that yields tomographic sequences that wrap a process encoded by a QUIL program `proc`
     in tomographic rotations on the specified `qubits`.
 
     If `qubits is None`, it assumes all qubits in the program should be
     tomographically rotated.
+
+    :param Program proc: A Quil program
+    :param list|NoneType qubits: The specific qubits for which to generate the tomographic sequences
+    :param pre_rotation_generator:
+    :param post_rotation_generator:
     """
     if qubits is None:
-        qubits = proc.extract_qubits()
+        qubits = proc.get_qubits()
     for tp_pre in pre_rotation_generator(*qubits):
         for tp_post in post_rotation_generator(*qubits):
             p = Program()
@@ -421,7 +427,11 @@ class StateTomography(object):
             _log.warn("Problem did not converge to optimal solution. "
                       "Solver settings: {}".format(settings.solver_kwargs))
 
-        return StateTomography(np.array(rho_m.value).ravel(), pauli_basis, settings)
+        tomo = StateTomography(np.array(rho_m.value).ravel(), pauli_basis, settings)
+        # TODO: Decide if pi_basis should be passed as argument to StateTomography
+        # Set as attribute for use in setting state tomography plot labels
+        tomo.pi_basis = pi_basis
+        return tomo
 
     def __init__(self, rho_coeffs, pauli_basis, settings):
         """
@@ -454,7 +464,14 @@ class StateTomography(object):
 
         :param matplotlib.Axes ax: A matplotlib Axes object to plot into.
         """
-        return ut.state_histogram(self.rho_est, ax, "Estimated State")
+        title = "Estimated state"
+        if hasattr(self, 'fidelity_vs_qvm'):
+            title += r', $Fidelity={:1.2g}$'.format(self.fidelity_vs_qvm)
+        return ut.state_histogram(self.rho_est,
+                                  ax,
+                                  title,
+                                  xlabels=list(self.pi_basis.labels),
+                                  ylabels=list(self.pi_basis.labels))
 
     def plot(self):
         """
@@ -633,7 +650,13 @@ class ProcessTomography(object):
 
         :param matplotlib.Axes ax: A matplotlib Axes object to plot into.
         """
-        ut.plot_pauli_transfer_matrix(self.R_est, ax, self.pauli_basis.labels, "Estimated Process")
+        title = "Estimated process"
+        if hasattr(self, 'fidelity_vs_qvm'):
+            title += r', $F_{{\rm avg}}={:1.2g}$'.format(self.fidelity_vs_qvm)
+        ut.plot_pauli_transfer_matrix(self.R_est,
+                                      ax,
+                                      self.pauli_basis.labels,
+                                      title)
 
     def plot(self):
         """
@@ -653,3 +676,192 @@ TOMOGRAPHY_GATES = OrderedDict([
     (RY(np.pi/2), (-1j * np.pi / 4 * qY).expm()),
     (RX(np.pi), (-1j * np.pi / 2 * qX).expm())
 ])
+
+
+def bitstring_to_int(bitstring):
+    """Convert a binary bitstring into the corresponding unsigned integer.
+    """
+    ret = 0
+    for b in bitstring:
+        ret = (ret << 1) | (int(b) & 1)
+    return ret
+
+
+def wait_until_done(result):
+    if isinstance(result, list):
+        return result
+    while True:
+        if result.is_done():
+            return result.result['result']
+        time.sleep(.1)
+
+
+def sample_assignment_probs(qubits, nsamples, cxn):
+    nq = len(qubits)
+    d = 2 ** nq
+    hists = []
+    print "Sampling bitstring preparations:"
+    # collect readout prep data
+    jobs = []
+    for jj, p in enumerate(basis_state_preps(*qubits)):
+        jobs.append(cxn.run_and_measure(p, qubits, nsamples))
+
+    for jj, job in enumerate(jobs):
+        print ".",
+        results = wait_until_done(job)
+        idxs = map(bitstring_to_int, results)
+        hists.append(make_histogram(idxs, d))
+    print "done."
+    return estimate_assignment_probs(hists)
+
+
+def do_state_tomography(preparation_program, nsamples, cxn, qubits=None,
+                        assignment_probs=None):
+    if qubits is None:
+        qubits = sorted(preparation_program.extract_qubits())
+
+    nq = len(qubits)
+    d = 2 ** nq
+
+    if assignment_probs is None:
+        assignment_probs = sample_assignment_probs(qubits, nsamples, cxn)
+
+    tomo_seq = list(state_tomography_programs(preparation_program, qubits))
+    histograms = np.zeros((len(tomo_seq), d))
+    print "Sampling tomographic measurements:"
+    jobs = []
+    for jj, p in enumerate(tomo_seq):
+        jobs.append(cxn.run_and_measure(p, qubits, nsamples))
+
+    for jj, job in enumerate(jobs):
+        print ".",
+        results = wait_until_done(job)
+        idxs = map(bitstring_to_int, results)
+        histograms[jj] = make_histogram(idxs, d)
+    print "done."
+
+    povm = make_diagonal_povm(POVM_PI_BASIS ** nq, assignment_probs)
+    channel_ops = list(default_channel_ops(nq))
+
+    state_tomo = StateTomography.estimate_from_ssr(histograms, povm,
+                                                   channel_ops,
+                                                   DEFAULT_STATE_TOMO_SETTINGS)
+
+    return state_tomo, assignment_probs, histograms
+
+
+def do_state_tomography_with_qvm_reference(preparation_program,
+                                           nsamples,
+                                           qpu=None,
+                                           qvm=None,
+                                           qubits=None,
+                                           assignment_probs=None):
+    """
+    Method to perform both a QPU and QVM state tomography, and use the latter as
+    as reference to calculate the fidelity of the former.
+
+    :param Program preparation_program: Program to execute.
+    :param int nsamples: Number of samples to take for the program.
+    :param QPUConnection qpu: QPUConnection on which to run the program.
+    :param QVMConnection qvm: QVMConnection on which to run the reference program.
+    :param list qubits: List of qubits for the program.
+    :param AssignmentProbabilities assignment_probs: Optional assignment probabilities
+    to use in the tomography analysis.
+    :return: The state tomogram
+    :rtype: StateTomography
+    """
+    if qpu is None:
+        print("Please provide a QPU connection.")
+        return None
+
+    print("Running state tomography on the QPU...")
+    tomography_qpu, _, _ = do_state_tomography(preparation_program, nsamples, qpu, qubits)
+    print("State tomography completed.")
+
+    if qvm is None:
+        print("Warning: Cannot report state fidelity without a QVM on which to \
+              calculate the ideal state.")
+        return tomography_qpu
+
+    print("Running state tomography on the QVM for reference...")
+    tomography_qvm, _, _ = do_state_tomography(preparation_program, nsamples, qvm, qubits)
+    print("State tomography completed.")
+
+    # Used for supplying a reference unitary for calculating the fidelity, in plotting
+    tomography_qpu.fidelity_vs_qvm = tomography_qpu.fidelity(tomography_qvm.rho_est)
+    return tomography_qpu
+
+
+def do_process_tomography(process, nsamples, cxn, qubits=None,
+                          assignment_probs=None):
+    if qubits is None:
+        qubits = sorted(process.extract_qubits())
+
+    nq = len(qubits)
+    d = 2 ** nq
+
+    #
+    if assignment_probs is None:
+        assignment_probs = sample_assignment_probs(qubits, nsamples, cxn)
+
+    tomo_seq = list(process_tomography_programs(process, qubits))
+    histograms = np.zeros((len(tomo_seq), d))
+    print "Sampling tomographic measurements:"
+    for jj, p in enumerate(tomo_seq):
+        print ".",
+        results = wait_until_done(cxn.run_and_measure(p, qubits, nsamples))
+
+        idxs = map(bitstring_to_int, results)
+        histograms[jj] = make_histogram(idxs, d)
+    print "done."
+
+    povm = make_diagonal_povm(POVM_PI_BASIS ** nq, assignment_probs)
+    channel_ops = list(default_channel_ops(nq))
+    histograms = histograms.reshape((len(channel_ops), len(channel_ops), d))
+    process_tomo = ProcessTomography.estimate_from_ssr(histograms, povm,
+                                                       channel_ops, channel_ops,
+                                                       DEFAULT_PROCESS_TOMO_SETTINGS)
+
+    return process_tomo, assignment_probs, histograms
+
+
+def do_process_tomography_with_qvm_reference(process,
+                                             nsamples,
+                                             qpu=None,
+                                             qvm=None,
+                                             qubits=None,
+                                             assignment_probs=None):
+    """
+    Method to perform both a QPU and QVM process tomography, and use the latter as
+    as reference to calculate the fidelity of the former.
+
+    :param Program process: Process to execute.
+    :param int nsamples: Number of samples to take for the program.
+    :param QPUConnection qpu: QPUConnection on which to run the program.
+    :param QVMConnection qvm: QVMConnection on which to run the reference program.
+    :param list qubits: List of qubits for the program.
+    :param AssignmentProbabilities assignment_probs: Optional assignment probabilities
+    to use in the tomography analysis.
+    :return: The process tomogram
+    :rtype: ProcessTomography
+    """
+    if qpu is None:
+        print("Please provide a QPU connection.")
+        return None
+
+    print("Running process tomography on the QPU...")
+    tomography_qpu, _, _ = do_process_tomography(process, nsamples, qpu, qubits)
+    print("Process tomography completed.")
+
+    if qvm is None:
+        print("Warning: Cannot report process fidelity without a QVM on which to \
+              calculate the ideal process.")
+        return tomography_qpu
+
+    print("Running process tomography on the QVM for reference...")
+    tomography_qvm, _, _ = do_process_tomography(process, nsamples, qvm, qubits)
+    print("Process tomography completed.")
+
+    # Used for supplying a reference unitary for calculating the fidelity, in plotting
+    tomography_qpu.fidelity_vs_qvm = tomography_qpu.avg_gate_fidelity(tomography_qvm.R_est)
+    return tomography_qpu

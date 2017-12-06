@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 import qutip as qt
-from grove.benchmarking.tomography import (DEFAULT_STATE_TOMO_SETTINGS,
-                                           DEFAULT_PROCESS_TOMO_SETTINGS, StateTomography,
-                                           ProcessTomography, state_tomography_programs,
-                                           process_tomography_programs,
-                                           _SDP_SOLVER, TOMOGRAPHY_GATES, default_channel_ops)
-from grove.benchmarking.utils import (
+from grove.tomography.analysis import (DEFAULT_STATE_TOMO_SETTINGS,
+                                       DEFAULT_PROCESS_TOMO_SETTINGS, StateTomography,
+                                       ProcessTomography, state_tomography_programs,
+                                       process_tomography_programs,
+                                       _SDP_SOLVER, TOMOGRAPHY_GATES, default_channel_ops)
+from grove.tomography.utils import (
     POVM_PI_BASIS, make_diagonal_povm, make_histogram, sample_bad_readout, basis_state_preps,
     estimate_assignment_probs)
 from mock import patch, Mock
@@ -46,7 +46,7 @@ def test_state_tomography(cxn):
                     CZ(0, 1),
                     H(1)])
 
-    nq = len(prog.extract_qubits())
+    nq = len(prog.get_qubits())
     d = 2 ** nq
 
     tomo_seq = list(state_tomography_programs(prog))
@@ -78,8 +78,8 @@ def test_state_tomography(cxn):
 
         assert abs(1-state_tomo.fidelity(rho_ideal)) < 1e-2
 
-    with patch("grove.benchmarking.utils.state_histogram"), \
-         patch("grove.benchmarking.tomography.plt"):
+    with patch("grove.tomography.utils.state_histogram"), \
+         patch("grove.tomography.tomography.plt"):
         state_tomo.plot()
 
 
@@ -127,8 +127,8 @@ def test_process_tomography(cxn):
 
     assert abs(1-process_tomo.avg_gate_fidelity(qt.to_super(U_ideal))) < 1e-2
 
-    with patch("grove.benchmarking.utils.plot_pauli_transfer_matrix"), \
-         patch("grove.benchmarking.tomography.plt") as mplt:
+    with patch("grove.tomography.utils.plot_pauli_transfer_matrix"), \
+         patch("grove.tomography.tomography.plt") as mplt:
         mplt.subplots.return_value = Mock(), Mock()
         process_tomo.plot()
 
