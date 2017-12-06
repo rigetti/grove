@@ -26,8 +26,8 @@ start the variational-quantum-eigensolver loop in order to find  the beta, gamma
 ```
 import numpy as np
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-import pyquil.forest as qvm
-qvm_connection = qvm.Connection()
+import pyquil.api as api
+qvm_connection = api.QVMConnection()
 ```
 
 ```

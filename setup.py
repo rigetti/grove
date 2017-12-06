@@ -29,10 +29,11 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
-        'pyquil >= 1.4.0',
+        'pyquil >= 1.5.1',
         'mock',
         'networkx',
-        'matplotlib'
+        'matplotlib',
+        'funcsigs'
     ],
     setup_requires=['pytest-runner'],
     tests_require=[
