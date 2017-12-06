@@ -1,19 +1,19 @@
 import numpy as np
 import pytest
 import qutip as qt
-from grove.tomography.analysis import (DEFAULT_STATE_TOMO_SETTINGS,
-                                       DEFAULT_PROCESS_TOMO_SETTINGS, StateTomography,
-                                       ProcessTomography, state_tomography_programs,
-                                       process_tomography_programs,
-                                       _SDP_SOLVER, TOMOGRAPHY_GATES, default_channel_ops)
+from grove.tomography.tomography import (DEFAULT_STATE_TOMO_SETTINGS,
+                                         DEFAULT_PROCESS_TOMO_SETTINGS, StateTomography,
+                                         ProcessTomography, state_tomography_programs,
+                                         process_tomography_programs,
+                                         _SDP_SOLVER, TOMOGRAPHY_GATES, default_channel_ops)
 from grove.tomography.utils import (
     POVM_PI_BASIS, make_diagonal_povm, make_histogram, sample_bad_readout, basis_state_preps,
     estimate_assignment_probs)
 from mock import patch, Mock
 from pyquil.gates import CNOT, H, CZ
 from pyquil.quil import Program
-from referenceqvm.api import SyncConnection
-from referenceqvm.gates import gate_matrix
+from pyquil.api.qvm import QVMConnection
+
 
 BAD_1Q_READOUT = np.array([[.9, .15],
                            [.1, .85]])
@@ -22,9 +22,7 @@ BAD_2Q_READOUT = np.kron(BAD_1Q_READOUT, BAD_1Q_READOUT)
 
 @pytest.fixture
 def cxn():
-    custom_gateset = gate_matrix.copy()
-    custom_gateset.update({k: v.data.toarray() for k, v in TOMOGRAPHY_GATES.items()})
-    return SyncConnection(gate_set=custom_gateset)
+    return QVMConnection()
 
 
 def ghz_circuit(N):
@@ -71,9 +69,8 @@ def test_state_tomography(cxn):
         state_tomo = StateTomography.estimate_from_ssr(histograms, povm, channel_ops,
                                                        settings)
 
-
-        cxn.run(prog)
-        state = qt.Qobj(cxn.wf, dims=[[2, 2], [1, 1]])
+        wf = cxn.wavefunction(prog)
+        state = qt.Qobj(wf.amplitudes, dims=[[2, 2], [1, 1]])
         rho_ideal = state * state.dag()
 
         assert abs(1-state_tomo.fidelity(rho_ideal)) < 1e-2
@@ -93,7 +90,7 @@ def test_process_tomography(cxn):
                     CZ(0, 1),
                     H(1)])
 
-    nq = len(prog.extract_qubits())
+    nq = len(prog.get_qubits())
     d = 2 ** nq
 
     tomo_seq = list(process_tomography_programs(prog))

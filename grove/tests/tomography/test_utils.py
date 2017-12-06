@@ -1,3 +1,4 @@
+import grove
 import grove.tomography.utils as ut
 import numpy as np
 import pytest
@@ -85,10 +86,9 @@ def test_sample_bad_readout():
     assignment_probs = .3*np.random.rand(4, 4) + np.eye(4)
     assignment_probs /= assignment_probs.sum(axis=0)[np.newaxis, :]
     cxn = Mock()
-    cxn.wf.ravel.return_value = 0.5j*np.ones(4)
+    cxn.wavefunction.return_value.amplitudes = 0.5j * np.ones(4)
     with patch("grove.tomography.utils.sample_outcomes") as so:
         ut.sample_bad_readout(Program(X(0), X(1), X(0), X(1)), 10000, assignment_probs, cxn)
-        assert cxn.run.called
         assert np.allclose(so.call_args[0][0], 0.25 * assignment_probs.sum(axis=1))
 
 
@@ -101,7 +101,8 @@ def test_estimate_assignment_probs():
 
 def test_visualization():
     ax = Mock()
-    with patch("qutip.matrix_histogram_complex", spec=qt.matrix_histogram_complex) as mhc:
+    with patch("grove.tomography.utils.matrix_histogram_complex",
+               spec=grove.tomography.utils.matrix_histogram_complex) as mhc:
         ut.state_histogram(ut.GS, ax, "test")
     assert mhc.called
     assert ax.view_init.called

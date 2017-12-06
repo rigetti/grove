@@ -9,8 +9,10 @@ from collections import OrderedDict, namedtuple
 from itertools import product as cartesian_product
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import qutip as qt
+from mpl_toolkits.mplot3d import Axes3D
 from pyquil.quil import Program
 from pyquil.gates import I, X
 from scipy.sparse import hstack as sphstack, vstack as spvstack
@@ -31,7 +33,6 @@ THREE_COLOR_MAP = ['#48737F', '#FFFFFF', '#D6619E']
 rigetti_3_color_cm = LinearSegmentedColormap.from_list(
     "Rigetti", THREE_COLOR_MAP[::-1], N=100)
 
-# TODO: Make these exact
 FIVE_COLOR_MAP = ['#C671A2', '#545253', '#85B5BE', '#ECE9CC', '#C671A2']
 rigetti_4_color_cm = LinearSegmentedColormap.from_list(
     "Rigetti", FIVE_COLOR_MAP[::-1], N=100)
@@ -67,6 +68,18 @@ def basis_state_preps(*qubits):
         yield p
 
 
+def basis_labels(n):
+    """
+    Generate a list of basis labels for `n` qubits:
+
+        ['00..00', '00..01', ..., '11..11']
+
+    :param n:
+    :return: A list of strings of length n that enumerate the n-qubit bitstrings
+    """
+    return ["".join(labels) for labels in itertools.product('01', repeat=n)]
+
+
 def sample_bad_readout(program, n, assignment_probs, cxn):
     """
     Generate `n` samples of measuring all outcomes of a QUIL `program`
@@ -79,8 +92,8 @@ def sample_bad_readout(program, n, assignment_probs, cxn):
     :param reference_qvm.api.SyncConnection cxn: the QVM connection.
     :return:
     """
-    cxn.run(program)
-    return sample_outcomes(assignment_probs.dot(abs(cxn.wf.ravel())**2), n)
+    wf = cxn.wavefunction(program)
+    return sample_outcomes(assignment_probs.dot(abs(wf.amplitudes.ravel())**2), n)
 
 
 def make_histogram(samples, ksup):
@@ -333,7 +346,7 @@ class OperatorBasis(object):
         Compute the transfer matrix :math:`R_{jk} = \tr[P_j sop(P_k)]`.
 
         :param qutip.Qobj sop: The superoperator to transform.
-        :return: The transfer matrix in dense or sparse form.
+        :return: The transfer matrix in sparse form.
         :rtype: scipy.sparse.csr_matrix
         """
         if not self.is_orthonormal():  # pragma no coverage
@@ -665,9 +678,11 @@ def matrix_histogram_complex(M, xlabels=None, ylabels=None,
 
     return fig, ax
 
+
 # using the Z-basis for POVM terms allows to easily identify multi-body contributions
 # Z_i Z_j ... Z_k to the readout signal. This should lead to sparsity vs the readout signal index
 POVM_Z_BASIS = OperatorBasis([("I", qI), ("Z", qZ)])
+
 
 # using the Pi-basis for POVM terms allows to easily associate the preparations with individual
 # multi-qubit projectors
