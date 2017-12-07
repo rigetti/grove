@@ -1,12 +1,14 @@
-import grove
-import grove.tomography.utils as ut
-import numpy as np
 import pytest
-import qutip as qt
 from mock import Mock, patch
+
 from pyquil.gates import X
 from pyquil.quil import Program
+import numpy as np
 from scipy.sparse import csr_matrix
+import qutip as qt
+
+import grove.tomography.utils as ut
+import grove
 
 
 def test_operator_basis():
@@ -213,3 +215,10 @@ def test_povm():
         confusion_rate_matrix = np.array([[.8, -.1],
                                      [.2, 1.1]])
         povm = ut.make_diagonal_povm(pi_basis, confusion_rate_matrix)
+
+
+def test_basis_labels():
+    for num_qubits, desired_labels in [(1, ['0', '1']),
+                                       (2, ['00', '01', '10', '11'])]:
+        generated_labels = ut.basis_labels(num_qubits)
+        assert desired_labels == generated_labels

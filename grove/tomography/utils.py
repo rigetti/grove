@@ -70,7 +70,8 @@ def basis_state_preps(*qubits):
 
 def basis_labels(n):
     """
-    Generate a list of basis labels for `n` qubits:
+    Generate a list of basis labels for `n` qubits, ordered from least to greatest, in big-endian
+     format:
 
         ['00..00', '00..01', ..., '11..11']
 

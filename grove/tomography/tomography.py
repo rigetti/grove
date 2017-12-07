@@ -26,6 +26,7 @@ from grove.tomography.utils import qI, qX, qY
 MAX_QUBITS_STATE_TOMO = 4
 MAX_QUBITS_PROCESS_TOMO = MAX_QUBITS_STATE_TOMO // 2
 
+
 def default_rotations_1q(q):
     """
     Generate the QUIL programs for tomographic pre- and post-rotations
@@ -167,6 +168,7 @@ class TomographySettings(_TomographySettings):
     :param dict solver_kwargs: Keyword arguments to be passed to the convex solver.
     """
     pass
+
 
 DEFAULT_SOLVER_KWARGS = dict(verbose=False, max_iters=20000)
 
