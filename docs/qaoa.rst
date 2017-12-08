@@ -363,7 +363,7 @@ looks like this:
     X 0
     PHASE(gamma{i}/2) 0
     CNOT 0 1
-    RZ(gamma{i}/2) 1
+    RZ(gamma{i}) 1
     CNOT 0 1
 
 Executing the Quil code will generate the 
