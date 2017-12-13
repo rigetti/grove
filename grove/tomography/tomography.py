@@ -28,6 +28,8 @@ import logging
 from collections import namedtuple, OrderedDict
 from itertools import product as cartesian_product
 
+from pyquil.quilbase import Pragma
+
 try:
     # Python 2
     from itertools import izip
@@ -196,6 +198,7 @@ def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomogr
     tomo_seq = list(program_generator(target_program, qubits))
     histograms = np.zeros((len(tomo_seq), dimension))
     for i, tomo_prog in izip(ut.TRANGE(len(tomo_seq)), tomo_seq):
+        tomo_prog = Program(Pragma("PRESERVE_BLOCK")) + tomo_prog
         results = cxn.run_and_measure(tomo_prog, qubits, nsamples)
         idxs = list(map(bitlist_to_int, results))
         histograms[i] = ut.make_histogram(idxs, dimension)
