@@ -455,7 +455,7 @@ and provides some example applications of grove's tomography module.
 
 .. parsed-literal::
 
-    Could not find online device, defaulting to QVM
+    Found online device 19Q-Acorn, making QPUConnection
 
 .. _example_code:
 
