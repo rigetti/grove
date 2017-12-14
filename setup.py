@@ -29,11 +29,14 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
-        'cython',
+        'cython==0.24.1',
         'pyquil >= 1.4.0',
         'mock',
         'networkx',
-        'matplotlib'
+        'cvxpy',
+        'scs==1.2.6',
+        'matplotlib',
+        'qutip==4.1'
     ],
     setup_requires=['pytest-runner'],
     tests_require=[
