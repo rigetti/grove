@@ -12,7 +12,7 @@ from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
 def initialize_system(ancilla_qubit):
     """Prepare initial state
 
-    :param list ancilla_qubit: Qubit of ancilla register.
+    :param int ancilla_qubit: Qubit of ancilla register.
     :return: Quil program to initialize this system.
     :rtype: Program
     """
