@@ -9,6 +9,10 @@ echo "Converting notebooks"
 jupyter nbconvert --to script *.ipynb
 
 echo "Running notebooks"
-python *.py
+for f in *.py;
+do
+echo "Running $f";
+ipython $f;
+done
 
 popd
