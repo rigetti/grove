@@ -30,7 +30,7 @@ setup(
         'numpy',
         'scipy',
         'pyquil >= 1.6.1',
-        'funcsigs'
+        'funcsigs',
         'cython==0.24.1',
         'mock',
         'networkx',
