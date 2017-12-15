@@ -23,6 +23,7 @@ def initialize_system(ancilla_qubit):
 
     return p_ic
 
+
 def phase_kickback(f_h, precision):
     """Encode f_h into ancilla eigenvalue and kickback to input registers
 
@@ -38,6 +39,7 @@ def phase_kickback(f_h, precision):
     p_kickback = phase_estimation(U, precision)
 
     return p_kickback
+
 
 def gradient_estimator(f_h, ancilla_qubit):
     """Gradient estimation via Jordan's algorithm
@@ -59,6 +61,7 @@ def gradient_estimator(f_h, ancilla_qubit):
     p_gradient = p_ic + p_kickback
 
     return p_gradient
+
 
 def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     """Estimate the gradient using function evaluation at perturbation, h

@@ -24,6 +24,7 @@ def binary_to_real(number):
 
     return deci
 
+
 def measurements_to_bf(measurements):
     """Convert measurements into gradient binary fraction
 
