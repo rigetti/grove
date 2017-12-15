@@ -63,7 +63,7 @@ def gradient_estimator(f_h, ancilla_qubit):
     return p_gradient
 
 
-def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
+def estimate_gradient(f_h, precision, n_measurements=50, cxn=None):
     """Estimate the gradient using function evaluation at perturbation, h
 
     :param float f_h: Oracle output at perturbation h.
@@ -83,7 +83,7 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=False):
     p_gradient = gradient_estimator(f_h, ancilla_qubit)
 
     # run gradient program
-    if not cxn:
+    if cxn is None:
         from pyquil.api import QVMConnection
         cxn = QVMConnection()
     measurements = cxn.run(p_gradient, input_qubits, n_measurements)
