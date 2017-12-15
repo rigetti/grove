@@ -29,8 +29,9 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
+        'pyquil >= 1.6.1',
+        'funcsigs',
         'cython==0.24.1',
-        'pyquil >= 1.4.0',
         'mock',
         'networkx',
         'cvxpy',

@@ -34,8 +34,8 @@ To test your installation and get going we can run QAOA to solve MAX-CUT on a sq
 
     import numpy as np
     from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-    import pyquil.api as qvm
-    qvm_connection = qvm.SyncConnection()
+    import pyquil.api as api
+    qvm_connection = api.QVMConnection()
 
 Next define the graph on which to run MAX-CUT
 
@@ -61,7 +61,7 @@ quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate t
     t = np.hstack((betas, gammas))
     param_prog = inst.get_parameterized_program()
     prog = param_prog(t)
-    wf, _ = qvm_connection.wavefunction(prog)
+    wf = qvm_connection.wavefunction(prog)
     wf = wf.amplitudes
 
 ``wf`` is now a numpy array of complex-valued amplitudes for each computational
@@ -71,7 +71,7 @@ calculate the probability.
 .. code-block:: python
 
     for state_index in range(2**inst.n_qubits):
-        print inst.states[state_index], np.conj(wf[state_index])*wf[state_index]
+        print(inst.states[state_index], np.conj(wf[state_index])*wf[state_index])
 
 You should then see that the algorithm converges on the expected solutions of 0101 and 1010! ::
 

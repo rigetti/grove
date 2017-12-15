@@ -67,7 +67,7 @@ def test_get_angles():
 
 
 def test_get_string():
-    with patch('pyquil.api.SyncConnection') as cxn:
+    with patch('pyquil.api.QVMConnection') as cxn:
         cxn.run_and_measure.return_value = [[1] * 10]
         qaoa = QAOA(cxn, n_qubits=1)
         prog = Program()
