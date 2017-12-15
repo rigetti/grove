@@ -1,7 +1,5 @@
 import numpy as np
-import pytest
 from mock import patch
-import pyquil.quil as pq
 
 from grove.alpha.jordan_gradient.jordan_gradient import estimate_gradient
 
