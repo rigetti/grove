@@ -91,7 +91,8 @@ If the installation of the optional requirements fails, you can manually
 install the individual packages as
 
 ```
-pip install cython==0.24.1 scs==1.2.6 qutip==4.1
+pip install cython==0.24.1 scs==1.2.6
+pip install qutip==4.1 cvxpy
 ```
 These are not the most recent versions but they are the only ones that
 have consistently worked for us across different platforms and python
