@@ -34,14 +34,15 @@ def phase_kickback(f_h, precision):
     """
 
     # encode f_h / 2 into CPHASE gate
-    U = np.array([[np.exp(-1.0j * np.pi * f_h), 0],
-                  [0, np.exp(-1.0j * np.pi * f_h)]])
+    phase_factor = np.exp(-1.0j * np.pi * f_h)
+    U = np.array([[phase_factor, 0],
+                  [0, phase_factor]])
     p_kickback = phase_estimation(U, precision)
 
     return p_kickback
 
 
-def gradient_estimator(f_h, ancilla_qubit):
+def gradient_program(f_h, ancilla_qubit):
     """Gradient estimation via Jordan's algorithm
     10.1103/PhysRevLett.95.050501
 
@@ -80,7 +81,7 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=None):
 
     # generate gradient program
     perturbation_sign = np.sign(f_h)
-    p_gradient = gradient_estimator(f_h, ancilla_qubit)
+    p_gradient = gradient_program(f_h, ancilla_qubit)
 
     # run gradient program
     if cxn is None:
