@@ -6,12 +6,13 @@ from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
 
 
 def test_binary_to_real():
-    decimal_rep = 0.345703125
-    binary_rep = 0.010110001
+    for sign in [1, -1]:
+        decimal_rep = sign * 0.345703125
+        binary_rep = sign * 0.010110001
 
-    decimal_convert = binary_to_real(binary_rep)
+        decimal_convert = binary_to_real(binary_rep)
 
-    assert(np.isclose(decimal_rep, decimal_convert))
+        assert(np.isclose(decimal_rep, decimal_convert))
 
 
 def test_measurements_to_bf():
