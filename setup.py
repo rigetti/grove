@@ -31,7 +31,6 @@ setup(
         'scipy',
         'pyquil >= 1.6.1',
         'funcsigs',
-        'pyquil >= 1.4.0',
         'mock',
         'networkx',
         'matplotlib'
