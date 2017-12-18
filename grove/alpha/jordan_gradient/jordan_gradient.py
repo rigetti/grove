@@ -88,8 +88,6 @@ def estimate_gradient(f_h, precision, n_measurements=50, cxn=None):
         from pyquil.api import QVMConnection
         cxn = QVMConnection()
     measurements = cxn.run(p_gradient, input_qubits, n_measurements)
-    if isinstance(measurements, str):
-        raise ValueError(measurements)
 
     # summarize measurements
     bf_estimate = perturbation_sign * measurements_to_bf(measurements)
