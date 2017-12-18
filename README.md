@@ -47,6 +47,8 @@ Dependencies
 * Matplotlib (useful for plotting)
 * pytest (optional, for development testing)
 * mock (optional, for development testing)
+* cvxpy (optional, for tomography, see below)
+* qutip (optional, for tomography, see below)
 
 Forest and pyQuil
 -----------------
@@ -71,6 +73,30 @@ configured to run with a quantum virtual machine (QVM) or real quantum processor
 (QPU) hosted on the  [Rigetti Forest](forest.rigetti.com), which requires an API key.
 See the pyQuil [docs](http://pyquil.readthedocs.io/en/latest/index.html) for
 instructions on how to do this.
+
+Installing the dependencies for Quantum Tomography
+--------------------------------------------------
+
+Quantum tomography relies on the external packages qutip and and cvxpy,
+which can be somewhat tricky to install.
+
+You can first attempt to just run
+```
+pip install -r requirements.txt
+pip install -r optional-requirements.txt
+pip install quantum-grove
+```
+
+If the installation of the optional requirements fails, you can manually
+install the individual packages as
+
+```
+pip install cython==0.24.1 scs==1.2.6 qutip==4.1
+```
+These are not the most recent versions but they are the only ones that
+have consistently worked for us across different platforms and python
+versions.
+
 
 Building the Docs
 -----------------

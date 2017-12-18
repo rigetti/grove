@@ -17,9 +17,7 @@
 import logging
 
 import numpy as np
-import cvxpy
 import matplotlib.pyplot as plt
-import qutip as qt
 from scipy.sparse import csr_matrix, coo_matrix
 from pyquil.quil import Program
 
@@ -29,6 +27,19 @@ import grove.tomography.utils as ut
 import grove.tomography.operator_utils as o_ut
 
 _log = logging.getLogger(__name__)
+
+try:
+    import qutip as qt
+except ImportError:
+    qt = None
+    _log.error("Could not import qutip. Tomography tools will not function.")
+
+try:
+    import cvxpy
+except ImportError:
+    cvxpy = None
+    _log.error("Could not import cvxpy. Tomography tools will not function.")
+
 UNIT_TRACE = 'unit_trace'
 POSITIVE = 'positive'
 DEFAULT_STATE_TOMO_SETTINGS = TomographySettings(

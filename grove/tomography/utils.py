@@ -26,7 +26,6 @@ from itertools import product as cartesian_product
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import qutip as qt
 import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
@@ -43,6 +42,12 @@ except ImportError:
     izip = zip
 
 _log = logging.getLogger(__name__)
+
+try:
+    import qutip as qt
+except ImportError:
+    qt = None
+    _log.error("Could not import qutip. Tomography tools will not function.")
 
 THREE_COLOR_MAP = ['#48737F', '#FFFFFF', '#D6619E']
 rigetti_3_color_cm = LinearSegmentedColormap.from_list("Rigetti", THREE_COLOR_MAP[::-1], N=100)

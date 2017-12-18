@@ -24,8 +24,4 @@ sphinx_rtd_theme
 
 # tomography
 # You may have to install numpy separately first before installing cvxpy and cython before qutip
-cython==0.24.1
-qutip==4.1
-cvxpy
-scs==1.2.6
 tqdm

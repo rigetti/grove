@@ -1,0 +1,4 @@
+cython
+qutip
+cvxpy
+scs

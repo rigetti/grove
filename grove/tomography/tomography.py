@@ -37,9 +37,8 @@ except ImportError:
     # Python 3
     izip = zip
 
-import cvxpy
 import numpy as np
-import qutip as qt
+
 from pyquil.gates import I, RX, RY
 from pyquil.quil import Program
 
@@ -48,6 +47,20 @@ import grove.tomography.operator_utils as o_ut
 from grove.tomography.utils import QI, QX, QY, bitlist_to_int, sample_assignment_probs
 
 _log = logging.getLogger(__name__)
+
+try:
+    import qutip as qt
+except ImportError:
+    qt = None
+    _log.error("Could not import qutip. Tomography tools will not function.")
+
+try:
+    import cvxpy
+except ImportError:
+    cvxpy = None
+    _log.error("Could not import cvxpy. Tomography tools will not function.")
+
+
 # We constrain the number of qubits to prevent the use of large amounts of memory, and prohibitively
 # long programs.
 MAX_QUBITS_STATE_TOMO = 4

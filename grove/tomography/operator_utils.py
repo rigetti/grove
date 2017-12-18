@@ -24,13 +24,20 @@ except ImportError:
     # Python 3
     izip = zip
 
-import qutip as qt
 import numpy as np
 from scipy.sparse import hstack as sphstack, vstack as spvstack
 from scipy.sparse.linalg import norm as spnorm
 
 
 _log = logging.getLogger(__name__)
+
+try:
+    import qutip as qt
+except ImportError:
+    qt = None
+    _log.error("Could not import qutip. Tomography tools will not function.")
+
+
 FROBENIUS = 'fro'
 CHOI = 'choi'
 
