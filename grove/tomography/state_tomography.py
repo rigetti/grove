@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix, coo_matrix
 from pyquil.quil import Program
 
+import grove.tomography.operator_utils
 from grove.tomography.tomography import TomographyBase, TomographySettings, DEFAULT_SOLVER_KWARGS
 from grove.tomography import tomography
 import grove.tomography.utils as ut
@@ -28,17 +29,9 @@ import grove.tomography.operator_utils as o_ut
 
 _log = logging.getLogger(__name__)
 
-try:
-    import qutip as qt
-except ImportError:
-    qt = None
-    _log.error("Could not import qutip. Tomography tools will not function.")
+qt = ut.import_qutip()
+cvxpy = ut.import_cvxpy()
 
-try:
-    import cvxpy
-except ImportError:
-    cvxpy = None
-    _log.error("Could not import cvxpy. Tomography tools will not function.")
 
 UNIT_TRACE = 'unit_trace'
 POSITIVE = 'positive'
@@ -121,7 +114,7 @@ class StateTomography(TomographyBase):
         :rtype: StateTomography
         """
         nqc = len(channel_ops[0].dims[0])
-        pauli_basis = ut.PAULI_BASIS ** nqc
+        pauli_basis = grove.tomography.operator_utils.PAULI_BASIS ** nqc
         pi_basis = readout_povm.pi_basis
 
         if not histograms.shape[1] == pi_basis.dim:  # pragma no coverage
@@ -179,7 +172,7 @@ class StateTomography(TomographyBase):
         a quantum tomography measurement.
 
         :param numpy.ndarray r_est: The estimated quantum state represented in a given (generalized)
-         Pauli basis.
+        Pauli basis.
         :param OperatorBasis pauli_basis: The employed (generalized) Pauli basis.
         :param TomographySettings settings: The settings used to estimate the state.
         """
@@ -230,12 +223,12 @@ def state_tomography_programs(state_prep, qubits=None,
                               rotation_generator=tomography.default_rotations):
     """
     Yield tomographic sequences that prepare a state with Quil program `state_prep` and then append
-     tomographic rotations on the specified `qubits`. If `qubits is None`, it assumes all qubits in
-     the program should be tomographically rotated.
+    tomographic rotations on the specified `qubits`. If `qubits is None`, it assumes all qubits in
+    the program should be tomographically rotated.
 
     :param Program state_prep: The program to prepare the state to be tomographed.
     :param list|NoneType qubits: A list of Qubits or Numbers, to perform the tomography on. If
-     `None`, performs it on all in state_prep.
+    `None`, performs it on all in state_prep.
     :param generator rotation_generator: A generator that yields tomography rotations to perform.
     :return: Program for state tomography.
     :rtype: Program

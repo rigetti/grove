@@ -30,6 +30,8 @@ from itertools import product as cartesian_product
 
 from pyquil.quilbase import Pragma
 
+import grove.tomography.operator_utils
+
 try:
     # Python 2
     from itertools import izip
@@ -44,33 +46,27 @@ from pyquil.quil import Program
 
 import grove.tomography.utils as ut
 import grove.tomography.operator_utils as o_ut
-from grove.tomography.utils import QI, QX, QY, bitlist_to_int, sample_assignment_probs
+from grove.tomography.operator_utils import QI, QX, QY
+from grove.tomography.utils import bitlist_to_int, sample_assignment_probs
 
 _log = logging.getLogger(__name__)
 
-try:
-    import qutip as qt
-except ImportError:
-    qt = None
-    _log.error("Could not import qutip. Tomography tools will not function.")
-
-try:
-    import cvxpy
-except ImportError:
-    cvxpy = None
-    _log.error("Could not import cvxpy. Tomography tools will not function.")
-
+qt = ut.import_qutip()
+cvxpy = ut.import_cvxpy()
 
 # We constrain the number of qubits to prevent the use of large amounts of memory, and prohibitively
 # long programs.
 MAX_QUBITS_STATE_TOMO = 4
 MAX_QUBITS_PROCESS_TOMO = MAX_QUBITS_STATE_TOMO // 2
 SEED = 137
-SOLVER = cvxpy.SCS
-TOMOGRAPHY_GATES = OrderedDict([(I, QI),
-                                (RX(np.pi / 2), (-1j * np.pi / 4 * QX).expm()),
-                                (RY(np.pi / 2), (-1j * np.pi / 4 * QY).expm()),
-                                (RX(np.pi), (-1j * np.pi / 2 * QX).expm())])
+SOLVER = "SCS"
+if qt:
+    TOMOGRAPHY_GATES = OrderedDict([(I, QI),
+                                    (RX(np.pi / 2), (-1j * np.pi / 4 * QX).expm()),
+                                    (RY(np.pi / 2), (-1j * np.pi / 4 * QY).expm()),
+                                    (RX(np.pi), (-1j * np.pi / 2 * QX).expm())])
+else:
+    TOMOGRAPHY_GATES = {}
 
 
 def default_rotations(*qubits):
@@ -140,10 +136,9 @@ class _SDP_SOLVER(object):
 
 
 TomographySettings = namedtuple('TomographySettings', ('constraints', 'solver_kwargs'))
-"""Encapsulate the TomographySettings, i.e., the constraints to be applied to the Maximum
+"""
+Encapsulate the TomographySettings, i.e., the constraints to be applied to the Maximum
 Likelihood Estimation and the keyword arguments to be passed to the convex solver.
-
-In particular, the settings are:
 
 :param set constraints: The constraints to be applied:
 For state tomography the maximal constraints are `{'positive', 'unit_trace'}`.
@@ -216,7 +211,7 @@ def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomogr
         idxs = list(map(bitlist_to_int, results))
         histograms[i] = ut.make_histogram(idxs, dimension)
 
-    povm = o_ut.make_diagonal_povm(ut.POVM_PI_BASIS ** num_qubits, assignment_probs)
+    povm = o_ut.make_diagonal_povm(grove.tomography.operator_utils.POVM_PI_BASIS ** num_qubits, assignment_probs)
     channel_ops = list(default_channel_ops(num_qubits))
 
     # Currently the analysis pathways are slightly different, so we branch on which type of

@@ -14,24 +14,27 @@
 #    limitations under the License.
 ##############################################################################
 
-import matplotlib
-matplotlib.use('Agg')
-
-import pytest
 import numpy as np
-from mock import Mock, patch
+import pytest
 from matplotlib.pyplot import figure
-
-import qutip as qt
+from mock import Mock, patch
 from mpl_toolkits.mplot3d import Axes3D
-
 from pyquil.gates import X
 from pyquil.quil import Program
 
-import grove.tomography.utils as ut
+import grove.tomography.operator_utils
 import grove.tomography.operator_utils as o_ut
-
+import grove.tomography.utils as ut
 from grove.tomography.operator_utils import FROBENIUS
+
+qt = ut.import_qutip()
+cvxpy = ut.import_cvxpy()
+
+if not qt:
+    pytest.skip("Qutip not installed, skipping tests", allow_module_level=True)
+
+if not cvxpy:
+    pytest.skip("CVXPY not installed, skipping tests", allow_module_level=True)
 
 
 def test_sample_outcomes_make_histogram():
@@ -73,7 +76,7 @@ def test_estimate_assignment_probs():
 
 
 def test_product_basis():
-    X, Y, Z, I = ut.QX, ut.QY, ut.QZ, ut.QI
+    X, Y, Z, I = grove.tomography.operator_utils.QX, grove.tomography.operator_utils.QY, grove.tomography.operator_utils.QZ, grove.tomography.operator_utils.QI
 
     assert o_ut.is_hermitian(X.data.toarray())
 
@@ -82,24 +85,26 @@ def test_product_basis():
     d = {"I": I / np.sqrt(2), "X": X / np.sqrt(2), "Y": Y / np.sqrt(2), "Z": Z / np.sqrt(2)}
     ops = [qt.tensor(d[s[0]], d[s[1]]) for s in labels]
 
-    for ((ll1, op1), ll2, op2) in zip(ut.PAULI_BASIS.product(ut.PAULI_BASIS), labels, ops):
+    for ((ll1, op1), ll2, op2) in zip(grove.tomography.operator_utils.PAULI_BASIS.product(
+            grove.tomography.operator_utils.PAULI_BASIS), labels, ops):
         assert ll1 == ll2
         assert (op1 - op2).norm(FROBENIUS) < o_ut.EPS
 
 
 def test_states():
-    preparations = ut.QX, ut.QY, ut.QZ
-    states = ut.generated_states(ut.GS, preparations)
-    assert (states[0] - ut.ES).norm(FROBENIUS) < o_ut.EPS
-    assert (states[1] - ut.ES).norm(FROBENIUS) < o_ut.EPS
-    assert (states[2] - ut.GS).norm(FROBENIUS) < o_ut.EPS
-    assert (ut.n_qubit_ground_state(2) - qt.tensor(ut.GS, ut.GS)).norm(FROBENIUS) < o_ut.EPS
+    preparations = grove.tomography.operator_utils.QX, grove.tomography.operator_utils.QY, grove.tomography.operator_utils.QZ
+    states = ut.generated_states(grove.tomography.operator_utils.GS, preparations)
+    assert (states[0] - grove.tomography.operator_utils.ES).norm(FROBENIUS) < o_ut.EPS
+    assert (states[1] - grove.tomography.operator_utils.ES).norm(FROBENIUS) < o_ut.EPS
+    assert (states[2] - grove.tomography.operator_utils.GS).norm(FROBENIUS) < o_ut.EPS
+    assert (grove.tomography.operator_utils.n_qubit_ground_state(2) - qt.tensor(
+        grove.tomography.operator_utils.GS, grove.tomography.operator_utils.GS)).norm(FROBENIUS) < o_ut.EPS
 
 
 
 
 def test_povm():
-    pi_basis = ut.POVM_PI_BASIS
+    pi_basis = grove.tomography.operator_utils.POVM_PI_BASIS
     confusion_rate_matrix = np.eye(2)
     povm = o_ut.make_diagonal_povm(pi_basis, confusion_rate_matrix)
 
@@ -127,15 +132,16 @@ def test_basis_labels():
 def test_visualization():
     ax = Axes3D(figure())
     # Without axis.
-    ut.state_histogram(ut.GS, title="test")
+    ut.state_histogram(grove.tomography.operator_utils.GS, title="test")
     # With axis.
-    ut.state_histogram(ut.GS, ax, "test")
+    ut.state_histogram(grove.tomography.operator_utils.GS, ax, "test")
     assert ax.get_title() == "test"
 
-    ptX = ut.PAULI_BASIS.transfer_matrix(qt.to_super(ut.QX)).toarray()
+    ptX = grove.tomography.operator_utils.PAULI_BASIS.transfer_matrix(qt.to_super(
+        grove.tomography.operator_utils.QX)).toarray()
     ax = Mock()
     with patch("matplotlib.pyplot.colorbar"):
-        ut.plot_pauli_transfer_matrix(ptX, ax, ut.PAULI_BASIS.labels, "bla")
+        ut.plot_pauli_transfer_matrix(ptX, ax, grove.tomography.operator_utils.PAULI_BASIS.labels, "bla")
     assert ax.imshow.called
     assert ax.set_xlabel.called
     assert ax.set_ylabel.called

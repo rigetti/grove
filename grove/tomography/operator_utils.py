@@ -17,6 +17,9 @@
 from collections import OrderedDict, namedtuple
 import logging
 import itertools
+
+from grove.tomography.utils import to_density_matrix, import_qutip
+
 try:
     # Python 2
     from itertools import izip
@@ -31,11 +34,7 @@ from scipy.sparse.linalg import norm as spnorm
 
 _log = logging.getLogger(__name__)
 
-try:
-    import qutip as qt
-except ImportError:
-    qt = None
-    _log.error("Could not import qutip. Tomography tools will not function.")
+qt = import_qutip()
 
 
 FROBENIUS = 'fro'
@@ -127,10 +126,10 @@ def choi_matrix(pauli_tm, basis):
     """
     Compute the Choi matrix for a quantum process from its Pauli Transfer Matrix.
 
-    This agrees with the definition in [Chow]_ except for a different overall normalization.
+    This agrees with the definition in
+    `Chow et al. <https://doi.org/10.1103/PhysRevLett.109.060501>`_
+    except for a different overall normalization.
     Our normalization agrees with that of qutip.
-
-    .. [Chow] Chow et al., 2012, https://doi.org/10.1103/PhysRevLett.109.060501
 
     :param numpy.ndarray pauli_tm: The Pauli Transfer Matrix as 2d-array.
     :param OperatorBasis basis:  The operator basis, typically products of normalized Paulis.
@@ -294,9 +293,9 @@ class OperatorBasis(object):
         """
         Generate the superoperator basis in which the Choi matrix can be represented.
 
-        The follows the definition in [Chow]_
+        The follows the definition in
+        `Chow et al. <https://doi.org/10.1103/PhysRevLett.109.060501>`_
 
-        .. [Chow] Chow et al., 2012, https://doi.org/10.1103/PhysRevLett.109.060501
 
         :return (OperatorBasis): The super basis as an OperatorBasis object.
         """
@@ -353,3 +352,48 @@ class OperatorBasis(object):
         return (self.labels == other.labels and all(
             [(my_op - o_op).norm(FROBENIUS) < EPS for (my_op, o_op) in zip(self.ops, other.ops)]))
 
+
+if qt:
+
+    # using the Pi-basis for POVM terms allows to easily associate the preparations with individual
+    # multi-qubit projectors
+
+    QX = qt.sigmax()
+    QY = qt.sigmay()
+    QZ = qt.sigmaz()
+    QI = qt.qeye(2)
+    GS = to_density_matrix(qt.basis(2, 0))
+    ES = to_density_matrix(qt.basis(2, 1))
+    POVM_PI_BASIS = OperatorBasis([("0", GS), ("1", ES)])
+    PAULI_BASIS = OperatorBasis(
+        [("I", QI / np.sqrt(2)), ("X", QX / np.sqrt(2)),
+         ("Y", QY / np.sqrt(2)), ("Z", QZ / np.sqrt(2))])
+
+else:
+    QX = QY = QZ = QI = GS = ES = None
+    POVM_PI_BASIS = PAULI_BASIS = None
+
+
+def n_qubit_pauli_basis(n):
+    """
+    Construct the tensor product operator basis of `n` PAULI_BASIS's.
+
+    :param int n: The number of qubits.
+    :return: The product Pauli operator basis of `n` qubits
+    :rtype: OperatorBasis
+    """
+    if n >= 1:
+        return PAULI_BASIS ** n
+    else:  # pragma no coverage
+        raise ValueError("n = {} should be at least 1.".format(n))
+
+
+def n_qubit_ground_state(n):
+    """
+    Construct the tensor product of `n` ground states `|0>`.
+
+    :param int n: The number of qubits.
+    :return: The state `|000...0>` for `n` qubits.
+    :rtype: qutip.Qobj
+    """
+    return qt.tensor(*([GS] * n))
