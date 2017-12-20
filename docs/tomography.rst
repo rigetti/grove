@@ -584,5 +584,26 @@ Run on the QPU & QVM, and calculate the fidelity
 .. image:: _static/tomography/Tomography_13_1.png
 
 
+Source Code Docs
+----------------
 
+.. automodule:: grove.tomography.tomography
+    :members:
+    :show-inheritance:
+
+.. automodule:: grove.tomography.state_tomography
+    :members:
+    :show-inheritance:
+
+.. automodule:: grove.tomography.process_tomography
+    :members:
+    :show-inheritance:
+
+.. automodule:: grove.tomography.operator_utils
+    :members:
+    :show-inheritance:
+
+.. automodule:: grove.tomography.utils
+    :members:
+    :show-inheritance:
 
