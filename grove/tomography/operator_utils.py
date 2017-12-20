@@ -23,7 +23,7 @@ from grove.tomography.utils import to_density_matrix, import_qutip
 try:
     # Python 2
     from itertools import izip
-except ImportError:
+except ImportError:  # pragma no coverage
     # Python 3
     izip = zip
 
@@ -369,7 +369,7 @@ if qt:
         [("I", QI / np.sqrt(2)), ("X", QX / np.sqrt(2)),
          ("Y", QY / np.sqrt(2)), ("Z", QZ / np.sqrt(2))])
 
-else:
+else:  # pragma no coverage
     QX = QY = QZ = QI = GS = ES = None
     POVM_PI_BASIS = PAULI_BASIS = None
 

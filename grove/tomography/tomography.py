@@ -35,7 +35,7 @@ import grove.tomography.operator_utils
 try:
     # Python 2
     from itertools import izip
-except ImportError:
+except ImportError:  # pragma no coverage
     # Python 3
     izip = zip
 
@@ -65,7 +65,7 @@ if qt:
                                     (RX(np.pi / 2), (-1j * np.pi / 4 * QX).expm()),
                                     (RY(np.pi / 2), (-1j * np.pi / 4 * QY).expm()),
                                     (RX(np.pi), (-1j * np.pi / 2 * QX).expm())])
-else:
+else:  # pragma no coverage
     TOMOGRAPHY_GATES = {}
 
 

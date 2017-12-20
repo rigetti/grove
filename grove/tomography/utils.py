@@ -35,7 +35,7 @@ from pyquil.quil import Program
 try:
     # Python 2
     from itertools import izip
-except ImportError:
+except ImportError:  # pragma no coverage
     # Python 3
     izip = zip
 
@@ -48,12 +48,14 @@ _QUTIP_ERROR_LOGGED = False
 def import_qutip():
     """
     Try importing the qutip module, log an error if unsuccessful.
-    :return:
+
+    :return: The qutip module if successful or None
+    :rtype: Optional[module]
     """
     global _QUTIP_ERROR_LOGGED
     try:
         import qutip
-    except ImportError:
+    except ImportError:  # pragma no coverage
         qutip = None
         if not _QUTIP_ERROR_LOGGED:
             _log.error("Could not import qutip. Tomography tools will not function.")
@@ -67,12 +69,14 @@ _CVXPY_ERROR_LOGGED = False
 def import_cvxpy():
     """
     Try importing the qutip module, log an error if unsuccessful.
-    :return:
+
+    :return: The cvxpy module if successful or None
+    :rtype: Optional[module]
     """
     global _CVXPY_ERROR_LOGGED
     try:
         import cvxpy
-    except ImportError:
+    except ImportError:  # pragma no coverage
         cvxpy = None
         if not _CVXPY_ERROR_LOGGED:
             _log.error("Could not import cvxpy. Tomography tools will not function.")
@@ -128,6 +132,7 @@ def to_density_matrix(state):
     :rtype: qutip.qobj.Qobj
     """
     return state * state.dag()
+
 
 def sample_outcomes(probs, n):
     """
