@@ -13,15 +13,22 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
-import matplotlib
+import pytest
 
 import grove.tomography.utils
 
-matplotlib.use('Agg')
 from grove.tomography.tomography import _SDP_SOLVER
 from grove.tomography.utils import notebook_mode
-import grove.tomography.tomography as tomography
+
+
+qt = grove.tomography.utils.import_qutip()
+cvxpy = grove.tomography.utils.import_cvxpy()
+
+if not qt:
+    pytest.skip("Qutip not installed, skipping tests", allow_module_level=True)
+
+if not cvxpy:
+    pytest.skip("CVXPY not installed, skipping tests", allow_module_level=True)
 
 
 def test_SDP_SOLVER():

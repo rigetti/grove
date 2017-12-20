@@ -37,16 +37,8 @@ pip install -e .
 This will install Grove’s dependencies if you do not already have them.
 However, you will still need to install pyQuil and set up a connection to
 the Rigetti Forest (see below).
-
-Dependencies
-------------
-
-* NumPy
-* SciPy
-* NetworkX (for building and analyzing graphs)
-* Matplotlib (useful for plotting)
-* pytest (optional, for development testing)
-* mock (optional, for development testing)
+To enable the tomography module, you will also have to install qutip
+and cvxpy, see below for more details.
 
 Forest and pyQuil
 -----------------
@@ -71,6 +63,38 @@ configured to run with a quantum virtual machine (QVM) or real quantum processor
 (QPU) hosted on the  [Rigetti Forest](forest.rigetti.com), which requires an API key.
 See the pyQuil [docs](http://pyquil.readthedocs.io/en/latest/index.html) for
 instructions on how to do this.
+
+Installing the dependencies for Quantum Tomography
+--------------------------------------------------
+
+Quantum tomography relies on the external packages qutip and and cvxpy,
+which can be somewhat tricky to install.
+
+You can first attempt to just run
+```
+pip install -r requirements.txt
+pip install -r optional-requirements.txt
+pip install quantum-grove
+```
+
+If the installation of the optional requirements fails, you can manually
+install the individual packages as
+
+```
+pip install cython==0.24.1 scs==1.2.6
+pip install qutip==4.1 cvxpy
+```
+These are not the most recent versions but they are the only ones that
+have consistently worked for us across different platforms and python
+versions.
+
+.. note::
+
+    For **Windows users**: Both qutip and cvxpy are fairly tricky to
+    install under windows and we therefore recommend using Anaconda's
+    ``conda`` package manager to install these first and then ``pip``
+    to install ``quantum-grove``.
+
 
 Building the Docs
 -----------------

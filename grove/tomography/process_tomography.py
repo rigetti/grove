@@ -17,12 +17,11 @@
 import logging
 
 import numpy as np
-import cvxpy
 import matplotlib.pyplot as plt
-import qutip as qt
 from scipy.sparse import (vstack as spvstack, csr_matrix, kron as spkron)
 from pyquil.quil import Program
 
+import grove.tomography.operator_utils
 from grove.tomography.tomography import TomographyBase, TomographySettings, DEFAULT_SOLVER_KWARGS
 import grove.tomography.state_tomography as state_tomography
 from grove.tomography import tomography
@@ -30,6 +29,12 @@ import grove.tomography.utils as ut
 import grove.tomography.operator_utils as o_ut
 
 _log = logging.getLogger(__name__)
+
+
+qt = ut.import_qutip()
+cvxpy = ut.import_cvxpy()
+
+
 TRACE_PRESERVING = 'trace_preserving'
 COMPLETELY_POSITIVE = 'cpositive'
 DEFAULT_PROCESS_TOMO_SETTINGS = TomographySettings(
@@ -105,13 +110,13 @@ class ProcessTomography(TomographyBase):
         :rtype: ProcessTomography
         """
         nqc = len(pre_channel_ops[0].dims[0])
-        pauli_basis = ut.PAULI_BASIS ** nqc
+        pauli_basis = grove.tomography.operator_utils.PAULI_BASIS ** nqc
         pi_basis = readout_povm.pi_basis
 
         if not histograms.shape[-1] == pi_basis.dim:  # pragma no coverage
             raise ValueError("Currently tomography is only implemented for two-level systems")
 
-        rho0 = ut.n_qubit_ground_state(nqc)
+        rho0 = grove.tomography.operator_utils.n_qubit_ground_state(nqc)
 
         n_lkj = np.asarray(histograms)
 
