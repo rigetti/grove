@@ -37,18 +37,8 @@ pip install -e .
 This will install Grove’s dependencies if you do not already have them.
 However, you will still need to install pyQuil and set up a connection to
 the Rigetti Forest (see below).
-
-Dependencies
-------------
-
-* NumPy
-* SciPy
-* NetworkX (for building and analyzing graphs)
-* Matplotlib (useful for plotting)
-* pytest (optional, for development testing)
-* mock (optional, for development testing)
-* cvxpy (optional, for tomography, see below)
-* qutip (optional, for tomography, see below)
+To enable the tomography module, you will also have to install qutip
+and cvxpy, see below for more details.
 
 Forest and pyQuil
 -----------------
