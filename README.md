@@ -88,12 +88,10 @@ These are not the most recent versions but they are the only ones that
 have consistently worked for us across different platforms and python
 versions.
 
-.. note::
-
-    For **Windows users**: Both qutip and cvxpy are fairly tricky to
-    install under windows and we therefore recommend using Anaconda's
-    ``conda`` package manager to install these first and then ``pip``
-    to install ``quantum-grove``.
+For **Windows users**: Both qutip and cvxpy are fairly tricky to
+install under windows and we therefore recommend using Anaconda's
+``conda`` package manager to install these first and then ``pip``
+to install ``quantum-grove``.
 
 
 Building the Docs
