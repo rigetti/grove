@@ -26,23 +26,63 @@ from itertools import product as cartesian_product
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import qutip as qt
 import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
 from pyquil.gates import I, X, H, CZ
 from pyquil.quil import Program
 
-from grove.tomography.operator_utils import OperatorBasis
-
 try:
     # Python 2
     from itertools import izip
-except ImportError:
+except ImportError:  # pragma no coverage
     # Python 3
     izip = zip
 
 _log = logging.getLogger(__name__)
+
+
+_QUTIP_ERROR_LOGGED = False
+
+
+def import_qutip():
+    """
+    Try importing the qutip module, log an error if unsuccessful.
+
+    :return: The qutip module if successful or None
+    :rtype: Optional[module]
+    """
+    global _QUTIP_ERROR_LOGGED
+    try:
+        import qutip
+    except ImportError:  # pragma no coverage
+        qutip = None
+        if not _QUTIP_ERROR_LOGGED:
+            _log.error("Could not import qutip. Tomography tools will not function.")
+            _QUTIP_ERROR_LOGGED = True
+    return qutip
+
+
+_CVXPY_ERROR_LOGGED = False
+
+
+def import_cvxpy():
+    """
+    Try importing the qutip module, log an error if unsuccessful.
+
+    :return: The cvxpy module if successful or None
+    :rtype: Optional[module]
+    """
+    global _CVXPY_ERROR_LOGGED
+    try:
+        import cvxpy
+    except ImportError:  # pragma no coverage
+        cvxpy = None
+        if not _CVXPY_ERROR_LOGGED:
+            _log.error("Could not import cvxpy. Tomography tools will not function.")
+            _CVXPY_ERROR_LOGGED = True
+    return cvxpy
+
 
 THREE_COLOR_MAP = ['#48737F', '#FFFFFF', '#D6619E']
 rigetti_3_color_cm = LinearSegmentedColormap.from_list("Rigetti", THREE_COLOR_MAP[::-1], N=100)
@@ -58,11 +98,6 @@ BAD_1Q_READOUT = np.array([[.9, .15],
                            [.1, .85]])
 BAD_2Q_READOUT = np.kron(BAD_1Q_READOUT, BAD_1Q_READOUT)
 
-
-QX = qt.sigmax()
-QY = qt.sigmay()
-QZ = qt.sigmaz()
-QI = qt.qeye(2)
 
 # constants to provide optional fancy progress bars
 NOTEBOOK_MODE = False
@@ -99,42 +134,6 @@ def to_density_matrix(state):
     return state * state.dag()
 
 
-GS = to_density_matrix(qt.basis(2, 0))
-ES = to_density_matrix(qt.basis(2, 1))
-
-# using the Pi-basis for POVM terms allows to easily associate the preparations with individual
-# multi-qubit projectors
-POVM_PI_BASIS = OperatorBasis([("0", GS), ("1", ES)])
-PAULI_BASIS = OperatorBasis(
-    [("I", QI / np.sqrt(2)), ("X", QX / np.sqrt(2)),
-     ("Y", QY / np.sqrt(2)), ("Z", QZ / np.sqrt(2))])
-
-
-def n_qubit_pauli_basis(n):
-    """
-    Construct the tensor product operator basis of `n` PAULI_BASIS's.
-
-    :param int n: The number of qubits.
-    :return: The product Pauli operator basis of `n` qubits
-    :rtype: OperatorBasis
-    """
-    if n >= 1:
-        return PAULI_BASIS ** n
-    else:  # pragma no coverage
-        raise ValueError("n = {} should be at least 1.".format(n))
-
-
-def n_qubit_ground_state(n):
-    """
-    Construct the tensor product of `n` ground states |0>.
-
-    :param int n: The number of qubits.
-    :return: The state |000...0> for `n` qubits.
-    :rtype: qutip.Qobj
-    """
-    return qt.tensor(*([GS] * n))
-
-
 def sample_outcomes(probs, n):
     """
     For a discrete probability distribution ``probs`` with outcomes 0, 1, ..., k-1 draw ``n``
@@ -155,12 +154,13 @@ def basis_state_preps(*qubits):
     Generate a sequence of programs that prepares the measurement
     basis states of some set of qubits in the order such that the qubit
     with highest index is iterated over the most quickly:
-    E.g., for qubits=(0, 1), it returns the circuits::
+    E.g., for ``qubits=(0, 1)``, it returns the circuits::
 
         I_0 I_1
         I_0 X_1
         X_0 I_1
         X_0 X_1
+
     :param list qubits: Each qubit to include in the basis state preparation.
     :return: Yields programs for each basis state preparation.
     :rtype: Program
@@ -284,10 +284,9 @@ def state_histogram(rho, ax=None, title="", threshold=0.001):
     Visualize a density matrix as a 3d bar plot with complex phase encoded
     as the bar color.
 
-    This code is a modified version of an equivalent function in qutip which is
-    released under the (New) BSD license
-    http://qutip.org/docs/3.1.0/apidoc/functions.html#qutip.visualization.matrix_histogram_complex
-
+    This code is a modified version of
+    `an equivalent function in qutip <http://qutip.org/docs/3.1.0/apidoc/functions.html#qutip.visualization.matrix_histogram_complex>`_
+    which is released under the (New) BSD license.
 
     :param qutip.Qobj rho: The density matrix.
     :param Axes3D ax: The axes object.

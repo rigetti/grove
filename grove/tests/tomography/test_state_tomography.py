@@ -14,30 +14,40 @@
 #    limitations under the License.
 ##############################################################################
 
-import matplotlib
-matplotlib.use('Agg')
-import pytest
-import os
-import numpy as np
-from mock import patch
-from mock import MagicMock
-import qutip as qt
 import json
+import os
+
+import numpy as np
+import pytest
+
+from mock import MagicMock
+from mock import patch
 from pyquil.api import QVMConnection
 
-from grove.tomography.tomography import (MAX_QUBITS_STATE_TOMO,
-                                         default_channel_ops)
+from grove.tomography.operator_utils import make_diagonal_povm
+from grove.tomography.process_tomography import (TRACE_PRESERVING)
 from grove.tomography.state_tomography import (DEFAULT_STATE_TOMO_SETTINGS,
                                                state_tomography_programs,
                                                do_state_tomography, StateTomography,
                                                UNIT_TRACE,
                                                POSITIVE)
-from grove.tomography.process_tomography import (TRACE_PRESERVING)
-from grove.tomography.utils import (POVM_PI_BASIS, make_histogram,
+from grove.tomography.tomography import (MAX_QUBITS_STATE_TOMO,
+                                         default_channel_ops)
+from grove.tomography.utils import (make_histogram,
                                     sample_bad_readout, basis_state_preps,
                                     estimate_assignment_probs, BELL_STATE_PROGRAM,
-                                    BAD_2Q_READOUT, EPS, SEED)
-from grove.tomography.operator_utils import make_diagonal_povm
+                                    BAD_2Q_READOUT, EPS, SEED, import_qutip, import_cvxpy)
+from grove.tomography.operator_utils import POVM_PI_BASIS
+
+qt = import_qutip()
+cvxpy = import_cvxpy()
+
+if not qt:
+    pytest.skip("Qutip not installed, skipping tests", allow_module_level=True)
+
+if not cvxpy:
+    pytest.skip("CVXPY not installed, skipping tests", allow_module_level=True)
+
 
 SHOTS_PATH = os.path.join(os.path.dirname(__file__), 'state_shots.json')
 RESULTS_PATH = os.path.join(os.path.dirname(__file__), 'state_results.json')

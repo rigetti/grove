@@ -15,13 +15,11 @@
 ##############################################################################
 
 import matplotlib
-matplotlib.use('Agg')
 import pytest
 import os
 import numpy as np
 from mock import patch
 from mock import MagicMock, Mock
-import qutip as qt
 import json
 
 from pyquil.api import QVMConnection
@@ -33,11 +31,20 @@ from grove.tomography.process_tomography import (DEFAULT_PROCESS_TOMO_SETTINGS,
                                                  do_process_tomography, ProcessTomography,
                                                  COMPLETELY_POSITIVE)
 from grove.tomography.process_tomography import (TRACE_PRESERVING)
-from grove.tomography.utils import (POVM_PI_BASIS, make_histogram,
+from grove.tomography.utils import (make_histogram,
                                     sample_bad_readout, basis_state_preps,
                                     estimate_assignment_probs, BAD_2Q_READOUT, SEED,
-                                    EPS, CNOT_PROGRAM)
-from grove.tomography.operator_utils import make_diagonal_povm
+                                    EPS, CNOT_PROGRAM, import_qutip, import_cvxpy)
+from grove.tomography.operator_utils import make_diagonal_povm, POVM_PI_BASIS
+
+qt = import_qutip()
+cvxpy = import_cvxpy()
+
+if not qt:
+    pytest.skip("Qutip not installed, skipping tests", allow_module_level=True)
+
+if not cvxpy:
+    pytest.skip("CVXPY not installed, skipping tests", allow_module_level=True)
 
 
 SHOTS_PATH = os.path.join(os.path.dirname(__file__), 'process_shots.json')

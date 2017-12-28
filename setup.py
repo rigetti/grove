@@ -31,15 +31,22 @@ setup(
         'scipy',
         'pyquil >= 1.6.1',
         'funcsigs',
-        'cython==0.24.1',
         'mock',
         'networkx',
-        'cvxpy',
-        'scs==1.2.6',
-        'matplotlib',
-        'qutip==4.1'
+        'matplotlib'
     ],
-    setup_requires=['pytest-runner'],
+    extras_require={
+        'tomography': [
+            'cython',
+            'cvxpy',
+            'scs',
+            'qutip'
+        ]
+    },
+    setup_requires=[
+        'pytest-runner',
+        'numpy'
+    ],
     tests_require=[
         'tox',
         'pytest >= 3.0.0',
