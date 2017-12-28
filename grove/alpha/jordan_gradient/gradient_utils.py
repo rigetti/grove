@@ -4,7 +4,7 @@ import numpy as np
 def binary_to_real(number):
     """Convert binary fraction to real decimal
 
-    :param float number: Floating point representation of binary fraction.
+    :param string number: String representation of binary fraction.
     :return: Real decimal representation of binary fraction.
     :rtype: float
     """
@@ -14,8 +14,6 @@ def binary_to_real(number):
             n_sign = -1
         else:
             n_sign = 1
-    elif isinstance(number, float):
-        n_sign = np.sign(number)
 
     deci = 0
     for ndx, val in enumerate(str(number).split('.')[-1]):

@@ -8,7 +8,7 @@ from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
 def test_binary_to_real():
     for sign in [1, -1]:
         decimal_rep = sign * 0.345703125
-        binary_rep = sign * 0.010110001
+        binary_rep = str(sign * 0.010110001)
 
         decimal_convert = binary_to_real(binary_rep)
 
