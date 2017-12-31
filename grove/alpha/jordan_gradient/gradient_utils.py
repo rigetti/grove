@@ -14,9 +14,12 @@ def binary_to_real(number):
             n_sign = -1
         else:
             n_sign = 1
+    elif isinstance(number, float):
+        n_sign = np.sign(number)
+        number = str(number)
 
     deci = 0
-    for ndx, val in enumerate(str(number).split('.')[-1]):
+    for ndx, val in enumerate(number.split('.')[-1]):
         deci += float(val) / 2**(ndx+1)
     deci *= n_sign
 
