@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from grove.alpha.jordan_gradient.gradient_utils import binary_to_real, \
     measurements_to_bf
