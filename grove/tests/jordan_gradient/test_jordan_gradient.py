@@ -1,7 +1,7 @@
 import numpy as np
 from mock import patch
 
-from pyquil.gates import X, H, CPHASE, SWAP, MEASURE
+from pyquil.gates import H, CPHASE, SWAP, MEASURE
 import pyquil.quil as pq
 
 from grove.alpha.phaseestimation.phase_estimation import controlled
@@ -15,9 +15,9 @@ def test_gradient_program():
     
     trial_prog = gradient_program(f_h, precision)
     
-    result_prog = pq.Program().inst([X(2), H(2), H(0), H(1)])
-    
-    phase_factor = np.exp(-1.0j * np.pi * f_h)
+    result_prog = pq.Program([H(0), H(1)])
+
+    phase_factor = np.exp(-1.0j * 2 * np.pi * abs(f_h))
     U = np.array([[phase_factor, 0],
                   [0, phase_factor]])
     q_out = range(precision, precision+1)
@@ -28,7 +28,7 @@ def test_gradient_program():
         name = "CONTROLLED-U{0}".format(2 ** i)
         result_prog.defgate(name, cU)
         result_prog.inst((name, i) + tuple(q_out))
-    
+
     result_prog.inst([H(1), CPHASE(1.5707963267948966, 0, 1), H(0), 
                      SWAP(0, 1), MEASURE(0, [0]), MEASURE(1, [1])])
 
@@ -41,7 +41,7 @@ def test_estimate_gradient():
     test_measurements = 10
 
     with patch("pyquil.api.SyncConnection") as cxn:
-        cxn.run.return_value = [[1, 0, 0] for i in range(test_measurements)]
+        cxn.run.return_value = [[0, 1, 0, 0] for i in range(test_measurements)]
 
     gradient_estimate = estimate_gradient(test_perturbation, test_precision,
                                           n_measurements=test_measurements,
