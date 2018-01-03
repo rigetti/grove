@@ -19,7 +19,6 @@
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H
-from pyquil.quilbase import Qubit
 
 from grove.amplification.amplification import amplification_circuit
 
@@ -98,9 +97,10 @@ class Grover(object):
         :return: Returns the bitstring resulting from measurement after Grover's Algorithm.
         :rtype: str
         """
+
         self._init_attr(bitstring_map)
         sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)[0]
-        return ''.join([str(b) for b in sampled_bitstring])
+        return "".join([str(bit) for bit in sampled_bitstring])
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):

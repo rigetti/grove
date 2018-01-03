@@ -3,6 +3,7 @@ from pyquil.quil import Program
 from pyquil.quilbase import Qubit
 
 from grove.utils.utility_programs import ControlledProgramBuilder
+from pyquil.gates import CNOT
 
 SIGMA_Z = np.array([[1, 0], [0, -1]])
 SIGMA_Z_NAME = "Z"
@@ -21,7 +22,7 @@ def test_1_qubit_control():
     assert len(prog) == 1
     instruction = prog.instructions[0]
     assert instruction.name == (ControlledProgramBuilder()
-                                            .format_gate_name("C", SIGMA_Z_NAME))
+                                .format_gate_name("C", SIGMA_Z_NAME))
     assert instruction.qubits == [control_qubit, qubit]
 
 
@@ -33,13 +34,13 @@ def double_control_test(instructions, target_qubit, control_qubit_one, control_q
     assert instructions[0].name == (cpg.format_gate_name("C", sqrt_z))
     assert instructions[0].qubits == [control_qubit_two, target_qubit]
 
-    assert instructions[1].name == cpg.format_gate_name("C", "NOT")
+    assert instructions[1].name == CNOT(control_qubit_one, control_qubit_two).name
     assert instructions[1].qubits == [control_qubit_one, control_qubit_two]
 
     assert instructions[2].name == cpg.format_gate_name("C", sqrt_z) + '-INV'
     assert instructions[2].qubits == [control_qubit_two, target_qubit]
 
-    assert instructions[3].name == cpg.format_gate_name("C", "NOT")
+    assert instructions[3].name == CNOT(control_qubit_one, control_qubit_two).name
     assert instructions[3].qubits == [control_qubit_one, control_qubit_two]
 
     assert instructions[4].name == cpg.format_gate_name("C", sqrt_z)
@@ -61,7 +62,10 @@ def test_recursive_builder():
                                   cpg.control_qubits,
                                   cpg.target_qubit)
     # Run tests
-    double_control_test(prog.instructions, Qubit(target_qubit), Qubit(control_qubit_one), Qubit(control_qubit_two))
+    double_control_test(prog.instructions,
+                        Qubit(target_qubit),
+                        Qubit(control_qubit_one),
+                        Qubit(control_qubit_two))
 
 
 def test_2_qubit_control():
