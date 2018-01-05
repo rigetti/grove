@@ -37,7 +37,7 @@ def test_probabilities():
                    -1.17642098e-05 - 1j*7.67538040e-06])
     fakeQVM = Mock(spec=qvm_module.SyncConnection())
     fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf), 0))
-    inst = QAOA(fakeQVM, n_qubits, steps=p,
+    inst = QAOA(fakeQVM, range(n_qubits), steps=p,
                 rand_seed=42)
 
     true_probs = np.zeros_like(wf)
@@ -60,7 +60,7 @@ def test_get_angles():
         result = Mock()
         result.x = [1.2, 2.1, 3.4, 4.3]
         inst.vqe_run.return_value = result
-        MCinst = QAOA(fakeQVM, n_qubits, steps=p,
+        MCinst = QAOA(fakeQVM, range(n_qubits), steps=p,
                       cost_ham=[PauliSum([PauliTerm("X", 0)])])
         betas, gammas = MCinst.get_angles()
         assert betas == [1.2, 2.1]
@@ -70,7 +70,7 @@ def test_get_angles():
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
     fakeQVM = Mock(spec=qvm_module.SyncConnection())
-    inst = QAOA(fakeQVM, 2, driver_ref=ref_prog)
+    inst = QAOA(fakeQVM, range(2), driver_ref=ref_prog)
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
     compare_progs(ref_prog, test_prog)
