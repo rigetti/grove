@@ -18,6 +18,7 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+from pyquil.quilbase import Pragma
 from scipy.sparse import csr_matrix, coo_matrix
 from pyquil.quil import Program
 
@@ -236,7 +237,7 @@ def state_tomography_programs(state_prep, qubits=None,
     if qubits is None:
         qubits = state_prep.get_qubits()
     for tomography_program in rotation_generator(*qubits):
-        state_tomography_program = Program()
+        state_tomography_program = Program(Pragma("PRESERVE_BLOCK"))
         state_tomography_program.inst(state_prep)
         state_tomography_program.inst(tomography_program)
         yield state_tomography_program
