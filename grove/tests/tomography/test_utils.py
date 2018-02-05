@@ -174,9 +174,13 @@ def test_run_in_parallel():
 
     with patch("grove.tomography.utils.np.random.shuffle") as shuffle:
 
-        # flip program order of qubit 0
+        has_shuffled = [False]
+
+        # flip program order on first call
         def flip_shuffle(a):
-            a[:, 0] = a[::-1, 0]
+            if not has_shuffled[0]:
+                a[:] = a[::-1]
+                has_shuffled[0] = True
 
         shuffle.side_effect = flip_shuffle
 
@@ -186,7 +190,7 @@ def test_run_in_parallel():
             res01,
         ]
         results2 = ut.run_in_parallel(programsXY, nsamples, cxn, shuffle=True)
-        assert results1.tolist() == [[[100, 0],
+        assert results2.tolist() == [[[100, 0],
                                       [0, 100]],
                                      [[100, 0],
                                       [0, 100]]]
