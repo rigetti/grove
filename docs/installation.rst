@@ -50,6 +50,6 @@ or from a source distribution, navigate into its directory in a terminal and run
     pip install -e .
 
 You will need to make sure that your pyQuil installation is properly configured to run with a
-QVM or quantum processor (QPU) hosted on the `Rigetti Forest <forest.rigetti.com>`_, which
+QVM or quantum processor (QPU) hosted on the `Rigetti Forest <http://forest.rigetti.com>`_, which
 requires an API key. See the pyQuil `docs <http://pyquil.readthedocs.io/en/latest/index.html>`_
 for instructions on how to do this.
