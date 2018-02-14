@@ -297,6 +297,8 @@ def process_tomography_programs(process, qubits=None,
             process_tomography_program.inst(tomographic_pre_rotation)
             process_tomography_program.inst(process)
             process_tomography_program.inst(tomography_post_rotation)
+            process_tomography_program.inst(Pragma("END_PRESERVE_BLOCK"))
+
             yield process_tomography_program
 
 

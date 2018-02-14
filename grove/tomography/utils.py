@@ -29,8 +29,10 @@ import numpy as np
 import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
+from pyquil.api.errors import QPUError
 from pyquil.gates import I, X, H, CZ
 from pyquil.quil import Program
+from pyquil.quilbase import Pragma
 
 try:
     # Python 2
@@ -166,9 +168,10 @@ def basis_state_preps(*qubits):
     :rtype: Program
     """
     for prep in cartesian_product([I, X], repeat=len(qubits)):
-        basis_prep = Program()
+        basis_prep = Program(Pragma("PRESERVE_BLOCK"))
         for gate, qubit in zip(prep, qubits):
             basis_prep.inst(gate(qubit))
+        basis_prep.inst(Pragma("END_PRESERVE_BLOCK"))
         yield basis_prep
 
 
@@ -460,8 +463,12 @@ def _run_in_parallel(programs, nsamples, cxn):
     # execute on cxn
     all_results = []
     for i, prog in izip(TRANGE(n_progs_per_group), parallel_programs):
-        results = cxn.run_and_measure(prog, all_qubits, nsamples)
-        all_results.append(np.array(results))
+        try:
+            results = cxn.run_and_measure(prog, all_qubits, nsamples)
+            all_results.append(np.array(results))
+        except QPUError as e:
+            _log.error("Could not execute parallel program:\n%s", prog.out())
+            raise e
 
     # generate histograms per qubit group
     all_histograms = np.array([np.zeros((n_progs_per_group, 2 ** n_qubits), dtype=int)

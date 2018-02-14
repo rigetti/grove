@@ -13,23 +13,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-from collections import OrderedDict
 
 import numpy as np
 import pytest
-from matplotlib.pyplot import figure
-from mock import Mock, patch, call
-from mpl_toolkits.mplot3d import Axes3D
+from mock import Mock, patch
 from pyquil.api import QPUConnection
 from pyquil.api.errors import DeviceRetuningError
-from pyquil.gates import X, Y, I
-from pyquil.quil import Program
+from pyquil.device import Qubit, Edge
+from pyquil.gates import X
 
-import grove.tomography.operator_utils
-import grove.tomography.operator_utils as o_ut
 import grove.tomography.qpu_characterization as qc
 import grove.tomography.utils as ut
-from grove.tomography.operator_utils import FROBENIUS
 from grove.tomography.process_tomography import ProcessTomography
 
 qt = ut.import_qutip()
@@ -42,37 +36,21 @@ if not cvxpy:
     pytest.skip("CVXPY not installed, skipping tests", allow_module_level=True)
 
 
-def test_isa():
-    d = qc.AGAVE_ISA.to_dict()
-    assert  d == {
-        'name': qc.AGAVE_ISA.name,
-        'qubits': qc.AGAVE_ISA.qubits,
-        'cz_edges': qc.AGAVE_ISA.cz_edges,
-    }
-
-    assert qc.ISA.from_dict(d) == qc.AGAVE_ISA
-
-
-def test_kraus_model():
-    km = qc.KrausModel('I', (5.,), (0, 1), [np.array([[1+1j]])], 1.0)
-    d = km._asdict()
-    assert d == OrderedDict([
-        ('gate', km.gate),
-        ('params', km.params),
-        ('targets', (0, 1)),
-        ('kraus_ops', [[[[1.]], [[1.0]]]]),
-        ('fidelity', 1.0)
-    ])
-    assert qc.KrausModel.from_dict(d) == km
-
-
 def test_estimate():
 
-    dummy_isa = qc.ISA(name='dummy',
-                       qubits=[0, 1],
-                       cz_edges=[(0, 1)]
-                       )
-    dummy_cliques = [dummy_isa.cz_edges]
+    dummy_isa = qc.ISA(
+        name='dummy',
+        version='0.0',
+        timestamp=0,
+        qubits=[
+           Qubit(0, "Xhalves", False),
+           Qubit(1, "Xhalves", False)
+        ],
+        edges=[
+           Edge((0, 1), "CZ", False)
+        ]
+    )
+    dummy_cliques = [dummy_isa.edges]
 
     with patch("grove.tomography.qpu_characterization.parallel_process_tomographies") as ppt:
 
@@ -92,9 +70,8 @@ def test_estimate():
         ppt.side_effect = mock_ppt
         res = qc.estimate(dummy_isa, 100, Mock(spec=QPUConnection), dummy_cliques, retune_sleep=1.)
 
-        assert res.isa == dummy_isa
-        assert res.identities[0].kraus_ops[0].tolist() == [[1+0j]]
-        assert res.identities[0].fidelity == 0.99
+        assert res.gates[0].kraus_ops[0].tolist() == [[1+0j]]
+        assert res.gates[0].fidelity == 0.99
 
         assert qc.NoiseModel.from_dict(res.to_dict()) == res
 
@@ -119,8 +96,9 @@ def test_parallel_sample_assignment_probs():
 
     res = qc.parallel_sample_assignment_probs([[0], [1]], nsamples, cxn, shuffle=False)
     assert [r.tolist() for r in res] == [[[1., 0],
-                                          [0., 1.]], [[1., 0],
-                                                      [0., 1.]]]
+                                          [0., 1.]],
+                                         [[1., 0],
+                                          [0., 1.]]]
 
     with pytest.raises(ValueError):
         qc.parallel_sample_assignment_probs([[0], [1, 2]], nsamples, cxn, shuffle=False)
