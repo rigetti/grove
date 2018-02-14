@@ -240,6 +240,7 @@ def state_tomography_programs(state_prep, qubits=None,
         state_tomography_program = Program(Pragma("PRESERVE_BLOCK"))
         state_tomography_program.inst(state_prep)
         state_tomography_program.inst(tomography_program)
+        state_tomography_program.inst(Pragma("END_PRESERVE_BLOCK"))
         yield state_tomography_program
 
 
