@@ -411,7 +411,6 @@ def run_in_parallel(programs, nsamples, cxn, shuffle=True):
         for jdx, (progsj, pj) in enumerate(zip(programs, permutations)):
             shuffled_programs[jdx] = [progsj[pjk] for pjk in pj]
 
-        # recursive call on shuffled programs
         shuffled_results = _run_in_parallel(shuffled_programs, nsamples, cxn)
 
         # reverse shuffling of results
@@ -424,7 +423,7 @@ def run_in_parallel(programs, nsamples, cxn, shuffle=True):
 
 def _run_in_parallel(programs, nsamples, cxn):
     """
-    See docs for run_in_parallel.
+    See docs for ``run_in_parallel()``.
 
     :param Union[np.ndarray,List[List[Program]]] programs: A rectangular list of lists, or a 2d
         array of Quil Programs. The outer list iterates over disjoint qubit groups as targets, the
