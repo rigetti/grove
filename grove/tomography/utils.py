@@ -434,7 +434,10 @@ def _run_in_parallel(programs, nsamples, cxn):
     :return: An array of 2d arrays that provide bitstring histograms for each input program.
         The axis of the outer array iterates over the disjoint qubit groups, the outer axis of the
         inner 2d array iterates over the programs for that group and the inner most axis iterates
-        over all possible bitstrings for the qubit group under consideration.
+        over all possible bitstrings for the qubit group under consideration. The bitstrings are
+        enumerated in lexicographical order, i.e., for a program with qubits {3, 1, 2} the qubits
+        are first sorted -> [1, 2, 3] and then the bitstrings are enumerated as 000, 001, 010,
+        where the bits ijk correspond to the states of qubits 1,2 and 3, respectively.
     :rtype np.array
     """
     n_groups = len(programs)
