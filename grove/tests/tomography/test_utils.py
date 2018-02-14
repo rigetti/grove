@@ -52,10 +52,10 @@ def test_sample_outcomes_make_histogram():
 
 def test_basis_state_preps():
     II, IX, XI, XX = ut.basis_state_preps(0, 1)
-    assert II.out() == "I 0\nI 1\n"
-    assert IX.out() == "I 0\nX 1\n"
-    assert XI.out() == "X 0\nI 1\n"
-    assert XX.out() == "X 0\nX 1\n"
+    assert II.out() == "PRAGMA PRESERVE_BLOCK\nI 0\nI 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert IX.out() == "PRAGMA PRESERVE_BLOCK\nI 0\nX 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert XI.out() == "PRAGMA PRESERVE_BLOCK\nX 0\nI 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert XX.out() == "PRAGMA PRESERVE_BLOCK\nX 0\nX 1\nPRAGMA END_PRESERVE_BLOCK\n"
 
 
 def test_sample_bad_readout():
