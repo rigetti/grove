@@ -442,6 +442,11 @@ def _run_in_parallel(programs, nsamples, cxn):
     """
     n_groups = len(programs)
     n_progs_per_group = len(programs[0])
+
+    for progs in programs[1:]:
+        if not len(progs) == n_progs_per_group:
+            raise ValueError("Non-rectangular grid of programs specified: {}".format(programs))
+
     # identify qubit groups, ensure disjointedness
     qubit_groups = [set() for _ in range(n_groups)]
     for group_idx, group in enumerate(qubit_groups):
