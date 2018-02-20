@@ -17,9 +17,10 @@
 import numpy as np
 import pytest
 from matplotlib.pyplot import figure
-from mock import Mock, patch
+from mock import Mock, patch, call
 from mpl_toolkits.mplot3d import Axes3D
-from pyquil.gates import X
+from pyquil.api import QPUConnection
+from pyquil.gates import X, Y, I
 from pyquil.quil import Program
 
 import grove.tomography.operator_utils
@@ -51,10 +52,10 @@ def test_sample_outcomes_make_histogram():
 
 def test_basis_state_preps():
     II, IX, XI, XX = ut.basis_state_preps(0, 1)
-    assert II.out() == "I 0\nI 1\n"
-    assert IX.out() == "I 0\nX 1\n"
-    assert XI.out() == "X 0\nI 1\n"
-    assert XX.out() == "X 0\nX 1\n"
+    assert II.out() == "PRAGMA PRESERVE_BLOCK\nI 0\nI 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert IX.out() == "PRAGMA PRESERVE_BLOCK\nI 0\nX 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert XI.out() == "PRAGMA PRESERVE_BLOCK\nX 0\nI 1\nPRAGMA END_PRESERVE_BLOCK\n"
+    assert XX.out() == "PRAGMA PRESERVE_BLOCK\nX 0\nX 1\nPRAGMA END_PRESERVE_BLOCK\n"
 
 
 def test_sample_bad_readout():
@@ -101,8 +102,6 @@ def test_states():
         grove.tomography.operator_utils.GS, grove.tomography.operator_utils.GS)).norm(FROBENIUS) < o_ut.EPS
 
 
-
-
 def test_povm():
     pi_basis = grove.tomography.operator_utils.POVM_PI_BASIS
     confusion_rate_matrix = np.eye(2)
@@ -145,3 +144,61 @@ def test_visualization():
     assert ax.imshow.called
     assert ax.set_xlabel.called
     assert ax.set_ylabel.called
+
+
+def test_run_in_parallel():
+    cxn = Mock(spec=QPUConnection)
+    programsXY = [[Program(I(0)), Program(X(0))],
+                  [Program(I(1)), Program(X(1))]]
+    nsamples = 100
+
+    res00 = [[0, 0]]*nsamples
+    res11 = [[1, 1]]*nsamples
+
+    res01 = [[0, 1]]*nsamples
+    res10 = [[1, 0]]*nsamples
+
+    cxn.run_and_measure.side_effect = [
+        res00,
+        res11,
+    ]
+    results1 = ut.run_in_parallel(programsXY, nsamples, cxn, shuffle=False)
+    assert results1.tolist() == [[[100, 0],
+                                  [0, 100]],
+                                 [[100, 0],
+                                  [0, 100]]]
+
+    assert cxn.run_and_measure.call_args_list == [call(Program(I(0), I(1)), [0, 1], nsamples),
+                                                  call(Program(X(0), X(1)), [0, 1], nsamples)]
+    cxn.run_and_measure.call_args_list = []
+
+    with patch("grove.tomography.utils.np.random.shuffle") as shuffle:
+
+        has_shuffled = [False]
+
+        # flip program order on first call
+        def flip_shuffle(a):
+            if not has_shuffled[0]:
+                a[:] = a[::-1]
+                has_shuffled[0] = True
+
+        shuffle.side_effect = flip_shuffle
+
+        # return results corresponding to 0's programs flipped
+        cxn.run_and_measure.side_effect = [
+            res10,
+            res01,
+        ]
+        results2 = ut.run_in_parallel(programsXY, nsamples, cxn, shuffle=True)
+        assert results2.tolist() == [[[100, 0],
+                                      [0, 100]],
+                                     [[100, 0],
+                                      [0, 100]]]
+        assert shuffle.called
+        assert cxn.run_and_measure.called
+        # qubit 0's programs have flipped
+        assert cxn.run_and_measure.call_args_list == [call(Program(X(0), I(1)), [0, 1], nsamples),
+                                                      call(Program(I(0), X(1)), [0, 1], nsamples)]
+
+    with pytest.raises(ValueError):
+        ut.run_in_parallel([[Program(X(0))], [Program(I(0))]], nsamples, cxn, shuffle=False)

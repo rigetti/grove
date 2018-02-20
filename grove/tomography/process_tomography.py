@@ -18,6 +18,7 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+from pyquil.quilbase import Pragma
 from scipy.sparse import (vstack as spvstack, csr_matrix, kron as spkron)
 from pyquil.quil import Program
 
@@ -38,7 +39,7 @@ cvxpy = ut.import_cvxpy()
 TRACE_PRESERVING = 'trace_preserving'
 COMPLETELY_POSITIVE = 'cpositive'
 DEFAULT_PROCESS_TOMO_SETTINGS = TomographySettings(
-    constraints=set(TRACE_PRESERVING),
+    constraints=set([TRACE_PRESERVING]),
     solver_kwargs=DEFAULT_SOLVER_KWARGS
 )
 
@@ -241,6 +242,15 @@ class ProcessTomography(TomographyBase):
         """
         return qt.to_chi(self.sop)
 
+    def to_kraus(self):
+        """
+        Compute the Kraus operator representation of the estimated process.
+
+        :return: The process as a list of Kraus operators.
+        :rytpe: List[np.array]
+        """
+        return [k.data.toarray() for k in qt.to_kraus(self.sop)]
+
     def plot_pauli_transfer_matrix(self, ax):
         """
         Plot the elements of the Pauli transfer matrix.
@@ -283,10 +293,12 @@ def process_tomography_programs(process, qubits=None,
         qubits = process.get_qubits()
     for tomographic_pre_rotation in pre_rotation_generator(*qubits):
         for tomography_post_rotation in post_rotation_generator(*qubits):
-            process_tomography_program = Program()
+            process_tomography_program = Program(Pragma("PRESERVE_BLOCK"))
             process_tomography_program.inst(tomographic_pre_rotation)
             process_tomography_program.inst(process)
             process_tomography_program.inst(tomography_post_rotation)
+            process_tomography_program.inst(Pragma("END_PRESERVE_BLOCK"))
+
             yield process_tomography_program
 
 

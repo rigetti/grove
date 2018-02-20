@@ -114,6 +114,10 @@ def test_process_tomography():
         # The map should be trace preserving.
         assert np.isclose(np.sum(super_op[0]), 1, atol=EPS)
 
+    kraus_ops = process_tomo.to_kraus()
+    assert np.isclose(sum(np.trace(k.conjugate().T.dot(k)) for k in kraus_ops),
+                      kraus_ops[0].shape[0], atol=.1)
+
     assert abs(1 - process_tomo.avg_gate_fidelity(qt.to_super(cnot_ideal))) < EPS
 
     with patch("grove.tomography.utils.plot_pauli_transfer_matrix"), \

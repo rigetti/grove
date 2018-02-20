@@ -29,8 +29,10 @@ import numpy as np
 import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
+from pyquil.api.errors import QPUError
 from pyquil.gates import I, X, H, CZ
 from pyquil.quil import Program
+from pyquil.quilbase import Pragma
 
 try:
     # Python 2
@@ -166,9 +168,10 @@ def basis_state_preps(*qubits):
     :rtype: Program
     """
     for prep in cartesian_product([I, X], repeat=len(qubits)):
-        basis_prep = Program()
+        basis_prep = Program(Pragma("PRESERVE_BLOCK"))
         for gate, qubit in zip(prep, qubits):
             basis_prep.inst(gate(qubit))
+        basis_prep.inst(Pragma("END_PRESERVE_BLOCK"))
         yield basis_prep
 
 
@@ -364,3 +367,126 @@ def sample_assignment_probs(qubits, nsamples, cxn):
         idxs = list(map(bitlist_to_int, results))
         hists.append(make_histogram(idxs, dimension))
     return estimate_assignment_probs(hists)
+
+
+def run_in_parallel(programs, nsamples, cxn, shuffle=True):
+    """
+    Take sequences of Protoquil programs on disjoint qubits and execute a single sequence of
+    programs that executes the input programs in parallel. Optionally randomize within each
+    qubit-specific sequence.
+
+    The programs are passed as a 2d array of Quil programs, where the (first) outer axis iterates
+    over disjoint sets of qubits that the programs involve and the inner axis iterates over a
+    sequence of related programs, e.g., tomography sequences, on the same set of qubits.
+
+    :param Union[np.ndarray,List[List[Program]]] programs: A rectangular list of lists, or a 2d
+        array of Quil Programs. The outer list iterates over disjoint qubit groups as targets, the
+        inner list over programs to run on those qubits, e.g., tomographic sequences.
+    :param int nsamples: Number of repetitions for executing each Program.
+    :param QPUConnection|QVMConnection cxn: The quantum machine connection.
+    :param bool shuffle: If True, the order of each qubit specific sequence (2nd axis) is randomized
+        Default is True.
+    :return: An array of 2d arrays that provide bitstring histograms for each input program.
+        The axis of the outer array iterates over the disjoint qubit groups, the outer axis of the
+        inner 2d array iterates over the programs for that group and the inner most axis iterates
+        over all possible bitstrings for the qubit group under consideration.
+    :rtype np.array
+    """
+
+    if shuffle:
+        n_groups = len(programs)
+        n_progs_per_group = len(programs[0])
+        permutations = np.outer(np.ones(n_groups, dtype=int),
+                                np.arange(n_progs_per_group, dtype=int))
+        inverse_permutations = np.zeros_like(permutations)
+
+        for jj in range(n_groups):
+            # in-place operation
+            np.random.shuffle(permutations[jj])
+            # store inverse permutation
+            inverse_permutations[jj] = np.argsort(permutations[jj])
+
+        # apply to programs
+        shuffled_programs = np.empty((n_groups, n_progs_per_group), dtype=object)
+        for jdx, (progsj, pj) in enumerate(zip(programs, permutations)):
+            shuffled_programs[jdx] = [progsj[pjk] for pjk in pj]
+
+        shuffled_results = _run_in_parallel(shuffled_programs, nsamples, cxn)
+
+        # reverse shuffling of results
+        results = np.array([resultsj[pj]
+                            for resultsj, pj in zip(shuffled_results, inverse_permutations)])
+        return results
+    else:
+        return _run_in_parallel(programs, nsamples, cxn)
+
+
+def _run_in_parallel(programs, nsamples, cxn):
+    """
+    See docs for ``run_in_parallel()``.
+
+    :param Union[np.ndarray,List[List[Program]]] programs: A rectangular list of lists, or a 2d
+        array of Quil Programs. The outer list iterates over disjoint qubit groups as targets, the
+        inner list over programs to run on those qubits, e.g., tomographic sequences.
+    :param int nsamples: Number of repetitions for executing each Program.
+    :param QPUConnection|QVMConnection cxn: The quantum machine connection.
+    :return: An array of 2d arrays that provide bitstring histograms for each input program.
+        The axis of the outer array iterates over the disjoint qubit groups, the outer axis of the
+        inner 2d array iterates over the programs for that group and the inner most axis iterates
+        over all possible bitstrings for the qubit group under consideration. The bitstrings are
+        enumerated in lexicographical order, i.e., for a program with qubits {3, 1, 2} the qubits
+        are first sorted -> [1, 2, 3] and then the bitstrings are enumerated as 000, 001, 010,
+        where the bits ijk correspond to the states of qubits 1,2 and 3, respectively.
+    :rtype np.array
+    """
+    n_groups = len(programs)
+    n_progs_per_group = len(programs[0])
+
+    for progs in programs[1:]:
+        if not len(progs) == n_progs_per_group:
+            raise ValueError("Non-rectangular grid of programs specified: {}".format(programs))
+
+    # identify qubit groups, ensure disjointedness
+    qubit_groups = [set() for _ in range(n_groups)]
+    for group_idx, group in enumerate(qubit_groups):
+        for prog in programs[group_idx]:
+            group.update(set(prog.get_qubits()))
+
+        # test that groups are actually disjoint by comparing with the ones already created
+        for other_idx, other_group in enumerate(qubit_groups[:group_idx]):
+            intersection = other_group & group
+            if intersection:
+                raise ValueError(
+                    "Programs from groups {} and {} intersect on qubits {}".format(
+                        other_idx, group_idx, intersection))
+
+    qubit_groups = [sorted(c) for c in qubit_groups]
+    all_qubits = sum(qubit_groups, [])
+    n_qubits_per_group = [len(c) for c in qubit_groups]
+
+    # create joint programs
+    parallel_programs = [sum(progsj, Program()) for progsj in zip(*programs)]
+
+    # execute on cxn
+    all_results = []
+    for i, prog in izip(TRANGE(n_progs_per_group), parallel_programs):
+        try:
+            results = cxn.run_and_measure(prog, all_qubits, nsamples)
+            all_results.append(np.array(results))
+        except QPUError as e:
+            _log.error("Could not execute parallel program:\n%s", prog.out())
+            raise e
+
+    # generate histograms per qubit group
+    all_histograms = np.array([np.zeros((n_progs_per_group, 2 ** n_qubits), dtype=int)
+                               for n_qubits in n_qubits_per_group])
+    for idx, results in enumerate(all_results):
+        n_qubits_seen = 0
+        for jdx, n_qubits in enumerate(n_qubits_per_group):
+            group_results = results[:, n_qubits_seen:n_qubits_seen + n_qubits]
+            outcome_labels = list(map(bitlist_to_int, group_results))
+            dimension = 2 ** n_qubits
+            all_histograms[jdx][idx] = make_histogram(outcome_labels, dimension)
+            n_qubits_seen += n_qubits
+
+    return all_histograms
