@@ -22,7 +22,7 @@ import pytest
 
 from mock import MagicMock
 from mock import patch
-from pyquil.api import QVMConnection
+from pyquil.api import Job, QVMConnection
 
 from grove.tomography.operator_utils import make_diagonal_povm
 from grove.tomography.process_tomography import (TRACE_PRESERVING)
@@ -55,7 +55,9 @@ sample_bad_readout = MagicMock(sample_bad_readout)
 sample_bad_readout.side_effect = [np.array(shots) for shots in json.load(open(SHOTS_PATH, 'r'))]
 
 cxn = MagicMock(QVMConnection)
-cxn.run_and_measure.side_effect = json.load(open(RESULTS_PATH, 'r'))
+job = MagicMock(Job)
+job.result.side_effect = json.load(open(RESULTS_PATH, 'r'))
+cxn.wait_for_job.return_value = job
 
 
 def test_state_tomography():
