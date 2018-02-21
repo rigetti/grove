@@ -205,8 +205,16 @@ def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomogr
     assignment_probs = sample_assignment_probs(qubits, nsamples, cxn)
     tomo_seq = list(program_generator(target_program, qubits))
     histograms = np.zeros((len(tomo_seq), dimension))
+
+    jobs = []
+    _log.info('Submitting jobs...')
     for i, tomo_prog in izip(ut.TRANGE(len(tomo_seq)), tomo_seq):
-        results = cxn.run_and_measure(tomo_prog, qubits, nsamples)
+        jobs.append(cxn.run_and_measure_async(tomo_prog, qubits, nsamples))
+
+    _log.info('Waiting for results...')
+    for i, job_id in izip(ut.TRANGE(len(jobs)), jobs):
+        job = cxn.wait_for_job(job_id)
+        results = job.result()
         idxs = list(map(bitlist_to_int, results))
         histograms[i] = ut.make_histogram(idxs, dimension)
 
