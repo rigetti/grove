@@ -244,7 +244,7 @@ def state_tomography_programs(state_prep, qubits=None,
         yield state_tomography_program
 
 
-def do_state_tomography(preparation_program, nsamples, cxn, qubits=None):
+def do_state_tomography(preparation_program, nsamples, cxn, qubits=None, use_run=False):
     """
     Method to perform both a QPU and QVM state tomography, and use the latter as
     as reference to calculate the fidelity of the former.
@@ -254,10 +254,12 @@ def do_state_tomography(preparation_program, nsamples, cxn, qubits=None):
     :param QVMConnection|QPUConnection cxn: Connection on which to run the program.
     :param list qubits: List of qubits for the program.
     to use in the tomography analysis.
+    :param bool use_run: If ``True``, use append measurements on all qubits and use ``cxn.run``
+        instead of ``cxn.run_and_measure``.
     :return: The state tomogram.
     :rtype: StateTomography
     """
     return tomography._do_tomography(preparation_program, nsamples, cxn, qubits,
                                      tomography.MAX_QUBITS_STATE_TOMO,
                                      StateTomography, state_tomography_programs,
-                                     DEFAULT_STATE_TOMO_SETTINGS)
+                                     DEFAULT_STATE_TOMO_SETTINGS, use_run=use_run)

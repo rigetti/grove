@@ -41,7 +41,7 @@ except ImportError:  # pragma no coverage
 
 import numpy as np
 
-from pyquil.gates import I, RX, RY
+from pyquil.gates import I, RX, RY, MEASURE
 from pyquil.quil import Program
 
 import grove.tomography.utils as ut
@@ -178,7 +178,7 @@ class TomographyBase(object):
 
 
 def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomography_class,
-                   program_generator, settings):
+                   program_generator, settings, use_run=False):
     """
 
     :param Program target_program: The program to run to generate the state or process.
@@ -189,6 +189,8 @@ def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomogr
     :param type tomography_class: The type of tomography to perform.
     :param function program_generator: The function that yields the tomography experiments.
     :param TomographySettings settings: The settings for running the optimizer.
+    :param bool use_run: If ``True``, use append measurements on all qubits and use ``cxn.run``
+        instead of ``cxn.run_and_measure``.
     :return: The tomography result, the assignment probabilities, and the histograms of counts
      measured.
     :rtype: tuple
@@ -209,8 +211,11 @@ def _do_tomography(target_program, nsamples, cxn, qubits, max_num_qubits, tomogr
     jobs = []
     _log.info('Submitting jobs...')
     for i, tomo_prog in izip(ut.TRANGE(len(tomo_seq)), tomo_seq):
-        jobs.append(cxn.run_and_measure_async(tomo_prog, qubits, nsamples))
-
+        if use_run:
+            jobs.append(cxn.run_async(tomo_prog + Program([MEASURE(q, q) for q in qubits]),
+                                      qubits, nsamples))
+        else:
+            jobs.append(cxn.run_and_measure_async(tomo_prog, qubits, nsamples))
     _log.info('Waiting for results...')
     for i, job_id in izip(ut.TRANGE(len(jobs)), jobs):
         job = cxn.wait_for_job(job_id)

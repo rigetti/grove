@@ -302,7 +302,7 @@ def process_tomography_programs(process, qubits=None,
             yield process_tomography_program
 
 
-def do_process_tomography(process, nsamples, cxn, qubits=None):
+def do_process_tomography(process, nsamples, cxn, qubits=None, use_run=False):
     """
     Method to perform a process tomography.
 
@@ -311,10 +311,12 @@ def do_process_tomography(process, nsamples, cxn, qubits=None):
     :param QVMConnection|QPUConnection cxn: Connection on which to run the program.
     :param list qubits: List of qubits for the program.
     to use in the tomography analysis.
+    :param bool use_run: If ``True``, use append measurements on all qubits and use ``cxn.run``
+        instead of ``cxn.run_and_measure``.
     :return: The process tomogram
     :rtype: ProcessTomography
     """
     return tomography._do_tomography(process, nsamples, cxn, qubits,
                                      tomography.MAX_QUBITS_PROCESS_TOMO,
                                      ProcessTomography, process_tomography_programs,
-                                     DEFAULT_PROCESS_TOMO_SETTINGS)
+                                     DEFAULT_PROCESS_TOMO_SETTINGS, use_run=use_run)
