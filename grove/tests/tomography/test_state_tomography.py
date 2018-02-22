@@ -58,7 +58,8 @@ sample_bad_readout.side_effect = [np.array(shots) for shots in json.load(open(SH
 # but calling job.result() returns a different value every time via the side_effect defined below
 cxn = MagicMock(QVMConnection)
 job = MagicMock(Job)
-job.result.side_effect = json.load(open(RESULTS_PATH, 'r'))
+# repeat twice for run_and_measure and run
+job.result.side_effect = json.load(open(RESULTS_PATH, 'r')) * 2
 cxn.wait_for_job.return_value = job
 
 
@@ -110,3 +111,9 @@ def test_do_state_tomography():
         assert np.sum(histogram) == nsamples
     num_qubits = len(BELL_STATE_PROGRAM.get_qubits())
     assert np.isclose(assignment_probs, np.eye(2 ** num_qubits), atol=EPS).all()
+
+    # ensure that use_run works.
+    state_tomo2, _, _ = do_state_tomography(BELL_STATE_PROGRAM, nsamples, cxn, use_run=True)
+    assert np.allclose(state_tomo2.rho_est.data.toarray(), state_tomo.rho_est.data.toarray(),
+                       atol=1e-3)
+
