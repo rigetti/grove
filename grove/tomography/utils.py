@@ -362,8 +362,16 @@ def sample_assignment_probs(qubits, nsamples, cxn):
     dimension = 2 ** num_qubits
     hists = []
     preps = basis_state_preps(*qubits)
+
+    jobs = []
+    _log.info('Submitting jobs...')
     for jj, p in izip(TRANGE(dimension), preps):
-        results = cxn.run_and_measure(p, qubits, nsamples)
+        jobs.append(cxn.run_and_measure_async(p, qubits, nsamples))
+
+    _log.info('Waiting for results...')
+    for jj, job_id in izip(TRANGE(dimension), jobs):
+        job = cxn.wait_for_job(job_id)
+        results = job.result()
         idxs = list(map(bitlist_to_int, results))
         hists.append(make_histogram(idxs, dimension))
     return estimate_assignment_probs(hists)

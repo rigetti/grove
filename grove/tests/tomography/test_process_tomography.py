@@ -14,7 +14,6 @@
 #    limitations under the License.
 ##############################################################################
 
-import matplotlib
 import pytest
 import os
 import numpy as np
@@ -22,7 +21,7 @@ from mock import patch
 from mock import MagicMock, Mock
 import json
 
-from pyquil.api import QVMConnection
+from pyquil.api import Job, QVMConnection
 
 from grove.tomography.tomography import (MAX_QUBITS_PROCESS_TOMO,
                                          default_channel_ops)
@@ -52,8 +51,12 @@ RESULTS_PATH = os.path.join(os.path.dirname(__file__), 'process_results.json')
 sample_bad_readout = MagicMock(sample_bad_readout)
 sample_bad_readout.side_effect = [np.array(shots) for shots in json.load(open(SHOTS_PATH, 'r'))]
 
+# these mocks are set up such that a single mock Job is returned by the QVMConnection's wait_for_job
+# but calling job.result() returns a different value every time via the side_effect defined below
 cxn = MagicMock(QVMConnection)
-cxn.run_and_measure.side_effect = json.load(open(RESULTS_PATH, 'r'))
+job = MagicMock(Job)
+job.result.side_effect = json.load(open(RESULTS_PATH, 'r'))
+cxn.wait_for_job.return_value = job
 
 
 def test_process_tomography():
