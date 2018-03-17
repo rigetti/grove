@@ -242,8 +242,6 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
         sampling_prog = param_prog(stacked_params)
-        for i in range(self.n_qubits):
-            sampling_prog.measure(i, [i])
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
                                                      list(range(self.n_qubits)),
