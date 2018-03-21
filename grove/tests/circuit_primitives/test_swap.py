@@ -51,12 +51,21 @@ def test_run_swap():
     """
     Test the qvm return piece
     """
-    expected_bitstring = [1, 1, 1, 0, 1]
+    expected_bitstring = [1, 1, 1, 0, 0, 0, 0, 0, 0]
     prog_a = Program().inst(H(0))
     prog_b = Program().inst(H(1))
     with patch("pyquil.api.QVMConnection") as qvm:
         qvm.run.return_value = expected_bitstring
         test_overlap = run_swap_test(prog_a, prog_b, 5, qvm)
 
-        assert np.isclose(np.sqrt(2 * np.mean(expected_bitstring) - 1),
+        assert np.isclose(np.sqrt(1 - 2 * np.mean(expected_bitstring)),
                           test_overlap)
+
+    expected_bitstring = [1, 1, 1, 0, 1]
+    prog_a = Program().inst(H(0))
+    prog_b = Program().inst(H(1))
+    with patch("pyquil.api.QVMConnection") as qvm:
+        qvm.run.return_value = expected_bitstring
+        with pytest.raises(ValueError):
+            test_overlap = run_swap_test(prog_a, prog_b, 5, qvm)
+

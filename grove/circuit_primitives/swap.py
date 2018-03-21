@@ -10,7 +10,7 @@ from pyquil.gates import H, CSWAP
 
 
 class RegisterSizeMismatch(Exception):
-    """Error associated with mismatch register size"""
+    """Error associated with mismatched register size"""
     pass
 
 
@@ -23,14 +23,14 @@ def swap_circuit_generator(register_a, register_b, ancilla):
 
     :param List register_a: qubit labels in the 'A' register
     :param List register_b: qubit labels in the 'B' register
-    :param ancilla: ancilla to measure and control of swap operation.
+    :param ancilla: ancilla to measure and control the swap operation.
     :return: Program
     """
     if len(register_a) != len(register_b):
         raise RegisterSizeMismatch("registers involve different numbers of qubits")
 
     if not isinstance(register_a, list):
-        raise TypeError("Register A need to be list")
+        raise TypeError("Register A needs to be list")
     if not isinstance(register_b, list):
         raise TypeError("Register B needs to be a list")
 
@@ -76,7 +76,11 @@ def run_swap_test(program_a, program_b, number_of_measurements, quantum_resource
                                    classical_memory,
                                    trials=number_of_measurements)
 
-    estimated_overlap = np.sqrt(2 * np.mean(results) - 1)
+    probability_of_one = np.mean(results)
+    if probability_of_one > 0.5:
+        raise ValueError("measurements indicate overlap is negative")
+
+    estimated_overlap = np.sqrt(1 - 2 * probability_of_one)
     return estimated_overlap
 
 
