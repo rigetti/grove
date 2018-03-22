@@ -80,7 +80,6 @@ def test_commuting_sets_3():
 
 
 def test_commuting_sets_4():
-    # TODO: Order is important
     ham1 = PauliSum([PauliTerm('Z', 0), PauliTerm('X', 0)])
     ham2 = PauliSum([PauliTerm('X', 1), PauliTerm('Z', 1)])
     actual = commuting_sets_by_indices([ham1, ham2], check_trivial_commutation)
@@ -125,6 +124,3 @@ def test_term_grouping():
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
 
-
-if __name__ == "__main__":
-    test_term_grouping()

@@ -4,35 +4,88 @@ Various ways to group sets of Pauli Terms
 This augments the existing infrastructure in pyquil that finds commuting sets
 of PauliTerms.
 """
-from pyquil.paulis import check_commutation
+from pyquil.paulis import check_commutation, is_identity
 
 
-def check_trivial_commutation(pauli_list, pauli_two):
+def _commutes(p1, p2):
+    # Identity commutes with anything
+    if is_identity(p1) or is_identity(p2):
+        return True
+
+    # Operators acting on different qubits commute
+    if len(set(p1.get_qubits()) & set(p2.get_qubits())) == 0:
+        return True
+
+    # Otherwise, they must be the same thing modulo coefficient
+    return p1.id() == p2.id()
+
+
+def _max_key_overlap(pauli_term, diagonal_sets, max_qubit):
+    """
+    Calculate the max overlap of a pauli term ID with keys of diagonal_sets
+
+    Returns a different key if we find any collisions.  If no collisions is
+    found then the pauli term is added and the key is updated so it has the
+    largest weight.
+
+    :param pauli_term:
+    :param diagonal_sets:
+    :return: dictionary where key value pair is tuple indicating diagonal basis
+             and list of PauliTerms that share that basis
+    :rtype: dict
+    """
+    hash_ptp = tuple([pauli_term[n] for n in range(max_qubit)])
+
+    keys = list(diagonal_sets.keys())
+    #  if there are keys check for collisions if not return updated
+    #  diagonal_set dictionary with the key and term added
+    for key in keys:  # for each key check any collisions
+        for idx, pauli_tensor_element in enumerate(key):
+            if ((pauli_tensor_element != 'I' and hash_ptp[idx] != 'I')
+               and hash_ptp[idx] != pauli_tensor_element):
+                #  item has collision with this key
+                #  so must be  a different key or new key
+                break
+        else:
+            #  we've gotten to the end without finding a difference!
+            #  that means this key works with this pauli term!
+            #  Now we must select the longer of the two keys
+            #  longer is the key or item with fewer identities
+            new_key = []
+            for ii in range(len(hash_ptp)):
+                if hash_ptp[ii] != 'I':
+                    new_key.append(hash_ptp[ii])
+                elif key[ii] != 'I':
+                    new_key.append(key[ii])
+                else:
+                    new_key.append('I')
+
+            if tuple(new_key) in diagonal_sets.keys():
+                diagonal_sets[tuple(new_key)].append(pauli_term)
+            else:
+                diagonal_sets[tuple(new_key)] = diagonal_sets[key]
+                diagonal_sets[tuple(new_key)].append(pauli_term)
+                del diagonal_sets[key]
+            return diagonal_sets
+
+    diagonal_sets[hash_ptp] = [pauli_term]
+    return diagonal_sets
+
+
+def check_trivial_commutation(pauli_list, single_pauli_term):
     """
     Check if a PauliTerm trivially commutes with a list of other terms.
 
     :param list pauli_list: A list of PauliTerm objects
-    :param PauliTerm pauli_two_term: A PauliTerm object
+    :param PauliTerm single_pauli_term: A PauliTerm object
     :returns: True if pauli_two object commutes with pauli_list, False otherwise
     :rtype: bool
     """
     if not isinstance(pauli_list, list):
         raise TypeError("pauli_list should be a list")
 
-    def _commutes(p1, p2):
-        # Identity commutes with anything
-        if len(p1.get_qubits()) == 0 or len(p1.get_qubits()) == 0:
-            return True
-
-        # Operators acting on different qubits commute
-        if len(set(p1.get_qubits()) & set(p2.get_qubits())) == 0:
-            return True
-
-        # Otherwise, they must be the same thing modulo coefficient
-        return p1.id() == p2.id()
-
-    for i, term in enumerate(pauli_list):
-        if not _commutes(term, pauli_two):
+    for term in pauli_list:
+        if not _commutes(term, single_pauli_term):
             return False
     return True
 
@@ -83,55 +136,6 @@ def commuting_sets_by_zbasis(pauli_sums):
     :param pauli_sums:
     :return:
     """
-    def _max_key_overlap(item, diagonal_sets, max_qubit):
-        """
-        Calculate the max overlap of item with keys of diagoanl_sets
-
-        Returns a different key if we find any collisions
-
-        This mutates the sets
-
-        :param item:
-        :param diagonal_sets:
-        :return:
-        """
-        hash_ptp = tuple([item[n] for n in range(max_qubit)])
-
-        keys = list(diagonal_sets.keys())
-        #  if there are keys check for collisions if not return updated
-        #  diagonal_set dictionary with the key and term added
-        for key in keys:  # for each key check any collisions
-            for idx, pauli_tensor_element in enumerate(key):
-                if ((pauli_tensor_element != 'I' and hash_ptp[idx] != 'I')
-                   and hash_ptp[idx] != pauli_tensor_element):
-                    #  item has collision with this key
-                    #  so must be in a different in a different key or new key
-                    break
-            else:
-                #  we've gotten to the end without finding a difference!
-                #  that means this key works with this item!
-                #  Now we must select the longer of the two keys
-                #  longer is the key or item with fewer identities
-                new_key = []
-                for ii in range(len(hash_ptp)):
-                    if hash_ptp[ii] != 'I':
-                        new_key.append(hash_ptp[ii])
-                    elif key[ii] != 'I':
-                        new_key.append(key[ii])
-                    else:
-                        new_key.append('I')
-
-                if tuple(new_key) in diagonal_sets.keys():
-                    diagonal_sets[tuple(new_key)].append(item)
-                else:
-                    diagonal_sets[tuple(new_key)] = diagonal_sets[key]
-                    diagonal_sets[tuple(new_key)].append(item)
-                    del diagonal_sets[key]
-                return diagonal_sets
-
-        diagonal_sets[hash_ptp] = [item]
-        return diagonal_sets
-
     max_qubit = 0
     for term in pauli_sums:
         if term.id() != "":
