@@ -20,7 +20,7 @@ def _commutes(p1, p2):
     return p1.id() == p2.id()
 
 
-def _max_key_overlap(pauli_term, diagonal_sets, max_qubit):
+def _max_key_overlap(pauli_term, diagonal_sets, active_qubits): #max_qubit):
     """
     Calculate the max overlap of a pauli term ID with keys of diagonal_sets
 
@@ -34,7 +34,7 @@ def _max_key_overlap(pauli_term, diagonal_sets, max_qubit):
              and list of PauliTerms that share that basis
     :rtype: dict
     """
-    hash_ptp = tuple([pauli_term[n] for n in range(max_qubit)])
+    hash_ptp = tuple([pauli_term[n] for n in active_qubits])
 
     keys = list(diagonal_sets.keys())
     #  if there are keys check for collisions if not return updated
@@ -133,18 +133,20 @@ def commuting_sets_by_zbasis(pauli_sums):
 
     Following the technique outlined in the appendix of arXiv:1704.05018.
 
-    :param pauli_sums:
-    :return:
+    :param pauli_sums: PauliSum object to group
+    :return: dictionary where key value pair is a tuple corresponding to the
+             basis and a list of PauliTerms associated with that basis.
     """
-    max_qubit = 0
+    active_qubits = []
     for term in pauli_sums:
-        if term.id() != "":
-            max_qubit = max(max_qubit, max(term.get_qubits()))
-    max_qubit += 1  # index from 1
+        active_qubits += list(term.get_qubits())
+    # get unique indices and put in order from least to greatest
+    # NOTE: translation layer to physical qubits is likely to be needed
+    active_qubits = sorted(list(set(active_qubits)))
 
     diagonal_sets = {}
     for term in pauli_sums:
-        diagonal_sets = _max_key_overlap(term, diagonal_sets, max_qubit)
+        diagonal_sets = _max_key_overlap(term, diagonal_sets, active_qubits)
 
     return diagonal_sets
 

@@ -106,13 +106,13 @@ def test_term_grouping():
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
 
-    zzzz_terms = sZ(0) * sZ(1) + sZ(2) * sZ(3) + \
-                 sZ(0) * sZ(2) + sZ(0) * sZ(2) * sZ(3)
-    xzxz_terms = sX(0) * sZ(1) + sX(2) * sZ(3) + \
-                 sX(0) * sZ(1) * sX(2) * sZ(3) + sX(0) * sX(2) * sZ(3)
-    xxxx_terms = sX(0) * sX(1) + sX(1) + sX(2) * sX(3) + sX(3) + \
-                 sX(0) * sX(2) * sX(3) + sX(0) * sX(3) + sX(0) * sX(1) * sX(2)
-    yyyy_terms = sY(0) * sY(1) + sY(2) * sY(3) + sY(0) * sY(1) * sY(2) * sY(3)
+    zzzz_terms = sZ(1) * sZ(2) + sZ(3) * sZ(4) + \
+                 sZ(1) * sZ(3) + sZ(1) * sZ(3) * sZ(4)
+    xzxz_terms = sX(1) * sZ(2) + sX(3) * sZ(4) + \
+                 sX(1) * sZ(2) * sX(3) * sZ(4) + sX(1) * sX(3) * sZ(4)
+    xxxx_terms = sX(1) * sX(2) + sX(2) + sX(3) * sX(4) + sX(4) + \
+                 sX(1) * sX(3) * sX(4) + sX(1) * sX(4) + sX(1) * sX(2) * sX(3)
+    yyyy_terms = sY(1) * sY(2) + sY(3) * sY(4) + sY(1) * sY(2) * sY(3) * sY(4)
 
     pauli_sum = zzzz_terms + xzxz_terms + xxxx_terms + yyyy_terms
     clumped_terms = commuting_sets_by_zbasis(pauli_sum)
