@@ -5,7 +5,8 @@ import pytest
 from pyquil.paulis import sI, sX, sY, sZ, PauliSum, PauliTerm
 from grove.measurements.term_grouping import (check_trivial_commutation,
                                               commuting_sets_by_indices,
-                                              commuting_sets_by_zbasis)
+                                              commuting_sets_by_zbasis,
+                                              commuting_sets_trivial)
 
 
 def test_check_trivial_commutation_type():
@@ -29,6 +30,28 @@ def test_check_trivial_commutation_operation():
 
     # check trivial commutation is true
     assert check_trivial_commutation([sX(5) * sX(6)], sZ(4))
+
+
+def test_check_commutation_trivial_grouping_type():
+    with pytest.raises(TypeError):
+        commuting_sets_trivial(5)
+
+
+def test_check_commutation_trivial_grouping():
+    """
+    Check grouping of trivial terms
+    """
+    commuting_set_one = sX(0) * sZ(1) + sY(2)
+    commuting_set_two = PauliSum([sX(1)])
+    hamiltonian = commuting_set_one + commuting_set_two
+    commuting_sets = commuting_sets_trivial(hamiltonian)
+    for comm_set in commuting_sets:
+        if len(comm_set) == 2:
+            true_set = set(map(lambda x: x.id(), commuting_set_one.terms))
+            assert set(map(lambda x: x.id(), comm_set)) == true_set
+        elif len(comm_set) == 1:
+            true_set = set(map(lambda x: x.id(), commuting_set_two.terms))
+            assert set(map(lambda x: x.id(), comm_set)) == true_set
 
 
 def test_commuting_terms_indexed():
@@ -124,3 +147,5 @@ def test_term_grouping():
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
 
+if __name__ == "__main__":
+    test_check_commutation_trivial_grouping()
