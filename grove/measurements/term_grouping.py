@@ -4,7 +4,7 @@ Various ways to group sets of Pauli Terms
 This augments the existing infrastructure in pyquil that finds commuting sets
 of PauliTerms.
 """
-from pyquil.paulis import check_commutation, is_identity
+from pyquil.paulis import check_commutation, is_identity, PauliTerm, PauliSum
 
 
 def _commutes(p1, p2):
@@ -20,7 +20,7 @@ def _commutes(p1, p2):
     return p1.id() == p2.id()
 
 
-def _max_key_overlap(pauli_term, diagonal_sets, active_qubits): #max_qubit):
+def _max_key_overlap(pauli_term, diagonal_sets, active_qubits):
     """
     Calculate the max overlap of a pauli term ID with keys of diagonal_sets
 
@@ -149,4 +149,30 @@ def commuting_sets_by_zbasis(pauli_sums):
         diagonal_sets = _max_key_overlap(term, diagonal_sets, active_qubits)
 
     return diagonal_sets
+
+
+def commuting_sets_trivial(pauli_sum):
+    """
+    Group a pauli term into commuting sets using trivial check
+
+    :param pauli_sum: PauliSum term
+    :return: list of lists containing individual Pauli Terms
+    """
+    if not isinstance(pauli_sum, (PauliTerm, PauliSum)):
+        raise TypeError("This method can only group PauliTerm or PauliSum objects")
+
+    if isinstance(pauli_sum, PauliTerm):
+        pauli_sum = PauliSum([pauli_sum])
+
+    commuting_terms = []
+    for term in pauli_sum:
+        # find the group that it trivially commutes with
+        for term_group in commuting_terms:
+            if check_trivial_commutation(term_group, term):
+                term_group.append(term)
+                break
+        else:
+            commuting_terms.append([term])
+
+    return commuting_terms
 
