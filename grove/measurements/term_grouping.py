@@ -20,7 +20,7 @@ def _commutes(p1, p2):
     return p1.id() == p2.id()
 
 
-def _max_key_overlap(pauli_term, diagonal_sets, active_qubits): #max_qubit):
+def _max_key_overlap(pauli_term, diagonal_sets, active_qubits):
     """
     Calculate the max overlap of a pauli term ID with keys of diagonal_sets
 
