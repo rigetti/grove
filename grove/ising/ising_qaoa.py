@@ -110,7 +110,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
         vqe_option['disp'] = None
 
     qaoa_inst = QAOA(connection, range(n_nodes), steps=num_steps, cost_ham=cost_operators,
-                     ref_hamiltonian=driver_operators, store_basis=True,
+                     ref_ham=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
                      init_betas=initial_beta,
                      init_gammas=initial_gamma,

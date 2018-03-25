@@ -32,7 +32,7 @@ def test_pass_hamiltonians():
                 PauliTerm("Z", 1, 1.0)]
     fakeQVM = Mock()
     inst = QAOA(fakeQVM, range(2), steps=1,
-                cost_ham=cost_ham, ref_hamiltonian=ref_ham)
+                cost_ham=cost_ham, ref_ham=ref_ham)
 
     c = inst.cost_ham
     r = inst.ref_ham
@@ -45,7 +45,7 @@ def test_pass_hamiltonians():
 
     with pytest.raises(TypeError):
         QAOA(fakeQVM, 2, steps=1,
-             cost_ham=PauliTerm("X", 0, 1.0), ref_hamiltonian=ref_ham,
+             cost_ham=PauliTerm("X", 0, 1.0), ref_ham=ref_ham,
              rand_seed=42)
 
 
