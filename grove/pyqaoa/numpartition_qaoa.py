@@ -46,9 +46,9 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
                             'options': {'ftol': 1.0e-2,
                                         'xtol': 1.0e-2,
                                         'disp': True}}
-                                        
+
     qaoa_inst = QAOA(CXN, len(asset_list), steps=steps, cost_ham=cost_operators,
-                     ref_hamiltonian=ref_operators, store_basis=True,
+                     ref_ham=ref_operators, store_basis=True,
                      minimizer=minimize, minimizer_kwargs=minimizer_kwargs,
                      vqe_options={'disp': True})
 

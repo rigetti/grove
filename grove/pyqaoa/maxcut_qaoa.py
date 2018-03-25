@@ -76,7 +76,7 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
                       'samples': samples}
 
     qaoa_inst = QAOA(connection, list(graph.nodes()), steps=steps, cost_ham=cost_operators,
-                     ref_hamiltonian=driver_operators, store_basis=True,
+                     ref_ham=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
                      init_betas=initial_beta,
                      init_gammas=initial_gamma,

@@ -27,7 +27,7 @@ from functools import reduce
 class QAOA(object):
     def __init__(self, qvm, qubits, steps=1, init_betas=None,
                  init_gammas=None, cost_ham=[],
-                 ref_hamiltonian=[], driver_ref=None,
+                 ref_ham=[], driver_ref=None,
                  minimizer=None, minimizer_args=[],
                  minimizer_kwargs={}, rand_seed=None,
                  vqe_options={}, store_basis=False):
@@ -47,7 +47,7 @@ class QAOA(object):
                             cost function. Default=None.
         :param cost_ham: list of clauses in the cost function. Must be
                     PauliSum objects
-        :param ref_hamiltonian: list of clauses in the cost function. Must be
+        :param ref_ham: list of clauses in the mixer function. Must be
                     PauliSum objects
         :param driver_ref: (pyQuil.quil.Program()) object to define state prep
                            for the starting state of the QAOA algorithm.
@@ -79,8 +79,8 @@ class QAOA(object):
 
         if driver_ref is not None:
             if not isinstance(driver_ref, pq.Program):
-                raise TypeError("""Please provide a pyQuil Program object as a
-                                   to generate initial state""")
+                raise TypeError("Please provide a pyQuil Program object "
+                                   "to generate initial state.")
             else:
                 self.ref_state_prep = driver_ref
         else:
@@ -90,22 +90,22 @@ class QAOA(object):
             self.ref_state_prep = ref_prog
 
         if not isinstance(cost_ham, (list, tuple)):
-            raise TypeError("""cost_hamiltonian must be a list of PauliSum
-                               objects""")
+            raise TypeError("cost_hamiltonian must be a list of PauliSum "
+                               "objects.")
         if not all([isinstance(x, PauliSum) for x in cost_ham]):
-            raise TypeError("""cost_hamiltonian must be a list of PauliSum
-                                   objects""")
+            raise TypeError("cost_hamiltonian must be a list of PauliSum "
+                                   "objects")
         else:
             self.cost_ham = cost_ham
 
-        if not isinstance(ref_hamiltonian, (list, tuple)):
-            raise TypeError("""cost_hamiltonian must be a list of PauliSum
-                               objects""")
-        if not all([isinstance(x, PauliSum) for x in ref_hamiltonian]):
-            raise TypeError("""cost_hamiltonian must be a list of PauliSum
-                                   objects""")
+        if not isinstance(ref_ham, (list, tuple)):
+            raise TypeError("cost_hamiltonian must be a list of PauliSum "
+                               "objects")
+        if not all([isinstance(x, PauliSum) for x in ref_ham]):
+            raise TypeError("cost_hamiltonian must be a list of PauliSum "
+                                   "objects")
         else:
-            self.ref_ham = ref_hamiltonian
+            self.ref_ham = ref_ham
 
         if minimizer is None:
             self.minimizer = optimize.minimize
@@ -154,14 +154,15 @@ class QAOA(object):
             driver_para_programs.append(driver_list)
 
         def psi_ref(params):
-            """Construct a Quil program for the vector (beta, gamma).
+            """
+            Construct a Quil program for the vector (beta, gamma).
 
             :param params: array of 2 . p angles, betas first, then gammas
             :return: a pyquil program object
             """
             if len(params) != 2*self.steps:
-                raise ValueError("""params doesn't match the number of parameters set
-                                    by `steps`""")
+                raise ValueError("params doesn't match the number of parameters set "
+                                    "by `steps`")
             betas = params[:self.steps]
             gammas = params[self.steps:]
 
