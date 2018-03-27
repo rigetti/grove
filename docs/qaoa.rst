@@ -408,6 +408,153 @@ As expected the approximate evolution becomes more accurate as the number of
 steps (\\(\\alpha\\)) is increased.  For this simple model \\(\\alpha = 2\\) is
 sufficient to find the two degnerate cuts of the four ring graph.
 
+XY mixer Hamiltonian Example
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In this example we will use the important optional argument ``driver_operators`` to solve a simple toy problem
+using the Ising QAOA wrapper. This example is loosely based on the work 'QAOA with hard and soft constraints' by Hadfield et. al (2017)
+[`4 <https://dl.acm.org/citation.cfm?id=3149530>`_]. Here, the core idea is to implement hard constraints into the
+driver/mixer Hamiltonian which ensures that the search takes place only in the feasible subspace. Just keep reading and it will get
+clear what *hard constraints* and *feasible subspace* means.
+Suppose we encode the directions right, left and up into 3 bits each:
+
+.. image:: ising_qaoa/3_directions.png
+   :align: center
+   :scale: 75%
+
+All of these three bit strings have one thing in common: a Hamming weight of one. (basically the number of
+1's in the bit string [`5 <https://en.wikipedia.org/wiki/Hamming_weight>`_]). Let's say we want to use our
+Ising QAOA to find self-avoiding walks (SAW) with three moves. Due to the way we assigned bit strings to
+directions we know that every *feasible* solution for a walk with three moves must have a Hamming weight
+of three! Hence, our *hard constraint* is a constant Hamming weight of one for each triplet of bits.
+Consequently, the bit string \\( 110 \\, 111 \\, 011 \\) is not a feasible solution since its Hamming weight is
+too large and the three triplets carry no meaning in the context of our problem! Thus, we can define the
+*feasible subspace* as the set of all *feasible* bit strings.
+For example, a valid SAW with three moves (a feasible solution) could look like this:
+
+.. image:: ising_qaoa/valid_saw.png
+   :align: center
+   :scale: 75%
+
+The goal in this example is to create a driver/mixer Hamiltonian which preserves the Hamming weight of each bit triplet.
+The \\( SWAP_{i,j} \\) operation is a great building block since it simply swaps the values of two bits which
+of course preserves Hamming weight. In our case, we use the following simplified definition of
+the \\( SWAP_{i,j} \\) operation (see [`4 <https://dl.acm.org/citation.cfm?id=3149530>`_]):
+
+$$ SWAP_{i,j} = \\frac{1}{2} ( X_{i}X_{j} + Y_{i}Y_{j} ) $$
+
+The mixer should mix amplitudes between feasible solutions which means it should swap around the bits within each triplet.
+This can be achieved with the following driver/mixer Hamiltonian:
+
+$$ \\mathbf{H}_{M} = \\sum_{k \\in \\{ 0,3,6\\}} \\sum_{i=k}^{k+1} \\sum_{i+1}^{k+2} SWAP_{i,j} $$
+
+Let's first do our imports:
+
+.. code-block:: python
+
+    from grove.alpha.arbitrary_state.arbitrary_state import create_arbitrary_state
+    import numpy as np
+    import pyquil.api as api
+    import itertools
+    from functools import reduce
+    import operator
+
+In pyQuil code we can generate this driver/mixer Hamiltonian like this:
+
+.. code-block:: python
+
+    mixer_operators = []
+    for k in [0,3,6]:
+        l = list(range(k,k+3))
+        ij_pairs = [ (a,b) for a in l for b in l[l.index(a):] if a!=b and b-a<=2]
+        for i, j in ij_pairs:
+            mixer_operators.append(PauliSum([PauliTerm("X", i, 0.5) * PauliTerm("X", j)]))
+            mixer_operators.append(PauliSum([PauliTerm("Y", i, 0.5) * PauliTerm("Y", j)]))
+
+So far so good but now let's look at this walk:
+
+.. image:: ising_qaoa/valid_sol_not_SAW.png
+   :align: center
+   :scale: 75%
+
+This walk is a feasible solution since it satisfies the hard constraint of having an overall Hamming weight of three.
+Yet, it is not a valid SAW. In order to ensure that we are getting valid SAWs we will introduce *soft constraints* into
+the cost Hamiltonian. The only soft constraint that we have to enforce is that there shouldn't be a move to the right
+followed by a move to the left or vice versa. In order to evaluate if the \\( j \\)-th move went to the right or left, let's define the following the functions:
+
+$$ m^{j}_{x^{+}} = (1-Z_{3j})Z_{3j+1}$$
+$$ m^{j}_{x^{-}} = (1-Z_{3j+1})Z_{3j}$$
+
+Let's define these functions in pyQuil:
+
+.. code-block:: python
+
+    m_xplus = lambda j: (1-PauliTerm("Z", 3*j))*PauliTerm("Z", 3*j+1)
+    m_xminus = lambda j: (1-PauliTerm("Z", 3*j+1))*PauliTerm("Z", 3*j)
+
+From this we can construct our cost Hamiltonian:
+
+$$ \\mathbf{H}_{C} = \\lambda_{penalty} \\sum_{j=0}^{1} (m^{j}_{x^{-}} \\land m^{j+1}_{x^{+}}) + (m^{j}_{x^{+}} \\land m^{j+1}_{x^{-}}) $$
+
+We can generate this with:
+
+.. code-block:: python
+
+    penalty = 5
+    cost_operators = []
+    for j in range(2):
+        term = (m_xminus(j)*m_xplus(j+1)) + (m_xplus(j)*m_xminus(j+1))
+        cost_operators.append(penalty*term)
+
+Initial state!!!
+
+.. code-block:: python
+
+    from grove.alpha.arbitrary_state.arbitrary_state import create_arbitrary_state
+    import numpy as np
+    import pyquil.api as api
+    import itertools
+    from functools import reduce
+    import operator
+
+    connection = api.QVMConnection()
+
+    moves = 3
+    zero = np.array([[1,0],])
+    one = np.array([[0,1],])
+
+    tensor = lambda variables: reduce(np.kron,variables)[0]
+
+    probabilities = np.zeros((2**(3*moves),1)).T[0]
+
+    for elements in itertools.product([(one, zero, zero), (zero, one, zero), (zero, zero, one)], repeat=moves):
+        all_qubits = reduce(operator.add, elements)
+        probabilities += (1/np.sqrt(moves*3))*tensor(all_qubits)
+
+    initial_state = create_arbitrary_state(probabilities)
+
+Now we're ready to construct the QAOA instance!
+
+.. code-block:: python
+
+    n_nodes = 9 # 3 moves with 3 qubits each
+    num_steps = 2
+    qaoa_inst = QAOA(connection, n_nodes, num_steps, cost_operators, driver_operators, initial_state)
+
+Let's evaluate the wavefunction:
+
+.. code-block:: python
+
+    t = np.hstack((betas, gammas))
+    param_prog = inst.get_parameterized_program()
+    prog = param_prog(t)
+    wf = qvm_connection.wavefunction(prog)
+    wf = wf.amplitudes
+
+    for state_index in range(2**inst.n_qubits):
+        print(inst.states[state_index], np.conj(wf[state_index])*wf[state_index])
+
+
 Source Code Docs
 ----------------
 
