@@ -105,7 +105,7 @@ algorithm for finding "a 'good' solution to an optimization problem"
 [`1 <https://arxiv.org/abs/1602.07674>`_, `2 <https://arxiv.org/abs/1411.4028>`_].
 
 What's with the name? For a given NP-Hard problem an approximate algorithm is a
-polynomial-time algorithm that solves every instance of the problem with some 
+polynomial-time algorithm that solves every instance of the problem with some
 guaranteed quality in expectation.  The value of merit is the ratio between the quality of
 the polynomial time solution and the quality of the true solution.
 
@@ -154,8 +154,8 @@ barbell graph there are two equal weight partitionings that correspond to a
 maximum cut (the right two
 partitonings)--i.e. cutting
 the barbell in half.  One can denote which set \\( S \\) or \\( \\overline{S}
-\\) a node is in with either a \\(0\\) or a \\(1\\), respectively, in a bit 
-string of length  \\( N \\).  The four partitionings of the barbell graph listed 
+\\) a node is in with either a \\(0\\) or a \\(1\\), respectively, in a bit
+string of length  \\( N \\).  The four partitionings of the barbell graph listed
 above are, \\(\\{ 00, 11, 01, 10 \\} \\)---where the left most bit is node
 \\(A\\) and the right most bit is node \\(B\\).  The bit string representation
 makes it easy to represent a particular partition of the graph.  Each bit
@@ -165,7 +165,7 @@ For any graph, the bit string representations of the node partitionings are alwa
 length \\(N\\). The total number of partitionings grows as \\(2^{N}\\).  For
 example, a square ring graph
 
-.. image:: qaoa/square.png 
+.. image:: qaoa/square.png
    :scale: 55%
    :align: center
 
@@ -193,9 +193,9 @@ particular quality.  For example, a famous polynomial time algorithm is the
 randomized partitioning approach.  One simply iterates over the nodes of the
 graph and flips a coin.  If the coin is heads the node is in \\( S \\), if
 tails the node is in \\( \\overline{S} \\).  The quality of the random
-assignment algorithm is at least 50 percent of the maximum cut. 
-For a coin-flip process the probability of an edge being in the cut is 50\%.  
-Therefore, the expectation value of a cut produced by random assignment can be 
+assignment algorithm is at least 50 percent of the maximum cut.
+For a coin-flip process the probability of an edge being in the cut is 50\%.
+Therefore, the expectation value of a cut produced by random assignment can be
 written as follows:
 $$\\sum_{e \\in E} w_{e} \\cdot \\mathrm{Pr}(e \\in \\mathrm{cut}) =
 \\frac{1}{2} \\sum_{e \\in E}w_{e}$$
@@ -210,7 +210,7 @@ give cuts of expected value at least 0.87856 times the maximum cut [`3
 Quantum Approximate Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One can think of the bit strings (or set of bit strings) that correspond to the 
+One can think of the bit strings (or set of bit strings) that correspond to the
 maximum cut on a graph as the ground state of a Hamiltonian encoding
 the cost function.  The form of this Hamiltonian can be determined by
 constructing the classical function that returns a 1 (or the weight of the edge) if the edge spans two-nodes in different sets, or 0 if the nodes are in the same set.
@@ -219,13 +219,13 @@ C_{ij} = \\frac{1}{2}(1 - z_{i}z_{j})
 \\end{align}
 \\( z_{i}\\) or \\(z_{j}\\) is \\(+1\\) if node \\(i\\) or node \\(j\\) is in \\(S\\)
 or \\(-1\\) if node \\(i\\) or node \\(j\\) is in \\(\\overline{S}\\). The total cost is the
-sum of all \\( (i ,j) \\) node pairs that form the edge set of the graph.  
-This suggests that for MAX-CUT the Hamiltonian that encodes the problem is 
+sum of all \\( (i ,j) \\) node pairs that form the edge set of the graph.
+This suggests that for MAX-CUT the Hamiltonian that encodes the problem is
 $$\\sum_{ij}\\frac{1}{2}(\\mathbf{I} - \\sigma_{i}^{z}\\sigma_{j}^{z})$$
 where the sum is over \\( (i,j) \\) node pairs that form the edges of the graph.
-The quantum-approximate-optimization-algorithm relies on the fact that we can 
+The quantum-approximate-optimization-algorithm relies on the fact that we can
 prepare something approximating the ground state of this Hamiltonian and
-perform a measurement on that state. Performing a measurement on the \\(N\\)-body 
+perform a measurement on that state. Performing a measurement on the \\(N\\)-body
 quantum state returns the bit string corresponding to the maximum cut with high
 probability.
 
@@ -252,9 +252,9 @@ QAOA identifies the ground state of the MAXCUT Hamiltonian by
 evolving from a reference state.  This reference state is the ground state of
 a Hamiltonian that couples all \\( 2^{N} \\) states that form
 the basis of the cost Hamiltonian---i.e. the diagonal basis for cost function.
-For MAX-CUT this is the \\(Z\\) computational basis. 
+For MAX-CUT this is the \\(Z\\) computational basis.
 
-The  evolution between the ground state of the reference Hamiltonian 
+The  evolution between the ground state of the reference Hamiltonian
 and the ground state of the MAXCUT Hamiltonian can be generated by an
 interpolation between the two operators
 \\begin{align}
@@ -292,8 +292,8 @@ eigenvectors of the \\(\\sigma_{x}\\) operator (\\(\\mid +
 \\end{align}
 
 The reference state is easily generated by performing a Hadamard gate on each
-qubit--assuming the initial state of the system is all zeros.  The Quil code 
-generating this state is 
+qubit--assuming the initial state of the system is all zeros.  The Quil code
+generating this state is
 
 .. code-block:: c
 
@@ -306,7 +306,7 @@ pyQAOA requires the user to input how many
 slices (approximate steps) for the evolution between the reference and MAXCUT
 Hamiltonian.  The algorithm then variationally
 determines the parameters for the rotations (denoted \\(\\beta\\) and
-\\(\\gamma\\)) 
+\\(\\gamma\\))
 using the quantum-variational-eigensolver method [`4
 <http://arxiv.org/abs/1509.04279>`_][`5 <http://arxiv.org/abs/1304.3061>`_]
 that maximizes the cost function.
@@ -325,11 +325,11 @@ where
 \\begin{align}
 U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) = e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{i}}
 \\end{align}
-and 
+and
 \\begin{align}
 U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i}) = e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{i}}
 \\end{align}
-\\( U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) \\) and \\(  U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i})\\) can be expressed as a short quantum circuit. 
+\\( U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) \\) and \\(  U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i})\\) can be expressed as a short quantum circuit.
 
 For the \\(U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i})\\) term (or mixing
 term) all operators in the sum commute and thus can be split into a product of
@@ -347,7 +347,7 @@ e^{-i\\hat{H}_{\\mathrm{ref}} \\beta_{i}} = \\prod_{n =
     H 1
     RZ(beta_i) 1
     H 1
-    
+
 
 Of course, if RX is in the natural gate set for the quantum-processor this Quil
 is compiled into a set of RX rotations.  The Quil code for the cost function
@@ -359,21 +359,21 @@ looks like this:
 .. code-block:: c
 
     X 0
-    PHASE(gamma{i}/2) 0 
+    PHASE(gamma{i}/2) 0
     X 0
     PHASE(gamma{i}/2) 0
     CNOT 0 1
     RZ(gamma{i}) 1
     CNOT 0 1
 
-Executing the Quil code will generate the 
+Executing the Quil code will generate the
 \\( \\mid + \\rangle_{1}\\otimes\\mid + \\rangle_{0}\\) state and
 perform the evolution with selected \\(\\beta\\) and \\(\\gamma\\) angles.
 \\begin{align}
 \\mid \\beta, \\gamma \\rangle = e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{1}}e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{1}}e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{0}}e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{0}} \\mid + \\rangle_{N-1,...,0}
 \\end{align}
 In order to indentify the set of \\(\\beta\\) and \\(\\gamma\\) angles that
-maximize the objective function 
+maximize the objective function
 \\begin{align}
 \\mathrm{Cost} = \\langle \\beta, \\gamma \\mid  \\hat{H}_{\\mathrm{MAXCUT}}
 \\mid \\beta, \\gamma \\rangle
@@ -383,10 +383,10 @@ pyQAOA leverages the classical-quantum hybrid
 approach known as the quantum-variational-eigensolver[`4
 <http://arxiv.org/abs/1509.04279>`_][`5 <http://arxiv.org/abs/1304.3061>`_].  The quantum processor
 is used to prepare a state through a polynomial number of operations which is
-then used to evaluate the cost.  Evaluating the cost 
+then used to evaluate the cost.  Evaluating the cost
 (\\( \\langle \\beta, \\gamma \\mid \\hat{H}_{\\mathrm{MAXCUT}} \\mid \\beta, \\gamma \\rangle\\)) requires
-many preparations and measurements to generate enough samples to accurately 
-construct the distribution.   The classical computer then generates a new set of 
+many preparations and measurements to generate enough samples to accurately
+construct the distribution.   The classical computer then generates a new set of
 parameters (\\( \\beta, \\gamma\\)) for maximizing the cost function.
 
 .. image:: qaoa/VQE.png
@@ -404,35 +404,33 @@ state with \\(\\beta, \\gamma\\) and sampling.
     :scale: 55%
 
 The probability distributions above are for the four ring graph discussed earlier.
-As expected the approximate evolution becomes more accurate as the number of 
+As expected the approximate evolution becomes more accurate as the number of
 steps (\\(\\alpha\\)) is increased.  For this simple model \\(\\alpha = 2\\) is
 sufficient to find the two degnerate cuts of the four ring graph.
 
-XY mixer Hamiltonian Example
+XY Mixer Hamiltonian Example
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-In this example we will use the important optional argument ``driver_operators`` to solve a simple toy problem
-using the Ising QAOA wrapper. This example is loosely based on the work 'QAOA with hard and soft constraints' by Hadfield et. al (2017)
-[`4 <https://dl.acm.org/citation.cfm?id=3149530>`_]. Here, the core idea is to implement hard constraints into the
+In this example we will use the optional argument ``ref_hamiltonian`` to solve a simple toy problem
+using the QAOA. This example is loosely based on the work 'QAOA with hard and soft constraints' by Hadfield et. al (2017)
+[`4 <https://dl.acm.org/citation.cfm?id=3149530>`_]. The core idea here is to implement hard constraints into the
 driver/mixer Hamiltonian which ensures that the search takes place only in the feasible subspace. Just keep reading and it will get
-clear what *hard constraints* and *feasible subspace* means.
-Suppose we encode the directions right, left and up into 3 bits each:
+clear what *hard constraints* and *feasible subspace* means. Suppose we encode the directions right, left and up into 3 bits each:
 
-.. image:: ising_qaoa/3_directions.png
+.. image:: qaoa/3_directions.png
    :align: center
    :scale: 75%
 
-All of these three bit strings have one thing in common: a Hamming weight of one. (basically the number of
-1's in the bit string [`5 <https://en.wikipedia.org/wiki/Hamming_weight>`_]). Let's say we want to use our
-Ising QAOA to find self-avoiding walks (SAW) with three moves. Due to the way we assigned bit strings to
-directions we know that every *feasible* solution for a walk with three moves must have a Hamming weight
-of three! Hence, our *hard constraint* is a constant Hamming weight of one for each triplet of bits.
-Consequently, the bit string \\( 110 \\, 111 \\, 011 \\) is not a feasible solution since its Hamming weight is
-too large and the three triplets carry no meaning in the context of our problem! Thus, we can define the
-*feasible subspace* as the set of all *feasible* bit strings.
-For example, a valid SAW with three moves (a feasible solution) could look like this:
+All of these three bit strings have one thing in common: a Hamming weight of one (basically the number of
+1's in the bit string [`5 <https://en.wikipedia.org/wiki/Hamming_weight>`_]). Let's say we want to find
+self-avoiding walks (SAW) with two moves. Due to the way we assigned bit strings to directions we know that
+every *feasible* solution for a walk with three moves must have a Hamming weight of three! Hence, our *hard constraint*
+is a constant Hamming weight of one for each triplet of bits. Consequently, the bit string \\( 110 \\, 111 \\, 011 \\)
+is not a feasible solution since its Hamming weight is too large and the three triplets carry no meaning in the context
+of our problem! Thus, we can define the *feasible subspace* as the set of all *feasible* bit strings. For example, a valid
+SAW with two moves (a feasible solution) could look like this:
 
-.. image:: ising_qaoa/valid_saw.png
+.. image:: qaoa/valid_saw.png
    :align: center
    :scale: 75%
 
@@ -446,51 +444,60 @@ $$ SWAP_{i,j} = \\frac{1}{2} ( X_{i}X_{j} + Y_{i}Y_{j} ) $$
 The mixer should mix amplitudes between feasible solutions which means it should swap around the bits within each triplet.
 This can be achieved with the following driver/mixer Hamiltonian:
 
-$$ \\mathbf{H}_{M} = \\sum_{k \\in \\{ 0,3,6\\}} \\sum_{i=k}^{k+1} \\sum_{i+1}^{k+2} SWAP_{i,j} $$
+$$ \\mathbf{H}_{M} = \\sum_{k \\in \\{ 0,3\\}} \\sum_{i=k}^{k+1} \\sum_{i+1}^{k+2} SWAP_{i,j} $$
 
-Let's first do our imports:
+Let's first do our imports and open a QVMConnection:
 
 .. code-block:: python
 
-    from grove.alpha.arbitrary_state.arbitrary_state import create_arbitrary_state
+    import itertools
+    import operator
+    from functools import reduce
+
     import numpy as np
     import pyquil.api as api
-    import itertools
-    from functools import reduce
-    import operator
+    from grove.pyqaoa.qaoa import QAOA
+    from pyquil.paulis import PauliSum, PauliTerm
+    from pyquil.gates import *
+    from pyquil.quil import Program
+    from grove.alpha.arbitrary_state.arbitrary_state import create_arbitrary_state
+
+    connection = api.QVMConnection()
 
 In pyQuil code we can generate this driver/mixer Hamiltonian like this:
 
 .. code-block:: python
 
+    moves = 2
     mixer_operators = []
-    for k in [0,3,6]:
-        l = list(range(k,k+3))
-        ij_pairs = [ (a,b) for a in l for b in l[l.index(a):] if a!=b and b-a<=2]
+    for k in range(0, 3*moves, 3):
+        l = list(range(k, k+3))
+        ij_pairs = [ (a, b) for a in l for b in l[l.index(a):] if a != b and b - a <= 2]
         for i, j in ij_pairs:
             mixer_operators.append(PauliSum([PauliTerm("X", i, 0.5) * PauliTerm("X", j)]))
             mixer_operators.append(PauliSum([PauliTerm("Y", i, 0.5) * PauliTerm("Y", j)]))
 
 So far so good but now let's look at this walk:
 
-.. image:: ising_qaoa/valid_sol_not_SAW.png
+.. image:: qaoa/invalid_saw.png
    :align: center
    :scale: 75%
 
 This walk is a feasible solution since it satisfies the hard constraint of having an overall Hamming weight of three.
-Yet, it is not a valid SAW. In order to ensure that we are getting valid SAWs we will introduce *soft constraints* into
-the cost Hamiltonian. The only soft constraint that we have to enforce is that there shouldn't be a move to the right
-followed by a move to the left or vice versa. In order to evaluate if the \\( j \\)-th move went to the right or left, let's define the following the functions:
+Yet, it is not a valid SAW since it intersects with itself. In order to ensure that we are getting valid SAWs we will
+introduce *soft constraints* into the cost Hamiltonian. The only soft constraint that we have to enforce is that there
+shouldn't be a move to the right followed by a move to the left or vice versa. In order to evaluate if the \\(j\\)-th
+move went to the right or left, let's define the following functions:
 
-$$ m^{j}_{x^{+}} = (1-Z_{3j})Z_{3j+1}$$
-$$ m^{j}_{x^{-}} = (1-Z_{3j+1})Z_{3j}$$
+$$ m^{j}_{x^{+}} = (1 - Z_{3j})Z_{3j+1}$$
+$$ m^{j}_{x^{-}} = (1 - Z_{3j+1})Z_{3j}$$
 
-Let's define these functions in pyQuil:
+We can define these functions in pyQuil:
 
 .. code-block:: python
 
-    m_xplus = lambda j: (1-PauliTerm("Z", 3*j))*PauliTerm("Z", 3*j+1)
-    m_xminus = lambda j: (1-PauliTerm("Z", 3*j+1))*PauliTerm("Z", 3*j)
+    m_xplus = lambda j: (1 - PauliTerm("Z", 3 * j))*PauliTerm("Z", 3 * j + 1)
+    m_xminus = lambda j: (1 - PauliTerm("Z", 3 * j + 1))*PauliTerm("Z", 3 * j)
 
 From this we can construct our cost Hamiltonian:
 
@@ -500,60 +507,84 @@ We can generate this with:
 
 .. code-block:: python
 
-    penalty = 5
+    penalty = 10
     cost_operators = []
-    for j in range(2):
-        term = (m_xminus(j)*m_xplus(j+1)) + (m_xplus(j)*m_xminus(j+1))
-        cost_operators.append(penalty*term)
+    for j in range(moves - 1):
+        term = (m_xminus(j) * m_xplus(j + 1)) + (m_xplus(j) * m_xminus(j + 1))
+        cost_operators.append(penalty * term)
 
-Initial state!!!
+In vanilla QAOA with the standard X mixer we start from a superposition over all states by applying a Hadamard gate to each qubit. But in
+this case, we would like to start from the superposition of strings that constitute valid SAWs with two moves:
+
+$$ \\mid\\psi> = \\frac{1}{\\sqrt{9}} \\big( \\mid001001> + \\mid001010> + \\mid001100>  + ... + \\mid100100> \\big) $$
+
+The following code makes use of grove's ``create_arbitrary_state`` function in order to generate a circuit that will generate
+this initial superposition:
 
 .. code-block:: python
 
-    from grove.alpha.arbitrary_state.arbitrary_state import create_arbitrary_state
-    import numpy as np
-    import pyquil.api as api
-    import itertools
-    from functools import reduce
-    import operator
-
-    connection = api.QVMConnection()
-
-    moves = 3
-    zero = np.array([[1,0],])
-    one = np.array([[0,1],])
+    zero = np.array([[1, 0],])
+    one = np.array([[0, 1],])
 
     tensor = lambda variables: reduce(np.kron,variables)[0]
 
-    probabilities = np.zeros((2**(3*moves),1)).T[0]
+    probabilities = np.zeros((2 ** (3 * moves),1)).T[0]
+    quantum_states = itertools.product([(one, zero, zero),
+                                        (zero, one, zero),
+                                        (zero, zero, one)], repeat=moves)
 
-    for elements in itertools.product([(one, zero, zero), (zero, one, zero), (zero, zero, one)], repeat=moves):
-        all_qubits = reduce(operator.add, elements)
-        probabilities += (1/np.sqrt(moves*3))*tensor(all_qubits)
+    for qubits in quantum_states:
+        all_qubits = reduce(operator.add, qubits)
+        probabilities += (1 / np.sqrt(moves * 3))*tensor(all_qubits)
 
     initial_state = create_arbitrary_state(probabilities)
 
-Now we're ready to construct the QAOA instance!
+Now we're ready to construct the QAOA instance by providing it our custom SWAP mixer and the quantum circuit that generates the initial state:
 
 .. code-block:: python
 
-    n_nodes = 9 # 3 moves with 3 qubits each
-    num_steps = 2
-    qaoa_inst = QAOA(connection, n_nodes, num_steps, cost_operators, driver_operators, initial_state)
+    n_nodes = 3 * moves # moves with 3 qubits each
+    num_steps = 6
+    inst = QAOA(qvm=connection, n_qubits=n_nodes, steps=num_steps, cost_ham=cost_operators,
+                ref_hamiltonian=mixer_operators, driver_ref=initial_state, store_basis=True)
 
 Let's evaluate the wavefunction:
 
 .. code-block:: python
 
+    betas, gammas = inst.get_angles()
     t = np.hstack((betas, gammas))
     param_prog = inst.get_parameterized_program()
     prog = param_prog(t)
-    wf = qvm_connection.wavefunction(prog)
+    wf = connection.wavefunction(prog)
     wf = wf.amplitudes
 
-    for state_index in range(2**inst.n_qubits):
-        print(inst.states[state_index], np.conj(wf[state_index])*wf[state_index])
+    for state_index in range(2 ** inst.n_qubits):
+        print(inst.states[state_index], np.conj(wf[state_index]) * wf[state_index])
 
+This yields a long list of probabilities (most of which are \\(0\\)). Here, I am only printing
+a small subset of them::
+
+    000000 (4.814824860968226e-35+0j)
+    [...]
+    001001 (0.25374558548209253+0j)
+    001010 (4.4094400090988824e-05+0j)
+    001011 (3.759565398379776e-32+0j)
+    001100 (0.1075389948215445+0j)
+    [....]
+    010010 (0.10332997853766406+0j)
+    010011 (2.1304324480120207e-32+0j)
+    010100 (0.038396483138820936+0j)
+    [...]
+    100001 (0.10753899482154447+0j)
+    100010 (0.038396483138820985+0j)
+    100011 (6.39803705190637e-32+0j)
+    100100 (0.35096529125930287+0j)
+    [...]
+    111111 (4.333342374871216e-34+0j)
+
+As you can see, the quantum states, \\(010100\\) and \\(100010\\), which violate the soft constraints
+end up with the lowest probabilities whilst the other solutions range between 10-35% probability.
 
 Source Code Docs
 ----------------
