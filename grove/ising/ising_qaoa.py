@@ -15,20 +15,25 @@ def energy_value(h, J, sol):
     """
     Obtain energy of an Ising solution for a given Ising problem (h,J).
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
-    :param sol: Ising solution. List.
+    :param h: (dict) External magnetic term of the Ising problem.
+    :param J: (dict) Interaction terms of the Ising problem (may be k-local).
+    :param sol: (list) Ising solution.
     :return: Energy of the Ising string.
     :rtype: Integer or float.
 
     """
     ener_ising = 0
     for elm in J.keys():
-        if elm[0] == elm[1]:
-            raise TypeError("""Interaction term must connect two different variables""")
+        paired_indices =  [(a, b) for a, b in zip(elm, elm)]
+        if len(paired_indices) != len(set(paired_indices)):
+            raise TypeError(f"Interaction term must connect different variables. The term {elm} contains a duplicate.")
         else:
-            ener_ising += J[elm] * int(sol[elm[0]]) * int(sol[elm[1]])
-    for i in range(len(h)):
+            multipliers = int(sol[elm[0]]) * int(sol[elm[1]])
+            # if locality > 2 then add more multipliers
+            for i in range(2, len(elm)):
+                multipliers *= sol[elm[i]]
+            ener_ising += J[elm] * multipliers
+    for i in h.keys():
         ener_ising += h[i] * int(sol[i])
     return ener_ising
 
