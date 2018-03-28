@@ -113,10 +113,12 @@ def ising_qaoa(h, J, num_steps=0, embedding=None, driver_operators=None, verbose
     :rtype: List, Integer or float, 'pyquil.quil.Program'.
 
     """
-    if num_steps == 0:
-        num_steps = 2 * len(h)
 
-    n_nodes = len(qubit_indices)
+    n_nodes = len(set([ index for tuple_ in list(J.keys()) for index in tuple_]
+                        + list(h.keys())))
+
+    if num_steps == 0:
+        num_steps = 2 * len(n_nodes)
 
     if embedding is None:
         embedding = {i:i for i in range(n_nodes)}

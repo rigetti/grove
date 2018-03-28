@@ -25,6 +25,15 @@ def test_ising_trans():
     ising_sol = [ising_trans(bit) for bit in sol]
     assert ising_sol == [1, -1, -1, 1]
 
+def test_unembed_solution():
+    sol = [0, 1, 1, 1]
+    inv_embedding = {20: 0, 13: 2, 23: 1, 15: 3}
+    assert unembed_solution(sol, inv_embedding) == [1, 1, 0, 1]
+
+    sol = [0, 1, 1, 1, 0]
+    inv_embedding = {9: 0, 7: 2, 3: 1, 17: 3, 5: 4}
+    assert unembed_solution(sol, inv_embedding) == [1, 0, 1, 0, 1]
+
 def test_ising_mock():
     with patch("pyquil.api.QVMConnection") as cxn:
         # Mock the response
