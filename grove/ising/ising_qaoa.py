@@ -25,7 +25,8 @@ def energy_value(h, J, sol):
     for elm in J.keys():
         paired_indices =  [(a, b) for a, b in zip(elm, elm)]
         if len(paired_indices) != len(set(paired_indices)):
-            raise TypeError(f"Interaction term must connect different variables. The term {elm} contains a duplicate.")
+            raise TypeError("Interaction term must connect different variables. "
+                            "The term {} contains a duplicate.".format(elm))
         else:
             multipliers = int(sol[elm[0]]) * int(sol[elm[1]])
             # if locality > 2 then add more multipliers
