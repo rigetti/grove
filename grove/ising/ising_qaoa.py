@@ -1,4 +1,3 @@
-
 """
 Finding the minimum energy for an Ising problem by QAOA.
 """
@@ -89,7 +88,7 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     :param vqe_option: (Optional. Default=None). VQE optional arguments. If None set to
                        vqe_option = {'disp': print_fun, 'return_all': True,
                        'samples': samples}
-    :return: Most frequent Ising string, energy of the Ising string, circuit used to obtain result.
+    :return: Most frequent Ising string, Energy of the Ising string, Circuit used to obtain result.
     :rtype: List, Integer or float, 'pyquil.quil.Program'.
 
     """
