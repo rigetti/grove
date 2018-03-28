@@ -1,5 +1,4 @@
-from grove.ising.ising_qaoa import ising_qaoa
-from grove.ising.ising_qaoa import energy_value
+from grove.ising.ising_qaoa import *
 import numpy as np
 from mock import patch
 
