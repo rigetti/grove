@@ -88,7 +88,9 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
     if num_steps == 0:
         num_steps = 2 * len(h)
 
-    n_nodes = len(h)
+    qubit_indices = set([ index for tuple_ in list(J.keys()) for index in tuple_]
+                      + list(h.keys()))
+    n_nodes = len(qubit_indices)
 
     cost_operators = []
     driver_operators = []
@@ -98,7 +100,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
     for i in h.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
 
-    for i in range(n_nodes):
+    for i in qubit_indices:
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
