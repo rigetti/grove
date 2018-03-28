@@ -77,6 +77,17 @@ def test_get_string():
         assert len(freq) <= samples
         assert bitstring[0] == 1
 
+    with patch('pyquil.api.QVMConnection') as cxn:
+        cxn.run_and_measure.return_value = [[0, 1] * 10]
+        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding={0: 1, 1: 0})
+        prog = Program()
+        prog.inst(X(0))
+        qaoa.get_parameterized_program = lambda: lambda angles: prog
+        samples = 10
+        bitstring, freq = qaoa.get_string(betas=None, gammas=None, samples=samples)
+        assert len(freq) <= samples
+        assert bitstring[0:2] == (0,1)
+
 
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])

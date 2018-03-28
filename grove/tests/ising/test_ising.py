@@ -117,7 +117,24 @@ def test_ising_mock():
     J = {(0, 1, 2): 1.2, (0, 1, 2, 3): 2.5, (0, 2, 3): 0.5, (1, 3): 3.1}
     h = {0: -2.4, 1: 5.2, 3: -0.3}
     p = 1
-    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, driver_operators=swap_mixer, num_steps=p, vqe_option=None, connection=cxn)
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, driver_operators=swap_mixer,
+                                                               num_steps=p, vqe_option=None, connection=cxn)
 
     assert most_freq_string_ising == [1, -1, -1, 1]
     assert energy_ising == -7.8
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[0, 1, 1, 0]]
+        cxn.expectation.return_value = [0, 0, 0, 0, 0, 0] # dummy
+
+    embedding = {0: 15, 1: 3, 2: 17, 3: 7}
+    J = {(0, 1, 2): 1, (0, 1, 2, 3): 2 , (0, 2): 3}
+    h = {0: -2, 1: 5 , 3: -3}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, embedding=embedding,num_steps=p, vqe_option=None, connection=cxn)
+
+    # note that the solution string is different from the one define in the mock response!
+    # it was unembedded and resorted according to the indices in the logical space
+    assert most_freq_string_ising == [-1, 1, 1, -1]
+    assert energy_ising == 8
