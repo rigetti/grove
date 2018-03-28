@@ -23,6 +23,7 @@ of which has its own self-contained documentation.
    installation
    vqe
    qaoa
+   ising_qaoa
    qft
    phaseestimation
    tomography
