@@ -55,10 +55,10 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
           initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
           vqe_option=None):
     """
-    Ising set up method
+    Ising set up method for QAOA. Supports 2-local as well as k-local interaction terms.
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
+    :param h: (dict) External magnectic term of the Ising problem.
+    :param J: (dict) Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
     :param verbose: (Optional.Default=True) Verbosity of the code.
@@ -95,7 +95,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
     for i, j in J.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, J[(i, j)]) * PauliTerm("Z", j)]))
 
-    for i in range(n_nodes):
+    for i in h.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
 
     for i in range(n_nodes):
