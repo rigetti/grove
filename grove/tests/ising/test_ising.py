@@ -1,5 +1,4 @@
-from grove.ising.ising_qaoa import ising_qaoa
-from grove.ising.ising_qaoa import energy_value
+from grove.ising.ising_qaoa import *
 import numpy as np
 from mock import patch
 
@@ -12,6 +11,17 @@ def test_energy_value():
 
     assert(np.isclose(ener_ising, -9.9))
 
+    J = {(0, 1, 2): 1.2, (0, 1, 2, 3): 2.5 , (0, 2, 3): 0.5, (1, 3): 3.1}
+    h = {0: -2.4, 1: 5.2 , 3: -0.3}
+    sol = [1, -1, -1, 1]
+    ener_ising = energy_value(h, J, sol)
+
+    assert(np.isclose(ener_ising, -7.8))
+
+def test_ising_trans():
+    sol = [0, 1, 1, 0]
+    ising_sol = [ising_trans(bit) for bit in sol]
+    assert ising_sol == [1, -1, -1, 1]
 
 def test_ising_mock():
     with patch("pyquil.api.QVMConnection") as cxn:
