@@ -38,7 +38,13 @@ def print_fun(x):
 
 
 def ising_trans(x):
-    # Transformation to Ising notation
+    """
+    Transformation to Ising notation.
+
+    :param x: (int) Value of a single binary bit from {0, 1}.
+    :return: Transformed bit value from {-1, 1}.
+    :rtype: Integer.
+    """
     if x == 1:
         return -1
     else:
@@ -119,8 +125,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
                      vqe_options=vqe_option)
 
     betas, gammas = qaoa_inst.get_angles()
-    most_freq_string, sampling_results = qaoa_inst.get_string(
-        betas, gammas)
+    most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()
