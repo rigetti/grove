@@ -73,7 +73,7 @@ def ising_trans(x):
         return 1
 
 
-def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
+def ising_qaoa(h, J, num_steps=0, embedding=None, driver_operators=None, verbose=True,
                rand_seed=None, connection=None, samples=None,
                initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
                vqe_option=None):
@@ -84,6 +84,9 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     :param J: (dict) Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
+    :param embedding: (dict) (Optional. Default: Identity dict) Mapping of logical to physical
+                qubits in the QPU hardware graph. Logical qubits must be the
+                dict keys.
     :param driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
                 Hamiltonian used in QAOA. Can be used to enforce hard constraints
                 and ensure that solution stays in feasible subspace.
@@ -113,30 +116,35 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     if num_steps == 0:
         num_steps = 2 * len(h)
 
-    qubit_indices = set([ index for tuple_ in list(J.keys()) for index in tuple_]
-                      + list(h.keys()))
     n_nodes = len(qubit_indices)
+
+    if embedding is None:
+        embedding = {i:i for i in range(n_nodes)}
+        inv_embedding = None
+    else:
+        # construct inverse embedding
+        inv_embedding = {embedding[k]:k for k in embedding.keys()}
 
     cost_operators = []
     driver_operators = []
     for key in J.keys():
         # first PauliTerm is multiplied with coefficient obtained from J
-        pauli_product = PauliTerm("Z", key[0], J[key])
+        pauli_product = PauliTerm("Z", embedding[key[0]], J[key])
 
         for i in range(1,len(key)):
             # multiply with additional Z PauliTerms depending
             # on the locality of the interaction terms
-            pauli_product *= PauliTerm("Z", key[i])
+            pauli_product *= PauliTerm("Z", embedding[key[i]])
 
         cost_operators.append(PauliSum([pauli_product]))
 
     for i in h.keys():
-        cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
+        cost_operators.append(PauliSum([PauliTerm("Z", embedding[i], h[i])]))
 
     if driver_operators is None:
         driver_operators = []
         # default to X mixer
-        for i in qubit_indices:
+        for i in embedding.values():
             driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
@@ -156,6 +164,7 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     qaoa_inst = QAOA(connection, range(n_nodes), steps=num_steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
+                     embedding=embedding,
                      init_betas=initial_beta,
                      init_gammas=initial_gamma,
                      minimizer=minimize,
@@ -164,6 +173,11 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
 
     betas, gammas = qaoa_inst.get_angles()
     most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
+
+    if inv_embedding is not None:
+        # in case we use a custom embedding we need to reorder the solution
+        most_freq_string = unembed_solution(most_freq_string, inv_embedding)
+
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()
