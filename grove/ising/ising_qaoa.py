@@ -38,6 +38,23 @@ def energy_value(h, J, sol):
     return ener_ising
 
 
+def unembed_solution(embedded_solution, inv_embedding):
+    """
+    In case an embedding of logical to physical qubits was used.
+    Unembedding the solution string since QAOA returns solution string
+    that is sorted based on indices of physical qubits which might not
+    match up with qubit ordering in logical space.
+
+    :param embedded_solution: (list) Solution string returned from QAOA.
+    :param inv_embedding: (dict) Dictionary that has physical qubits as keys
+                and logical qubits as values.
+    :return: Unembedded (correctly ordered) solution string.
+    :rtype: List.
+    """
+    pos_list = [x[1] for x in sorted(inv_embedding.items(),key=lambda x: x[0])]
+    return [embedded_solution[i] for i,_ in sorted(enumerate(pos_list),key=lambda x: x[1])]
+
+
 def print_fun(x):
     print(x)
 
