@@ -26,3 +26,57 @@ def test_ising_mock():
 
     assert most_freq_string_ising == [-1, -1, 1, -1]
     assert energy_ising == -9
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[1, 0, 1, 0]]
+        cxn.expectation.return_value = [0, 0, 0, 0] # dummy
+
+    # checkerboard with couplings
+    J = {(0, 1): 1, (0, 2): 1, (1, 3): 1, (2, 3): 1}
+    h = {}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
+
+    assert most_freq_string_ising == [-1, 1, -1, 1]
+    assert energy_ising == 0
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[1, 0, 1, 0]]
+        cxn.expectation.return_value = [0, 0, 0, 0] # dummy
+
+    # checkerboard with biases
+    J = {}
+    h = {0: 1, 1: -1, 2: 1, 3: -1}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
+
+    assert most_freq_string_ising == [-1, 1, -1, 1]
+    assert energy_ising == -4
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[1, 0, 1, 0, 1]]
+        cxn.expectation.return_value = [0, 0, 0, 0, 0] # dummy
+
+    J = {(0, 4): -1}
+    h = {0: 1, 1: -1, 2: 1, 3: -1}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
+
+    assert most_freq_string_ising == [-1, 1, -1, 1, -1]
+    assert energy_ising == -5
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[0, 1, 1, 0]]
+        cxn.expectation.return_value = [0, 0, 0, 0, 0, 0, 0] # dummy
+
+    J = {(0, 1, 2): 1.2, (0, 1, 2, 3): 2.5 , (0, 2, 3): 0.5, (1, 3): 3.1}
+    h = {0: -2.4, 1: 5.2 , 3: -0.3}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
+
+    assert most_freq_string_ising == [1, -1, -1, 1]
+    assert energy_ising == -7.8
