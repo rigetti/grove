@@ -92,8 +92,16 @@ def ising_qaoa(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None,
 
     cost_operators = []
     driver_operators = []
-    for i, j in J.keys():
-        cost_operators.append(PauliSum([PauliTerm("Z", i, J[(i, j)]) * PauliTerm("Z", j)]))
+    for key in J.keys():
+        # first PauliTerm is multiplied with coefficient obtained from J
+        pauli_product = PauliTerm("Z", key[0], J[key])
+
+        for i in range(1,len(key)):
+            # multiply with additional Z PauliTerms depending
+            # on the locality of the interaction terms
+            pauli_product *= PauliTerm("Z", key[i])
+
+        cost_operators.append(PauliSum([pauli_product]))
 
     for i in h.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
