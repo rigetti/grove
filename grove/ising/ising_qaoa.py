@@ -56,9 +56,10 @@ def ising_trans(x):
         return 1
 
 
-def ising_qaoa(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samples=None,
-          initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
-          vqe_option=None):
+def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
+               rand_seed=None, connection=None, samples=None,
+               initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
+               vqe_option=None):
     """
     Ising set up method for QAOA. Supports 2-local as well as k-local interaction terms.
 
@@ -66,6 +67,10 @@ def ising_qaoa(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None,
     :param J: (dict) Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
+    :param driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
+                Hamiltonian used in QAOA. Can be used to enforce hard constraints
+                and ensure that solution stays in feasible subspace.
+                Must be PauliSum objects.
     :param verbose: (Optional.Default=True) Verbosity of the code.
     :param rand_seed: (Optional. Default=None) random seed when beta and
                       gamma angles are not provided.
@@ -111,8 +116,11 @@ def ising_qaoa(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None,
     for i in h.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
 
-    for i in qubit_indices:
-        driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
+    if driver_operators is None:
+        driver_operators = []
+        # default to X mixer
+        for i in qubit_indices:
+            driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
         connection = CXN
