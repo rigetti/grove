@@ -90,3 +90,23 @@ def test_ising_mock():
 
     assert most_freq_string_ising == [1, -1, -1, 1]
     assert energy_ising == -7.8
+
+    with patch("pyquil.api.QVMConnection") as cxn:
+        # Mock the response
+        cxn.run_and_measure.return_value = [[0, 1, 1, 0]]
+        cxn.expectation.return_value = [0, 0, 0, 0, 0, 0, 0] # dummy
+
+    swap_mixer = []
+    for i in range(4):
+        for j in range(4):
+            if j != i:
+                swap_mixer.append(PauliSum([PauliTerm("X", i, 0.5) * PauliTerm("X", j, 1.0)]))
+                swap_mixer.append(PauliSum([PauliTerm("Y", i, 0.5) * PauliTerm("Y", j, 1.0)]))
+
+    J = {(0, 1, 2): 1.2, (0, 1, 2, 3): 2.5 , (0, 2, 3): 0.5, (1, 3): 3.1}
+    h = {0: -2.4, 1: 5.2 , 3: -0.3}
+    p = 1
+    most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, driver_operators=swap_mixer, num_steps=p, vqe_option=None, connection=cxn)
+
+    assert most_freq_string_ising == [1, -1, -1, 1]
+    assert energy_ising == -7.8
