@@ -26,7 +26,7 @@ from functools import reduce
 
 class QAOA(object):
     def __init__(self, qvm, qubits, steps=1, init_betas=None,
-                 init_gammas=None, cost_ham=[],
+                 init_gammas=None, embedding=None, cost_ham=[],
                  ref_hamiltonian=[], driver_ref=None,
                  minimizer=None, minimizer_args=[],
                  minimizer_kwargs={}, rand_seed=None,
@@ -45,6 +45,8 @@ class QAOA(object):
                            mixing terms. Default=None.
         :param init_gammas: (list) Initial values for the gamma parameters on the
                             cost function. Default=None.
+        :param embedding: (dict) Dictionary mapping logical qubits to physical
+                    qubits on the Rigetti QPU. Logical qubits must be the dict keys.
         :param cost_ham: list of clauses in the cost function. Must be
                     PauliSum objects
         :param ref_hamiltonian: list of clauses in the cost function. Must be
@@ -76,6 +78,11 @@ class QAOA(object):
         self.betas = init_betas
         self.gammas = init_gammas
         self.vqe_options = vqe_options
+        if embedding is not None:
+            self.embedding = embedding
+        else:
+            # create identity dictionary
+            self.embedding = {i: i for i in qubits}
 
         if driver_ref is not None:
             if not isinstance(driver_ref, pq.Program):
@@ -85,7 +92,7 @@ class QAOA(object):
                 self.ref_state_prep = driver_ref
         else:
             ref_prog = pq.Program()
-            for i in qubits:
+            for i in self.embedding.values():
                 ref_prog.inst(H(i))
             self.ref_state_prep = ref_prog
 
@@ -242,9 +249,12 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
         sampling_prog = param_prog(stacked_params)
+        for i in self.embedding.values():
+            sampling_prog.measure(i, [i])
 
+        classical_register = list(sorted(self.embedding.values()))
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     self.qubits,
+                                                     classical_register,
                                                      trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
