@@ -67,21 +67,19 @@ def ising_qaoa(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None,
     :param connection: (Optional) connection to the QVM. Default is None.
     :param samples: (Optional. Default=None) VQE option. Number of samples
                     (circuit preparation and measurement) to use in operator
-                    averaging.
+                    averaging. Required when using QPU backend.
     :param initial_beta: (Optional. Default=None) Initial guess for beta
                          parameters.
     :param initial_gamma: (Optional. Default=None) Initial guess for gamma
                           parameters.
     :param minimizer_kwargs: (Optional. Default=None). Minimizer optional
                              arguments.  If None set to
-                             {'method': 'Nelder-Mead',
-                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
-                                        'disp': False}
-    :param vqe_option: (Optional. Default=None). VQE optional
-                             arguments.  If None set to
+                             {'method': 'Nelder-Mead', 'options': {'ftol': 1.0e-2,
+                             'xtol': 1.0e-2, disp': False}
+    :param vqe_option: (Optional. Default=None). VQE optional arguments. If None set to
                        vqe_option = {'disp': print_fun, 'return_all': True,
                        'samples': samples}
-    :return: Most frequent Ising string, Energy of the Ising string, Circuit used to obtain result.
+    :return: Most frequent Ising string, energy of the Ising string, circuit used to obtain result.
     :rtype: List, Integer or float, 'pyquil.quil.Program'.
 
     """
