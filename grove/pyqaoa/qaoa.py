@@ -71,10 +71,6 @@ class QAOA(object):
         self.qvm = qvm
         self.steps = steps
         self.qubits = qubits
-        self.nstates = 2 ** len(qubits)
-        if store_basis:
-            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
-                           self.nstates)]
         self.betas = init_betas
         self.gammas = init_gammas
         self.vqe_options = vqe_options
@@ -83,6 +79,10 @@ class QAOA(object):
         else:
             # create identity dictionary
             self.embedding = {i: i for i in qubits}
+        self.nstates = 2 ** (max(self.embedding.values())+1)
+        if store_basis:
+            self.states = [np.binary_repr(i, width=self.n_qubits) for i in range(
+                           self.nstates)]
 
         if driver_ref is not None:
             if not isinstance(driver_ref, pq.Program):
