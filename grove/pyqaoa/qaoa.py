@@ -139,7 +139,7 @@ class QAOA(object):
         cost_para_programs = []
         driver_para_programs = []
 
-        for idx in range(self.steps):
+        for _ in range(self.steps):
             cost_list = []
             driver_list = []
             for cost_pauli_sum in self.cost_ham:

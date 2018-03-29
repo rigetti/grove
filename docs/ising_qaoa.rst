@@ -227,7 +227,7 @@ we set the following biases on \\( \\sigma_{0} \\) and \\( \\sigma_{1}\\):
 
     qvm_connection = api.QVMConnection()
 
-    J = {(0,1,2): -3}
+    J = {(0, 1, 2): -3}
     h = {0: 1, 1: -1}
 
 We can now run the algorithm ten times with step size 2 to collect statistics (this might take a couple of minutes):
