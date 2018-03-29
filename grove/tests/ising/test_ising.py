@@ -1,6 +1,8 @@
-from grove.ising.ising_qaoa import *
 import numpy as np
 from mock import patch
+
+from pyquil.paulis import PauliSum, PauliTerm
+from grove.ising.ising_qaoa import energy_value, ising_trans, ising_qaoa
 
 
 def test_energy_value():
