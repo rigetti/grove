@@ -34,7 +34,7 @@ In your python script import the packages and connect to your QVM:
 .. code-block:: python
 
     import pyquil.api as api
-    from grove.ising.ising_qaoa import ising as ising_qaoa
+    from grove.ising.ising_qaoa import ising_qaoa
     qvm_connection = api.QVMConnection()
 
 Next we define the appropriate bias and interaction terms of the Ising Hamiltonian
@@ -173,7 +173,7 @@ solution. Hence, we don't use any bias terms and only anticorrelate each pair of
 .. code-block:: python
 
     import pyquil.api as api
-    from grove.ising.ising_qaoa import ising as ising_qaoa
+    from grove.ising.ising_qaoa import ising_qaoa
     qvm_connection = api.QVMConnection()
 
     J = {(0, 1): 1, (0, 2): 1, (1, 3): 1, (2, 3): 1}
@@ -223,7 +223,7 @@ we set the following biases on \\( \\sigma_{0} \\) and \\( \\sigma_{1}\\):
 .. code-block:: python
 
     import pyquil.api as api
-    from grove.ising.ising_qaoa import ising as ising_qaoa
+    from grove.ising.ising_qaoa import ising_qaoa
 
     qvm_connection = api.QVMConnection()
 
