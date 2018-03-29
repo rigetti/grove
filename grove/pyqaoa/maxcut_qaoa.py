@@ -30,7 +30,7 @@ def print_fun(x):
     print(x)
 
 
-def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
+def maxcut_qaoa(graph, steps=1, embedding=None, rand_seed=None, connection=None, samples=None,
                 initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
                 vqe_option=None):
     """
@@ -38,6 +38,8 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
 
     :param graph: Graph definition. Either networkx or list of tuples
     :param steps: (Optional. Default=1) Trotterization order for the QAOA algorithm.
+    :param embedding: (dict) Dictionary mapping logical qubits to physical
+                    qubits on the Rigetti QPU. Logical qubits must be the dict keys.
     :param rand_seed: (Optional. Default=None) random seed when beta and gamma angles
         are not provided.
     :param connection: (Optional) connection to the QVM. Default is None.
@@ -57,12 +59,18 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
             maxcut_graph.add_edge(*edge)
         graph = maxcut_graph.copy()
 
+    n_qubits = len(graph.nodes())
+
+    if embedding is None:
+        # create identity dictionary
+        embedding = {i: i for i in range(n_qubits)}
+
     cost_operators = []
     driver_operators = []
     for i, j in graph.edges():
-        cost_operators.append(PauliTerm("Z", i, 0.5)*PauliTerm("Z", j) + PauliTerm("I", 0, -0.5))
+        cost_operators.append(PauliTerm("Z", embedding[i], 0.5)*PauliTerm("Z", embedding[j]) + PauliTerm("I", min(embedding.values()), -0.5))
     for i in graph.nodes():
-        driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
+        driver_operators.append(PauliSum([PauliTerm("X", embedding[i], -1.0)]))
 
     if connection is None:
         connection = CXN
@@ -76,8 +84,10 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
                       'samples': samples}
 
     qaoa_inst = QAOA(connection, list(graph.nodes()), steps=steps, cost_ham=cost_operators,
+    qaoa_inst = QAOA(connection, n_qubits, steps=steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
+                     embedding=embedding,
                      init_betas=initial_beta,
                      init_gammas=initial_gamma,
                      minimizer=minimize,
