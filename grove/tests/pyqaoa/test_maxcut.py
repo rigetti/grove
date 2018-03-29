@@ -89,11 +89,9 @@ def test_psiref_bar_p2():
     # returns are the rotations correct?
     prog = param_prog([1.2, 3.4, 2.1, 4.5])
     result_prog = Program().inst([H(0), H(1),
-                                  X(0), PHASE(1.05)(0), X(0), PHASE(1.05)(0),
                                   CNOT(0, 1), RZ(2.1)(1), CNOT(0, 1),
                                   H(0), RZ(-2.4)(0), H(0),
                                   H(1), RZ(-2.4)(1), H(1),
-                                  X(0), PHASE(2.25)(0), X(0), PHASE(2.25)(0),
                                   CNOT(0, 1), RZ(4.5)(1), CNOT(0, 1),
                                   H(0), RZ(-6.8)(0), H(0),
                                   H(1), RZ(-6.8)(1), H(1),
