@@ -23,7 +23,7 @@ Cost Functions
 
 * ``numpartition_qaoa.py`` implements the cost function for bipartitioning a list of numbers.
 
-+.. _quickstart-example:
+.. _quickstart-example:
 
 Quickstart Examples
 -------------------
@@ -106,7 +106,7 @@ algorithm for finding "a 'good' solution to an optimization problem"
 [`1 <https://arxiv.org/abs/1602.07674>`_, `2 <https://arxiv.org/abs/1411.4028>`_].
 
 What's with the name? For a given NP-Hard problem an approximate algorithm is a
-polynomial-time algorithm that solves every instance of the problem with some 
+polynomial-time algorithm that solves every instance of the problem with some
 guaranteed quality in expectation.  The value of merit is the ratio between the quality of
 the polynomial time solution and the quality of the true solution.
 
@@ -155,8 +155,8 @@ barbell graph there are two equal weight partitionings that correspond to a
 maximum cut (the right two
 partitonings)--i.e. cutting
 the barbell in half.  One can denote which set \\( S \\) or \\( \\overline{S}
-\\) a node is in with either a \\(0\\) or a \\(1\\), respectively, in a bit 
-string of length  \\( N \\).  The four partitionings of the barbell graph listed 
+\\) a node is in with either a \\(0\\) or a \\(1\\), respectively, in a bit
+string of length  \\( N \\).  The four partitionings of the barbell graph listed
 above are, \\(\\{ 00, 11, 01, 10 \\} \\)---where the left most bit is node
 \\(A\\) and the right most bit is node \\(B\\).  The bit string representation
 makes it easy to represent a particular partition of the graph.  Each bit
@@ -166,7 +166,7 @@ For any graph, the bit string representations of the node partitionings are alwa
 length \\(N\\). The total number of partitionings grows as \\(2^{N}\\).  For
 example, a square ring graph
 
-.. image:: qaoa/square.png 
+.. image:: qaoa/square.png
    :scale: 55%
    :align: center
 
@@ -194,9 +194,9 @@ particular quality.  For example, a famous polynomial time algorithm is the
 randomized partitioning approach.  One simply iterates over the nodes of the
 graph and flips a coin.  If the coin is heads the node is in \\( S \\), if
 tails the node is in \\( \\overline{S} \\).  The quality of the random
-assignment algorithm is at least 50 percent of the maximum cut. 
-For a coin-flip process the probability of an edge being in the cut is 50\%.  
-Therefore, the expectation value of a cut produced by random assignment can be 
+assignment algorithm is at least 50 percent of the maximum cut.
+For a coin-flip process the probability of an edge being in the cut is 50\%.
+Therefore, the expectation value of a cut produced by random assignment can be
 written as follows:
 $$\\sum_{e \\in E} w_{e} \\cdot \\mathrm{Pr}(e \\in \\mathrm{cut}) =
 \\frac{1}{2} \\sum_{e \\in E}w_{e}$$
@@ -211,7 +211,7 @@ give cuts of expected value at least 0.87856 times the maximum cut [`3
 Quantum Approximate Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One can think of the bit strings (or set of bit strings) that correspond to the 
+One can think of the bit strings (or set of bit strings) that correspond to the
 maximum cut on a graph as the ground state of a Hamiltonian encoding
 the cost function.  The form of this Hamiltonian can be determined by
 constructing the classical function that returns a 1 (or the weight of the edge) if the edge spans two-nodes in different sets, or 0 if the nodes are in the same set.
@@ -220,13 +220,13 @@ C_{ij} = \\frac{1}{2}(1 - z_{i}z_{j})
 \\end{align}
 \\( z_{i}\\) or \\(z_{j}\\) is \\(+1\\) if node \\(i\\) or node \\(j\\) is in \\(S\\)
 or \\(-1\\) if node \\(i\\) or node \\(j\\) is in \\(\\overline{S}\\). The total cost is the
-sum of all \\( (i ,j) \\) node pairs that form the edge set of the graph.  
-This suggests that for MAX-CUT the Hamiltonian that encodes the problem is 
+sum of all \\( (i ,j) \\) node pairs that form the edge set of the graph.
+This suggests that for MAX-CUT the Hamiltonian that encodes the problem is
 $$\\sum_{ij}\\frac{1}{2}(\\mathbf{I} - \\sigma_{i}^{z}\\sigma_{j}^{z})$$
 where the sum is over \\( (i,j) \\) node pairs that form the edges of the graph.
-The quantum-approximate-optimization-algorithm relies on the fact that we can 
+The quantum-approximate-optimization-algorithm relies on the fact that we can
 prepare something approximating the ground state of this Hamiltonian and
-perform a measurement on that state. Performing a measurement on the \\(N\\)-body 
+perform a measurement on that state. Performing a measurement on the \\(N\\)-body
 quantum state returns the bit string corresponding to the maximum cut with high
 probability.
 
@@ -253,9 +253,9 @@ QAOA identifies the ground state of the MAXCUT Hamiltonian by
 evolving from a reference state.  This reference state is the ground state of
 a Hamiltonian that couples all \\( 2^{N} \\) states that form
 the basis of the cost Hamiltonian---i.e. the diagonal basis for cost function.
-For MAX-CUT this is the \\(Z\\) computational basis. 
+For MAX-CUT this is the \\(Z\\) computational basis.
 
-The  evolution between the ground state of the reference Hamiltonian 
+The  evolution between the ground state of the reference Hamiltonian
 and the ground state of the MAXCUT Hamiltonian can be generated by an
 interpolation between the two operators
 \\begin{align}
@@ -293,8 +293,8 @@ eigenvectors of the \\(\\sigma_{x}\\) operator (\\(\\mid +
 \\end{align}
 
 The reference state is easily generated by performing a Hadamard gate on each
-qubit--assuming the initial state of the system is all zeros.  The Quil code 
-generating this state is 
+qubit--assuming the initial state of the system is all zeros.  The Quil code
+generating this state is
 
 .. code-block:: c
 
@@ -307,7 +307,7 @@ pyQAOA requires the user to input how many
 slices (approximate steps) for the evolution between the reference and MAXCUT
 Hamiltonian.  The algorithm then variationally
 determines the parameters for the rotations (denoted \\(\\beta\\) and
-\\(\\gamma\\)) 
+\\(\\gamma\\))
 using the quantum-variational-eigensolver method [`4
 <http://arxiv.org/abs/1509.04279>`_][`5 <http://arxiv.org/abs/1304.3061>`_]
 that maximizes the cost function.
@@ -326,11 +326,11 @@ where
 \\begin{align}
 U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) = e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{i}}
 \\end{align}
-and 
+and
 \\begin{align}
 U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i}) = e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{i}}
 \\end{align}
-\\( U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) \\) and \\(  U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i})\\) can be expressed as a short quantum circuit. 
+\\( U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i}) \\) and \\(  U(\\hat{H}_{\\mathrm{MAXCUT}}, \\gamma_{i})\\) can be expressed as a short quantum circuit.
 
 For the \\(U(\\hat{H}_{\\mathrm{ref}}, \\beta_{i})\\) term (or mixing
 term) all operators in the sum commute and thus can be split into a product of
@@ -348,7 +348,7 @@ e^{-i\\hat{H}_{\\mathrm{ref}} \\beta_{i}} = \\prod_{n =
     H 1
     RZ(beta_i) 1
     H 1
-    
+
 
 Of course, if RX is in the natural gate set for the quantum-processor this Quil
 is compiled into a set of RX rotations.  The Quil code for the cost function
@@ -360,21 +360,21 @@ looks like this:
 .. code-block:: c
 
     X 0
-    PHASE(gamma{i}/2) 0 
+    PHASE(gamma{i}/2) 0
     X 0
     PHASE(gamma{i}/2) 0
     CNOT 0 1
     RZ(gamma{i}) 1
     CNOT 0 1
 
-Executing the Quil code will generate the 
+Executing the Quil code will generate the
 \\( \\mid + \\rangle_{1}\\otimes\\mid + \\rangle_{0}\\) state and
 perform the evolution with selected \\(\\beta\\) and \\(\\gamma\\) angles.
 \\begin{align}
 \\mid \\beta, \\gamma \\rangle = e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{1}}e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{1}}e^{-i \\hat{H}_{\\mathrm{ref}} \\beta_{0}}e^{-i \\hat{H}_{\\mathrm{MAXCUT}} \\gamma_{0}} \\mid + \\rangle_{N-1,...,0}
 \\end{align}
 In order to indentify the set of \\(\\beta\\) and \\(\\gamma\\) angles that
-maximize the objective function 
+maximize the objective function
 \\begin{align}
 \\mathrm{Cost} = \\langle \\beta, \\gamma \\mid  \\hat{H}_{\\mathrm{MAXCUT}}
 \\mid \\beta, \\gamma \\rangle
@@ -384,10 +384,10 @@ pyQAOA leverages the classical-quantum hybrid
 approach known as the quantum-variational-eigensolver[`4
 <http://arxiv.org/abs/1509.04279>`_][`5 <http://arxiv.org/abs/1304.3061>`_].  The quantum processor
 is used to prepare a state through a polynomial number of operations which is
-then used to evaluate the cost.  Evaluating the cost 
+then used to evaluate the cost.  Evaluating the cost
 (\\( \\langle \\beta, \\gamma \\mid \\hat{H}_{\\mathrm{MAXCUT}} \\mid \\beta, \\gamma \\rangle\\)) requires
-many preparations and measurements to generate enough samples to accurately 
-construct the distribution.   The classical computer then generates a new set of 
+many preparations and measurements to generate enough samples to accurately
+construct the distribution.   The classical computer then generates a new set of
 parameters (\\( \\beta, \\gamma\\)) for maximizing the cost function.
 
 .. image:: qaoa/VQE.png
@@ -405,7 +405,7 @@ state with \\(\\beta, \\gamma\\) and sampling.
     :scale: 55%
 
 The probability distributions above are for the four ring graph discussed earlier.
-As expected the approximate evolution becomes more accurate as the number of 
+As expected the approximate evolution becomes more accurate as the number of
 steps (\\(\\alpha\\)) is increased.  For this simple model \\(\\alpha = 2\\) is
 sufficient to find the two degnerate cuts of the four ring graph.
 
@@ -449,7 +449,7 @@ the optimization routine on our QVM:
 .. code-block:: python
 
     steps = 2
-inst = maxcut_qaoa(graph=square_ring, steps=steps, embedding=embedding)
+    inst = maxcut_qaoa(graph=square_ring, steps=steps, embedding=embedding)
     betas, gammas = inst.get_angles()
 
 And let's visualize the wavefunction again:
@@ -484,21 +484,20 @@ You should then see that the algorithm converges on the solutions of \\(0110\\) 
     1110 (7.764079130797125e-06+0j)
     1111 (5.708663566132753e-10+0j)
 
-If you compare this with the solution in the :ref:`quickstart-example` you will realize
-that the solutions don't match up. The reason for this is that we have to *unembed* our solution.
-The QPU/QVM returns the bits ordered in reverse order depending on the indices of the physical qubits
-(the values in the ``embedding`` dict). Hence, the solution 0110 string must be read as \\(q_{7}q_{6}q_{1}q_{0}\\).
-Unembedding means applying the transforms \\(q_{7}\\rightarrow q_{2}, q_{6} \\rightarrow q_{1},
-q_{1} \\rightarrow q_{3}, q_{0}\\rightarrow q_{0} \\). The order of the returned solution string is
-then \\(q_{2}q_{1}q_{3}q_{0}\\) which is obviously not correctly ordered. Thus, it remains to correctly
-order the bits by reverse indices such that we get \\(q_{3}q_{2}q_{1}q_{0}\\). The first unembedded solution
-\\(0110\\) then reads \\(0101\\) and the other unembedded solution \\(1001\\) becomes \\(1010\\) which are
+If you compare this with the solution in the :ref:`quickstart-example` you will realize that the solutions
+don't match up. The reason for this is that we have to *unembed* our solution. The QPU/QVM returns the bits
+ordered in reverse order depending on the indices of the physical qubits (the values in the ``embedding`` dict).
+Hence, the solution 0110 string must be read as \\(q_{7}q_{6}q_{1}q_{0}\\). Unembedding means applying the
+transforms \\(q_{7}\\rightarrow q_{2}, q_{6} \\rightarrow q_{1}, q_{1} \\rightarrow q_{3}, q_{0}\\rightarrow q_{0} \\).
+The order of the returned solution string is then \\(q_{2}q_{1}q_{3}q_{0}\\) which is obviously not correctly ordered.
+Thus, it remains to correctly order the bits by reverse indices such that we get \\(q_{3}q_{2}q_{1}q_{0}\\). The first
+unembedded solution \\(0110\\) then reads \\(0101\\) and the other unembedded solution \\(1001\\) becomes \\(1010\\) which are
 the same solutions that we obtained in the :ref:`quickstart-example`!
 
 Conveniently, if you use the ``get_string`` method on the QAOA instance the unembedding happens without you
 even having to worry about it! You pass the embedding when instantiating the QAOA instance and you will never
-ever have to think in terms of the physical qubit indices but the solution string will be ordered in reverse
-order of your logical qubits!
+ever have to think in terms of the physical qubit indices since the solution string will be ordered in reverse
+order of your logical qubits! Everything is as if you've never did an embedding.
 
 Source Code Docs
 ----------------
