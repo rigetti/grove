@@ -31,7 +31,7 @@ def test_pass_hamiltonians():
     cost_ham = [PauliTerm("I", 0, 0.5) + PauliTerm("Z", 0, -0.5) *
                 PauliTerm("Z", 1, 1.0)]
     fakeQVM = Mock()
-    inst = QAOA(fakeQVM, 2, steps=1,
+    inst = QAOA(fakeQVM, range(2), steps=1,
                 cost_ham=cost_ham, ref_hamiltonian=ref_ham)
 
     c = inst.cost_ham
