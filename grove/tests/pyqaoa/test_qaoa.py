@@ -88,6 +88,21 @@ def test_get_string():
         assert len(freq) <= samples
         assert bitstring[0:2] == (1,0)
 
+def test_unembed_solution():
+    with patch('pyquil.api.QVMConnection') as cxn:
+        #cxn.run_and_measure.return_value = [[0, 1] * 10]
+        embedding = {0: 20, 2: 13, 1: 23, 3: 15}
+        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding=embedding)
+        sol = [0, 1, 1, 1]
+        assert qaoa.unembed_solution(sol) == (1, 1, 0, 1)
+
+    with patch('pyquil.api.QVMConnection') as cxn:
+        #cxn.run_and_measure.return_value = [[0, 1] * 10]
+        embedding = {0: 9, 2: 7, 1: 3, 3: 17, 4: 5}
+        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding=embedding)
+        sol = [0, 1, 1, 1, 0]
+        assert qaoa.unembed_solution(sol) == (1, 0, 1, 0, 1)
+
 
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
