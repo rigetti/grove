@@ -258,11 +258,12 @@ class QAOA(object):
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
                                                      classical_register,
                                                      trials=samples)
+        if self.inv_embedding is not None:
+            for i, solution in enumerate(bitstring_samples):
+                bitstring_samples[i] = self.unembed_solution(bitstring_samples[i])
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
         most_freq_bit_string = max(freq, key=lambda x: freq[x])
-        if self.inv_embedding is not None:
-            most_freq_bit_string = self.unembed_solution(most_freq_bit_string)
         return most_freq_bit_string, freq
 
 
