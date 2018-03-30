@@ -23,6 +23,7 @@ Cost Functions
 
 * ``numpartition_qaoa.py`` implements the cost function for bipartitioning a list of numbers.
 
++.. _quickstart-example:
 
 Quickstart Examples
 -------------------
@@ -407,6 +408,97 @@ The probability distributions above are for the four ring graph discussed earlie
 As expected the approximate evolution becomes more accurate as the number of 
 steps (\\(\\alpha\\)) is increased.  For this simple model \\(\\alpha = 2\\) is
 sufficient to find the two degnerate cuts of the four ring graph.
+
+QPU Embedding
+~~~~~~~~~~~~~
+
+If you want to use QAOA with the QPU you most probably want full control
+over which qubits are being used. First of all, there might be dead qubits
+on the chip that no one should use. Secondly, your QAOA implementation might
+only require five qubits to run in which case you should try to select a subset
+of qubits that is in close proximity on the chip (to decrease the number of
+topological SWAPs) and which has the best specs. You can manually select the
+physical qubits by using the ``embedding`` argument when instantiating your
+QAOA instance. In this example, we will solve the same square ring Max-CUT
+problem as in the :ref:`quickstart-example`. To solve this problem, we require
+four qubits. Let's have a look at the hardware graph of the 19Q-Acorn chip:
+
+.. image:: qaoa/acorn_hardware_graph.png
+    :align: center
+    :scale: 75%
+
+We certainly don't want to use qubits 3 and 15 which are currently turned off. After looking at
+the decoherence times in the  `PyQuil documentation <http://pyquil.readthedocs.io/en/latest/qpu.html>`_
+we decide to use the qubits \\(0, 6, 1\\) and \\(7\\) (for this example we want to keep the indices
+small). Next to the square ring graph we can now define the ``embedding``:
+
+.. code-block:: python
+
+    import numpy as np
+    from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
+    import pyquil.api as api
+
+    qvm_connection = api.QVMConnection()
+
+    square_ring = [(0,1),(1,2),(2,3),(3,0)]
+    embedding = {0: 0, 1: 6, 2: 7, 3: 1}
+
+We instantiate the algorithm, this time with the optional ``embedding`` argument and run
+the optimization routine on our QVM:
+
+.. code-block:: python
+
+    steps = 2
+inst = maxcut_qaoa(graph=square_ring, steps=steps, embedding=embedding)
+    betas, gammas = inst.get_angles()
+
+And let's visualize the wavefunction again:
+
+.. code-block:: python
+
+    t = np.hstack((betas, gammas))
+    param_prog = inst.get_parameterized_program()
+    prog = param_prog(t)
+    wf = qvm_connection.wavefunction(prog)
+    wf = wf.amplitudes
+
+    for state_index in range(2**4):
+        print(inst.states[state_index], np.conj(wf[state_index])*wf[state_index])
+
+You should then see that the algorithm converges on the solutions of \\(0110\\) and \\(1001\\)! ::
+
+    0000 (5.708663566132753e-10+0j)
+    0001 (7.764079130797125e-06+0j)
+    0010 (7.764079130796849e-06+0j)
+    0011 (1.432693478156927e-06+0j)
+    0100 (7.764079130797427e-06+0j)
+    0101 (1.4326934781570087e-06+0j)
+    0110 (0.4999660777256528+0j)
+    0111 (7.764079130797218e-06+0j)
+    1000 (7.764079130797218e-06+0j)
+    1001 (0.4999660777256528+0j)
+    1010 (1.4326934781570087e-06+0j)
+    1011 (7.764079130797427e-06+0j)
+    1100 (1.432693478156927e-06+0j)
+    1101 (7.764079130796849e-06+0j)
+    1110 (7.764079130797125e-06+0j)
+    1111 (5.708663566132753e-10+0j)
+
+If you compare this with the solution in the :ref:`quickstart-example` you will realize
+that the solutions don't match up. The reason for this is that we have to *unembed* our solution.
+The QPU/QVM returns the bits ordered in reverse order depending on the indices of the physical qubits
+(the values in the ``embedding`` dict). Hence, the solution 0110 string must be read as \\(q_{7}q_{6}q_{1}q_{0}\\).
+Unembedding means applying the transforms \\(q_{7}\\rightarrow q_{2}, q_{6} \\rightarrow q_{1},
+q_{1} \\rightarrow q_{3}, q_{0}\\rightarrow q_{0} \\). The order of the returned solution string is
+then \\(q_{2}q_{1}q_{3}q_{0}\\) which is obviously not correctly ordered. Thus, it remains to correctly
+order the bits by reverse indices such that we get \\(q_{3}q_{2}q_{1}q_{0}\\). The first unembedded solution
+\\(0110\\) then reads \\(0101\\) and the other unembedded solution \\(1001\\) becomes \\(1010\\) which are
+the same solutions that we obtained in the :ref:`quickstart-example`!
+
+Conveniently, if you use the ``get_string`` method on the QAOA instance the unembedding happens without you
+even having to worry about it! You pass the embedding when instantiating the QAOA instance and you will never
+ever have to think in terms of the physical qubit indices but the solution string will be ordered in reverse
+order of your logical qubits!
 
 Source Code Docs
 ----------------
