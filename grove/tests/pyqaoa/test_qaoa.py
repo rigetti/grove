@@ -36,15 +36,14 @@ def test_probabilities():
                    -1.17642098e-05 - 1j*7.67538040e-06])
     fakeQVM = Mock(spec=qvm_module.QVMConnection())
     fakeQVM.wavefunction = Mock(return_value=(Wavefunction(wf)))
-    inst = QAOA(fakeQVM, n_qubits, steps=p,
-                rand_seed=42)
+    inst = QAOA(fakeQVM, range(n_qubits), steps=p, rand_seed=42)
 
     true_probs = np.zeros_like(wf)
     for xx in range(wf.shape[0]):
         true_probs[xx] = np.conj(wf[xx]) * wf[xx]
     probs = inst.probabilities(angles)
     assert isinstance(probs, np.ndarray)
-    prob_true = np.zeros((2**inst.n_qubits, 1))
+    prob_true = np.zeros((inst.nstates, 1))
     prob_true[1] = 0.5
     prob_true[2] = 0.5
     assert np.isclose(probs, prob_true).all()
@@ -59,7 +58,7 @@ def test_get_angles():
         result = Mock()
         result.x = [1.2, 2.1, 3.4, 4.3]
         inst.vqe_run.return_value = result
-        MCinst = QAOA(fakeQVM, n_qubits, steps=p,
+        MCinst = QAOA(fakeQVM, range(n_qubits), steps=p,
                       cost_ham=[PauliSum([PauliTerm("X", 0)])])
         betas, gammas = MCinst.get_angles()
         assert betas == [1.2, 2.1]
@@ -69,7 +68,7 @@ def test_get_angles():
 def test_get_string():
     with patch('pyquil.api.QVMConnection') as cxn:
         cxn.run_and_measure.return_value = [[1] * 10]
-        qaoa = QAOA(cxn, n_qubits=1)
+        qaoa = QAOA(cxn, [0])
         prog = Program()
         prog.inst(X(0))
         qaoa.get_parameterized_program = lambda: lambda angles: prog
@@ -82,7 +81,8 @@ def test_get_string():
 def test_ref_program_pass():
     ref_prog = Program().inst([X(0), Y(1), Z(2)])
     fakeQVM = Mock(spec=qvm_module.QVMConnection())
-    inst = QAOA(fakeQVM, 2, driver_ref=ref_prog)
+    inst = QAOA(fakeQVM, range(2), driver_ref=ref_prog)
+
     param_prog = inst.get_parameterized_program()
     test_prog = param_prog([0, 0])
     assert ref_prog == test_prog

@@ -25,7 +25,7 @@ from functools import reduce
 
 
 class QAOA(object):
-    def __init__(self, qvm, n_qubits, steps=1, init_betas=None,
+    def __init__(self, qvm, qubits, steps=1, init_betas=None,
                  init_gammas=None, cost_ham=[],
                  ref_hamiltonian=[], driver_ref=None,
                  minimizer=None, minimizer_args=[],
@@ -38,7 +38,7 @@ class QAOA(object):
         ground state of the list of cost clauses.
 
         :param qvm: (Connection) The qvm connection to use for the algorithm.
-        :param n_qubits: (int) The number of qubits to use for the algorithm.
+        :param qubits: (list of ints) The number of qubits to use for the algorithm.
         :param steps: (int) The number of mixing and cost function steps to use.
                       Default=1.
         :param init_betas: (list) Initial values for the beta parameters on the
@@ -68,10 +68,10 @@ class QAOA(object):
         """
         self.qvm = qvm
         self.steps = steps
-        self.n_qubits = n_qubits
-        self.nstates = 2 ** n_qubits
+        self.qubits = qubits
+        self.nstates = 2 ** len(qubits)
         if store_basis:
-            self.states = [np.binary_repr(i, width=self.n_qubits) for i in range(
+            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
                            self.nstates)]
         self.betas = init_betas
         self.gammas = init_gammas
@@ -85,7 +85,7 @@ class QAOA(object):
                 self.ref_state_prep = driver_ref
         else:
             ref_prog = pq.Program()
-            for i in range(self.n_qubits):
+            for i in qubits:
                 ref_prog.inst(H(i))
             self.ref_state_prep = ref_prog
 
@@ -217,7 +217,7 @@ class QAOA(object):
         wf = self.qvm.wavefunction(prog)
         wf = wf.amplitudes.reshape((-1, 1))
         probs = np.zeros_like(wf)
-        for xx in range(2 ** self.n_qubits):
+        for xx in range(2 ** len(self.qubits)):
             probs[xx] = np.conj(wf[xx]) * wf[xx]
         return probs
 
@@ -244,7 +244,7 @@ class QAOA(object):
         sampling_prog = param_prog(stacked_params)
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     list(range(self.n_qubits)),
+                                                     self.qubits,
                                                      trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
