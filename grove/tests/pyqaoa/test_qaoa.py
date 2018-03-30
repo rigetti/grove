@@ -79,7 +79,7 @@ def test_get_string():
 
     with patch('pyquil.api.QVMConnection') as cxn:
         cxn.run_and_measure.return_value = [[0, 1] * 10]
-        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding={0: 1, 1: 0})
+        qaoa = QAOA(qvm=cxn, qubits=[0, 1], embedding={0: 1, 1: 0})
         prog = Program()
         prog.inst(X(0))
         qaoa.get_parameterized_program = lambda: lambda angles: prog
@@ -90,14 +90,14 @@ def test_get_string():
 
 def test_unembed_solution():
     with patch('pyquil.api.QVMConnection') as cxn:
-        embedding = {0: 20, 2: 13, 1: 23, 3: 15}
-        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding=embedding)
+        embedding = {0: 20, 1: 23, 2: 13, 3: 15}
+        qaoa = QAOA(qvm=cxn, qubits=[0, 1, 2, 3], embedding=embedding)
         sol = [0, 1, 1, 1]
         assert qaoa.unembed_solution(sol) == (1, 1, 0, 1)
 
     with patch('pyquil.api.QVMConnection') as cxn:
-        embedding = {0: 9, 2: 7, 1: 3, 3: 17, 4: 5}
-        qaoa = QAOA(qvm=cxn, n_qubits=2, embedding=embedding)
+        embedding = {0: 9, 1: 3, 2: 7, 3: 17, 4: 5}
+        qaoa = QAOA(qvm=cxn, qubits=[0, 1, 2, 3, 4], embedding=embedding)
         sol = [0, 1, 1, 1, 0]
         assert qaoa.unembed_solution(sol) == (1, 0, 1, 0, 1)
 

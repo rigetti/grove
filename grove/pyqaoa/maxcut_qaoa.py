@@ -84,7 +84,6 @@ def maxcut_qaoa(graph, steps=1, embedding=None, rand_seed=None, connection=None,
                       'samples': samples}
 
     qaoa_inst = QAOA(connection, list(graph.nodes()), steps=steps, cost_ham=cost_operators,
-    qaoa_inst = QAOA(connection, n_qubits, steps=steps, cost_ham=cost_operators,
                      ref_hamiltonian=driver_operators, store_basis=True,
                      rand_seed=rand_seed,
                      embedding=embedding,

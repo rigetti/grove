@@ -83,7 +83,7 @@ class QAOA(object):
             self.inv_embedding = None
         self.nstates = 2 ** (max(self.embedding.values())+1)
         if store_basis:
-            self.states = [np.binary_repr(i, width=self.n_qubits) for i in range(
+            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
                            self.nstates)]
 
         if driver_ref is not None:
