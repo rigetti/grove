@@ -26,11 +26,11 @@ from functools import reduce
 
 class QAOA(object):
     def __init__(self, qvm, qubits, steps=1, init_betas=None,
-                 init_gammas=None, cost_ham=[],
-                 ref_ham=[], driver_ref=None,
-                 minimizer=None, minimizer_args=[],
-                 minimizer_kwargs={}, rand_seed=None,
-                 vqe_options={}, store_basis=False):
+                 init_gammas=None, cost_ham=None,
+                 ref_ham=None, driver_ref=None,
+                 minimizer=None, minimizer_args=None,
+                 minimizer_kwargs=None, rand_seed=None,
+                 vqe_options=None, store_basis=False):
         """
         QAOA object.
 
@@ -66,68 +66,60 @@ class QAOA(object):
         :param store_basis: (optional) boolean flag for storing basis states.
                             Default=False.
         """
+
+        # Randomize seed
+        if rand_seed is not None:
+            np.random.seed(rand_seed)
+
+        # Set attributes values, considering their defaults
         self.qvm = qvm
         self.steps = steps
         self.qubits = qubits
         self.nstates = 2 ** len(qubits)
+
+        self.cost_ham = cost_ham or []
+        self.ref_ham = ref_ham or []
+
+        self.minimizer = minimizer or optimize.minimize
+        self.minimizer_args = minimizer_args or []
+        self.minimizer_kwargs = minimizer_kwargs or {
+            'method': 'Nelder-Mead',
+            'options': {
+                'disp': True,
+                'ftol': 1.0e-2,
+                'xtol': 1.0e-2
+            }
+        }
+
+        self.betas = init_betas or np.random.uniform(0, np.pi, self.steps)[::-1]
+        self.gammas = init_gammas or np.random.uniform(0, 2*np.pi, self.steps)
+        self.vqe_options = vqe_options or {}
+
+        self.ref_state_prep = (
+            driver_ref or
+            pq.Program(*[H(i) for i in self.qubits])
+        )
+
         if store_basis:
-            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
-                           self.nstates)]
-        self.betas = init_betas
-        self.gammas = init_gammas
-        self.vqe_options = vqe_options
+            self.states = [
+                np.binary_repr(i, width=len(self.qubits))
+                for i in range(self.nstates)
+            ]
 
-        if driver_ref is not None:
-            if not isinstance(driver_ref, pq.Program):
-                raise TypeError("Please provide a pyQuil Program object "
-                                   "to generate initial state.")
-            else:
-                self.ref_state_prep = driver_ref
-        else:
-            ref_prog = pq.Program()
-            for i in qubits:
-                ref_prog.inst(H(i))
-            self.ref_state_prep = ref_prog
+        # Check argument types
+        if not isinstance(self.cost_ham, (list, tuple)):
+            raise TypeError("cost_ham must be a list of PauliSum objects.")
+        if not all([isinstance(x, PauliSum) for x in self.cost_ham]):
+            raise TypeError("cost_ham must be a list of PauliSum objects")
 
-        if not isinstance(cost_ham, (list, tuple)):
-            raise TypeError("cost_hamiltonian must be a list of PauliSum "
-                               "objects.")
-        if not all([isinstance(x, PauliSum) for x in cost_ham]):
-            raise TypeError("cost_hamiltonian must be a list of PauliSum "
-                                   "objects")
-        else:
-            self.cost_ham = cost_ham
+        if not isinstance(self.ref_ham, (list, tuple)):
+            raise TypeError("ref_ham must be a list of PauliSum objects")
+        if not all([isinstance(x, PauliSum) for x in self.ref_ham]):
+            raise TypeError("cost_ham must be a list of PauliSum objects")
 
-        if not isinstance(ref_ham, (list, tuple)):
-            raise TypeError("cost_hamiltonian must be a list of PauliSum "
-                               "objects")
-        if not all([isinstance(x, PauliSum) for x in ref_ham]):
-            raise TypeError("cost_hamiltonian must be a list of PauliSum "
-                                   "objects")
-        else:
-            self.ref_ham = ref_ham
-
-        if minimizer is None:
-            self.minimizer = optimize.minimize
-        else:
-            self.minimizer = minimizer
-        # minimizer_kwargs initialized to empty dictionary
-        if len(minimizer_kwargs) == 0:
-            self.minimizer_kwargs = {'method': 'Nelder-Mead',
-                                     'options': {'disp': True,
-                                                 'ftol': 1.0e-2,
-                                                 'xtol': 1.0e-2}}
-        else:
-            self.minimizer_kwargs = minimizer_kwargs
-
-        self.minimizer_args = minimizer_args
-
-        if rand_seed is not None:
-            np.random.seed(rand_seed)
-        if self.betas is None:
-            self.betas = np.random.uniform(0, np.pi, self.steps)[::-1]
-        if self.gammas is None:
-            self.gammas = np.random.uniform(0, 2*np.pi, self.steps)
+        if not isinstance(self.ref_state_prep, pq.Program):
+            raise TypeError("Please provide a pyQuil Program object "
+                            "to generate initial state.")
 
     def get_parameterized_program(self):
         """
