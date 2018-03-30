@@ -244,7 +244,7 @@ class QAOA(object):
         sampling_prog = param_prog(stacked_params)
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     list(range(self.n_qubits)),
+                                                     self.qubits,
                                                      trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
