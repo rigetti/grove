@@ -86,7 +86,7 @@ def test_get_string():
         samples = 10
         bitstring, freq = qaoa.get_string(betas=None, gammas=None, samples=samples)
         assert len(freq) <= samples
-        assert bitstring[0:2] == (0,1)
+        assert bitstring[0:2] == (1,0)
 
 
 def test_ref_program_pass():

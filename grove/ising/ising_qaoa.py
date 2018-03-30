@@ -122,10 +122,6 @@ def ising_qaoa(h, J, num_steps=0, embedding=None, driver_operators=None, verbose
 
     if embedding is None:
         embedding = {i:i for i in range(n_nodes)}
-        inv_embedding = None
-    else:
-        # construct inverse embedding
-        inv_embedding = {embedding[k]:k for k in embedding.keys()}
 
     cost_operators = []
     driver_operators = []
@@ -175,11 +171,6 @@ def ising_qaoa(h, J, num_steps=0, embedding=None, driver_operators=None, verbose
 
     betas, gammas = qaoa_inst.get_angles()
     most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
-
-    if inv_embedding is not None:
-        # in case we use a custom embedding we need to reorder the solution
-        most_freq_string = unembed_solution(most_freq_string, inv_embedding)
-
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()
