@@ -22,12 +22,14 @@ from grove.pyqaoa.qaoa import QAOA
 CXN = api.QVMConnection()
 
 
-def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
+def numpart_qaoa(asset_list, A=1.0, embedding=None, minimizer_kwargs=None, steps=1):
     """
     generate number partition driver and cost functions
 
     :param asset_list: list to binary parition
     :param A: (float) optional constant for level separation. Default=1.
+    :param embedding: (dict) Dictionary mapping logical qubits to physical
+                    qubits on the Rigetti QPU. Logical qubits must be the dict keys.
     :param minimizer_kwargs: Arguments for the QAOA minimizer
     :param steps: (int) number of steps approximating the solution.
     """
@@ -46,9 +48,8 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
                             'options': {'ftol': 1.0e-2,
                                         'xtol': 1.0e-2,
                                         'disp': True}}
-                                        
     qaoa_inst = QAOA(CXN, len(asset_list), steps=steps, cost_ham=cost_operators,
-                     ref_hamiltonian=ref_operators, store_basis=True,
+                     ref_hamiltonian=ref_operators, embedding=embedding, store_basis=True,
                      minimizer=minimize, minimizer_kwargs=minimizer_kwargs,
                      vqe_options={'disp': True})
 
