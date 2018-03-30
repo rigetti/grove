@@ -83,10 +83,11 @@ def inverse_qft(qubits):
     qft_result = pq.Program().inst(_core_qft(qubits, -1))
     qft_result += bit_reversal(qubits)
     inverse_qft = pq.Program()
-    while len(qft_result.actions) > 0:
-        new_inst = qft_result.actions.pop()[1]
+    while len(qft_result) > 0:
+        new_inst = qft_result.pop()
         inverse_qft.inst(new_inst)
     return inverse_qft
+
 
 if __name__ == '__main__':
     print(qft([0, 1, 2, 3]))

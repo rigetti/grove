@@ -63,7 +63,7 @@ pyQuil program.
     from pyquil.quil import Program
     import pyquil.api as api
     from pyquil.gates import *
-    qvm = api.SyncConnection()
+    qvm = api.QVMConnection()
 
 Any Python function that takes a list of numeric parameters and outputs
 a pyQuil program can be used as an ansatz function. We will see some more
@@ -75,7 +75,7 @@ single parameter.
     def small_ansatz(params):
         return Program(RX(params[0], 0))
 
-    print small_ansatz([1.0])
+    print(small_ansatz([1.0]))
 
 .. parsed-literal::
 
@@ -99,7 +99,7 @@ parameters or write your own minimizer.
 
 .. code:: python
 
-    from grove import VQE
+    from grove.pyvqe.vqe import VQE
     from scipy.optimize import minimize
     import numpy as np
 
@@ -178,7 +178,7 @@ variational quantum eigensolver.
 .. code:: python
 
     result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, None, qvm=qvm)
-    print result
+    print(result)
 
 .. parsed-literal::
 
@@ -199,7 +199,7 @@ the same probability of each random Pauli.
 .. code:: python
 
     pauli_channel = [0.1, 0.1, 0.1] #10% chance of each gate at each timestep
-    noisy_qvm = api.SyncConnection(gate_noise=pauli_channel)
+    noisy_qvm = api.QVMConnection(gate_noise=pauli_channel)
 
 Let us check that this QVM has noise:
 
@@ -228,7 +228,7 @@ with a larger simplex so we don't get stuck at an initial minimum.
 
     vqe_inst.minimizer_kwargs = {'method': 'Nelder-mead', 'options': {'initial_simplex': np.array([[0.0], [0.05]]), 'xatol': 1.0e-2}}
     result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
-    print result
+    print(result)
 
 .. parsed-literal::
 
@@ -243,7 +243,7 @@ noise on the result of this algorithm:
     noises = np.linspace(0.0, 0.01, 4)
     for noise in noises:
         pauli_channel = [noise] * 3
-        noisy_qvm = api.SyncConnection(gate_noise=pauli_channel)
+        noisy_qvm = api.QVMConnection(gate_noise=pauli_channel)
         # We can pass the noise params directly into the vqe_run instead of passing the noisy connection
         result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle,
                               gate_noise=pauli_channel)
@@ -267,7 +267,7 @@ However measurement noise might be a different story.
 .. code:: python
 
     meas_channel = [0.1, 0.1, 0.1] #10% chance of each gate at each measurement
-    noisy_meas_qvm = api.SyncConnection(measurement_noise=meas_channel)
+    noisy_meas_qvm = api.QVMConnection(measurement_noise=meas_channel)
 
 Measurement noise has a different effect:
 
@@ -295,7 +295,7 @@ Measurement noise has a different effect:
     noises = np.linspace(0.0, 0.01, 4)
     for noise in noises:
         meas_channel = [noise] * 3
-        noisy_qvm = api.SyncConnection(measurement_noise=meas_channel)
+        noisy_qvm = api.QVMConnection(measurement_noise=meas_channel)
         result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
         data.append(result['fun'])
 
@@ -324,7 +324,7 @@ easily change the number of gates.
     def smallish_ansatz(params):
         return Program(RX(params[0], 0), RX(params[1], 0))
 
-    print smallish_ansatz([1.0, 2.0])
+    print(smallish_ansatz([1.0, 2.0]))
 
 .. parsed-literal::
 
@@ -337,7 +337,7 @@ easily change the number of gates.
                    minimizer_kwargs={'method': 'nelder-mead'})
     initial_angles = [1.0, 1.0]
     result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles, None, qvm=qvm)
-    print result
+    print(result)
 
 .. parsed-literal::
 
@@ -355,7 +355,7 @@ parameterization:
             p.inst(X(0))
         return p
 
-    print variable_gate_ansatz([0.5, 3])
+    print(variable_gate_ansatz([0.5, 3]))
 
 .. parsed-literal::
 
@@ -368,7 +368,7 @@ parameterization:
 
     initial_params = [1.0, 3]
     result = vqe_inst.vqe_run(variable_gate_ansatz, hamiltonian, initial_params, None, qvm=qvm)
-    print result
+    print(result)
 
 .. parsed-literal::
 

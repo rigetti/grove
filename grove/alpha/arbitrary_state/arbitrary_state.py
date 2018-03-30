@@ -11,7 +11,7 @@ involve finding gates to be applied in the reversed circuit.
 """
 import numpy as np
 import pyquil.quil as pq
-from pyquil.api import SyncConnection
+from pyquil.api import QVMConnection
 from pyquil.gates import *
 from six.moves import input
 
@@ -297,8 +297,8 @@ if __name__ == "__main__":
     else:
         v = list(v)
     p = create_arbitrary_state(v)
-    qvm = SyncConnection()
-    wf, _ = qvm.wavefunction(p)
+    qvm = QVMConnection()
+    wf = qvm.wavefunction(p)
     print("Normalized Vector: ", list(v / np.linalg.norm(v)))
     print("Generated Wavefunction: ", wf)
     if input("Show Program? (y/n): ") == 'y':

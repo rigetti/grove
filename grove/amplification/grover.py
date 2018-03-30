@@ -19,7 +19,6 @@
 import numpy as np
 import pyquil.quil as pq
 from pyquil.gates import H
-from pyquil.quilbase import Qubit
 
 from grove.amplification.amplification import amplification_circuit
 
@@ -90,7 +89,7 @@ class Grover(object):
         In particular, this will prepare an initial state in the uniform superposition over all bit-
         strings, an then use Grover's Algorithm to pick out the desired bitstring.
 
-        :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
+        :param QVMConnection cxn: the connection to the Rigetti cloud to run pyQuil programs.
         :param bitstring_map: a mapping from bitstrings to the phases that the oracle should impart
             on them. If the oracle should "look" for a bitstring, it should have a ``-1``, otherwise
             it should have a ``1``.
@@ -98,9 +97,10 @@ class Grover(object):
         :return: Returns the bitstring resulting from measurement after Grover's Algorithm.
         :rtype: str
         """
+
         self._init_attr(bitstring_map)
         sampled_bitstring = cxn.run_and_measure(self.grover_circuit, self.qubits)[0]
-        return ''.join([str(b) for b in sampled_bitstring])
+        return "".join([str(bit) for bit in sampled_bitstring])
 
     @staticmethod
     def oracle_grover(oracle, qubits, num_iter=None):

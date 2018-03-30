@@ -214,7 +214,7 @@ class QAOA(object):
 
         param_prog = self.get_parameterized_program()
         prog = param_prog(angles)
-        wf, _ = self.qvm.wavefunction(prog)
+        wf = self.qvm.wavefunction(prog)
         wf = wf.amplitudes.reshape((-1, 1))
         probs = np.zeros_like(wf)
         for xx in range(2 ** len(self.qubits)):
@@ -242,11 +242,9 @@ class QAOA(object):
         param_prog = self.get_parameterized_program()
         stacked_params = np.hstack((betas, gammas))
         sampling_prog = param_prog(stacked_params)
-        for i in range(self.n_qubits):
-            sampling_prog.measure(i, [i])
 
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     range(self.n_qubits),
+                                                     list(range(self.n_qubits)),
                                                      trials=samples)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)

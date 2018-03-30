@@ -127,7 +127,7 @@ class VQE(object):
                      models will be ineffective""")
 
         if qvm is None:
-            qvm = api.SyncConnection(
+            qvm = api.QVMConnection(
                     gate_noise=gate_noise,
                     measurement_noise=measurement_noise)
         else:
@@ -211,7 +211,7 @@ class VQE(object):
         """
         if isinstance(pauli_sum, np.ndarray):
             # debug mode by passing an array
-            wf, _ = qvm.wavefunction(pyquil_prog)
+            wf = qvm.wavefunction(pyquil_prog)
             wf = np.reshape(wf.amplitudes, (-1, 1))
             average_exp = np.conj(wf).T.dot(pauli_sum.dot(wf)).real
             return average_exp

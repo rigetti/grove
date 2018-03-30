@@ -1,6 +1,6 @@
 numpy
 scipy
-pyquil >= 1.0.0
+pyquil >= 1.8.0
 mock
 networkx
 matplotlib
@@ -21,3 +21,7 @@ codeclimate-test-reporter
 # docs
 sphinx
 sphinx_rtd_theme
+
+# tomography
+# You may have to install numpy separately first before installing cvxpy and cython before qutip
+tqdm

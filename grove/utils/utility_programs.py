@@ -120,7 +120,7 @@ class ControlledProgramBuilder(object):
         return prog
 
     def _defgate(self, program, gate_name, gate_matrix):
-        """Defines a gate named gate_name with matrix gate_matrix in program. In addtion, updates
+        """Defines a gate named gate_name with matrix gate_matrix in program. In addition, updates
          self.defined_gates to track what has been defined.
 
         :param Program program: Pyquil Program to add the defgate and gate to.
@@ -159,8 +159,12 @@ class ControlledProgramBuilder(object):
         controlled_subprogram = pq.Program()
         control_gate = pq.Program()
         # For the base case, we check to see if there is just one control qubit.
+        # If it is a CNOT we explicitly break the naming convention so as not to redefine the gate.
         if len(control_qubits) == 1:
-            control_name = self.format_gate_name(CONTROL_PREFIX, gate_name)
+            if gate_name == NOT_GATE_LABEL:
+                control_name = CONTROL_PREFIX + gate_name
+            else:
+                control_name = self.format_gate_name(CONTROL_PREFIX, gate_name)
             control_gate = self._defgate(control_gate, control_name, controlled_gate)
             control_gate.inst((control_name, control_qubits[0], target_qubit))
             return control_gate
@@ -183,6 +187,7 @@ class ControlledProgramBuilder(object):
             controlled_subprogram += control_gate
             controlled_subprogram += n_minus_one_toffoli
             controlled_subprogram += control_gate.dagger()
-            controlled_subprogram += n_minus_one_toffoli
+            # We only add the instructions so that we don't redefine gates
+            controlled_subprogram += n_minus_one_toffoli.instructions
             controlled_subprogram += n_minus_one_controlled_sqrt
             return controlled_subprogram

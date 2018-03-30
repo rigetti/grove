@@ -184,12 +184,10 @@ class Simon(object):
         self._qubits = list(range(self.n_qubits + self.n_ancillas))
         self.computational_qubits = self._qubits[:self.n_qubits]
         self.ancillas = self._qubits[self.n_qubits:]
-        self.classical_register = np.asarray(list(range(self.n_qubits + self.n_ancillas)))
         self.unitary_function_mapping, _ = self._compute_unitary_oracle_matrix(bitstring_map)
         self.simon_circuit = self._construct_simon_circuit()
         self._dict_of_linearly_indep_bit_vectors = {}
         self.mask = None
-        self.classical_register = np.asarray(list(range(self.n_qubits + self.n_ancillas)))
 
     @staticmethod
     def _compute_unitary_oracle_matrix(bitstring_map):
@@ -228,7 +226,7 @@ class Simon(object):
         """
         Runs Simon's mask_array algorithm to find the mask.
 
-        :param JobConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
+        :param QVMConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
         :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
             whose period is  to be found.
 

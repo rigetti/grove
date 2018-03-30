@@ -19,7 +19,7 @@ from pyquil.paulis import PauliTerm, PauliSum
 import pyquil.api as api
 from scipy.optimize import minimize
 from grove.pyqaoa.qaoa import QAOA
-CXN = api.SyncConnection()
+CXN = api.QVMConnection()
 
 
 def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
