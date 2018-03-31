@@ -55,7 +55,7 @@ class DeutschJosza(object):
         self._init_attr(bitstring_map)
         returned_bitstring = cxn.run_and_measure(self.deutsch_jozsa_circuit, self.computational_qubits)
         # We are only running a single shot, so we are only interested in the first element.
-        bitstring = np.array(returned_bitstring, dtype=int)
+        bitstring = returned_bitstring[0]
         constant = all([bit == 0 for bit in bitstring])
         return constant
 
