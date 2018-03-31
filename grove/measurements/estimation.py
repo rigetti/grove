@@ -2,7 +2,8 @@
 Utilities for estimating expected values of Pauli terms given pyquil programs
 """
 import numpy as np
-from pyquil.paulis import PauliSum, PauliTerm, commuting_sets, sI
+from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
+                           term_with_coeff)
 from pyquil.quil import Program
 from pyquil.gates import RY, RX
 
@@ -13,28 +14,28 @@ class CommutationError(Exception):
 
 def remove_imaginary_terms(pauli_sums):
     """
-    Remove the imaginary components of the Pauli sum term
+    Remove the imaginary component of each term in a Pauli sum
 
-    :param pauli_sums:
-    :return:
+    :param PauliSum pauli_sums: The Pauli sum to process.
+    :return: a purely hermitian Pauli sum.
+    :rtype: PauliSum
     """
     if not isinstance(pauli_sums, PauliSum):
         raise TypeError("not a pauli sum. please give me one")
     new_term = sI(0) * 0.0
     for term in pauli_sums:
-        if (not np.isclose(term.coefficient.real, 0.0) and
-                np.isclose(term.coefficient.imag, 0.0)):
-            new_term += term
+        new_term += term_with_coeff(term, term.coefficient.real)
 
     return new_term
 
 
 def get_rotation_program(pauli_term):
     """
-    Generate a rotation program so that the pauli term is diagoanl
+    Generate a rotation program so that the pauli term is diagonal
 
-    :param pauli_term:
-    :return: rotaiton program
+    :param PauliTerm pauli_term: The Pauli term used to generate diagonalizing
+                                 one-qubit rotations.
+    :return: The rotation program.
     :rtype: Program
     """
     meas_basis_change = Program()
@@ -53,22 +54,21 @@ def get_rotation_program(pauli_term):
 
 def get_parity(pauli_terms, bitstring_results):
     """
-    Calculate the parity at each of the marked qubits in pauli_terms
+    Calculate the eigenvalues of Pauli operators given results of projective measurements
 
-    Each list of bits in the bitstring_results is the maximum weight pauli term
-    in pauli_terms.  The bits in each element of bitstring_results correspond
-    to a numerical ordering of the maximal weight element of pauli_terms.
+    The single-qubit projective measurement results (elements of
+    `bitstring_results`) are listed in physical-qubit-label numerical order.
 
     An example:
 
-    A maximum weight pauli term is Z1Z5Z6.
+    Consider a Pauli term Z1 Z5 Z6 I7 and a collection of single-qubit
+    measurement results corresponding to measurements in the z-basis on qubits
+    {1, 5, 6, 7}. Each element of bitstring_results is an element of
+    :math:`\{0, 1\}^{\otimes 4}`.  If [0, 0, 1, 0] and [1, 0, 1, 1]
+    are the two projective measurement results in `bitstring_results` then
+    this method returns a 1 x 2 numpy array with values [[-1, 1]]
 
-    each element of bitstring_results is something in
-    :math:`\{0, 1\}^{\otimes 3}` where the first bit corresponds to the measured
-    value of qubit 1, the second bit corresponds to the measured value of qubit
-    5, and the third bit corresponds to the measured value of qubit 6.
-
-    :param pauli_terms:
+    :param List pauli_terms: A list of Pauli terms operators to use
     :param bitstring_results:
     :return:
     """
@@ -88,13 +88,14 @@ def get_parity(pauli_terms, bitstring_results):
         memory_index = np.array(list(map(lambda x: index_mapper[x],
                                          sorted(term.get_qubits()))))
 
-        results[row_idx, :] = [-2 * (sum(x[memory_index]) % 2) + \
+        results[row_idx, :] = [-2 * (sum(x[memory_index]) % 2) +
                                1 for x in bitstring_results]
     return results
 
 
-def estimate_pauli_set(pauli_term_set, basis_transform_dict, program,
-                       variance_bound, quantum_resource):
+def estimate_pauli_set(pauli_terms, basis_transform_dict, program,
+                       variance_bound, quantum_resource,
+                       commutation_check=True):
     """
     Estimate the mean of a sum of pauli terms to set variance
 
@@ -106,7 +107,7 @@ def estimate_pauli_set(pauli_term_set, basis_transform_dict, program,
         \mathrm{Cov}(\hat{\langle P_{i} \rangle}, \hat{\langle P_{j} \rangle})
         \end{align}
 
-    :param pauli_term_set: list of pauli terms to measure simultaneously
+    :param pauli_terms: list of pauli terms to measure simultaneously
     :param basis_transform_dict: basis transform dictionary where the key is
                                  the qubit index and the value is the basis to
                                  rotate into. Valid basis is [I, X, Y, Z].
@@ -114,36 +115,44 @@ def estimate_pauli_set(pauli_term_set, basis_transform_dict, program,
     :param variance_bound:  Bound on the variance of the estimator for the
                             PauliSum. Remember this is the SQUARE of the
                             standard error!
-
     :param quantum_resource: quantum abstract machine object
+    :param Bool commutation_check: Optional flag toggling a safety check
+                                   ensuring all terms in `pauli_terms`
+                                   commute with each other
     :return: estimated expected value, covariance matrix, variance of the
              estimator, and the number of shots taken
     """
-    if not isinstance(pauli_term_set, list):
+    if not isinstance(pauli_terms, list):
         raise TypeError("pauli_term_set needs to be a list")
 
     # check if each term commutes with everything
-    if len(commuting_sets(sum(pauli_term_set))) != 1:
-        raise CommutationError("Not all terms commute in the expected way")
+    if commutation_check:
+        if len(commuting_sets(sum(pauli_terms))) != 1:
+            raise CommutationError("Not all terms commute in the expected way")
 
     pauli_for_rotations = PauliTerm.from_list(
         [(value, key) for key, value in basis_transform_dict.items()])
     post_rotations = get_rotation_program(pauli_for_rotations)
 
     coeff_vec = np.array(
-        list(map(lambda x: x.coefficient, pauli_term_set))).reshape((-1, 1))
+        list(map(lambda x: x.coefficient, pauli_terms))).reshape((-1, 1))
 
+    # upper bound on samples given by IV of arXiv:1801.03524
+    num_sample_ubound = int(np.ceil(np.sum(np.abs(coeff_vec))**2 / variance_bound))
     results = None
     sample_variance = np.infty
-    while sample_variance > variance_bound:
+    number_of_samples = 0
+    while (sample_variance > variance_bound and
+           number_of_samples < num_sample_ubound):
         # note: bit string values are returned according to their listed order
         # in run_and_measure.  Therefore, sort beforehand to keep alpha numeric
         tresults = quantum_resource.run_and_measure(
             program + post_rotations,
             sorted(list(basis_transform_dict.keys())),
-            trials=10000)
+            trials=min(10000, num_sample_ubound))
+        number_of_samples += len(tresults)
 
-        parity_results = get_parity(pauli_term_set, tresults)
+        parity_results = get_parity(pauli_terms, tresults)
 
         # Note: easy improvement would be to update mean and variance on the fly
         # instead of storing all these results.

@@ -27,7 +27,7 @@ def test_imaginary_removal():
 
     test_term = (0.25 + 1j) * sX(0) * sZ(2) + 1j * sZ(2)
     # is_identity in pyquil apparently thinks zero is identity
-    assert is_zero(remove_imaginary_terms(test_term))
+    assert remove_imaginary_terms(test_term) == 0.25 * sX(0) * sZ(2)
 
     test_term = 0.25 * sX(0) * sZ(2) + 1j * sZ(2)
     assert remove_imaginary_terms(test_term) == PauliSum([0.25 * sX(0) * sZ(2)])
@@ -71,9 +71,7 @@ def test_get_parity():
     brv2 = bernoulli(p=0.4)
     n = 500
     two_qubit_measurements = list(zip(brv1.rvs(size=n), brv2.rvs(size=n)))
-    # note: get_parity doesn't check if basis makes sense. The following example
-    # would not work on the device
-    pauli_terms = [sZ(0), sX(1), sZ(0) * sZ(1)]
+    pauli_terms = [sZ(0), sZ(1), sZ(0) * sZ(1)]
     parity_results = np.zeros((len(pauli_terms), n))
     parity_results[0, :] = [-2 * x[0] + 1 for x in two_qubit_measurements]
     parity_results[1, :] = [-2 * x[1] + 1 for x in two_qubit_measurements]
@@ -105,8 +103,6 @@ def test_estimate_pauli_set():
     brv2 = bernoulli(p=0.4)
     n = 500
     two_qubit_measurements = list(zip(brv1.rvs(size=n), brv2.rvs(size=n)))
-    # note: get_parity doesn't check if basis makes sense. The following example
-    # would not work on the device
     pauli_terms = [sZ(0), sZ(1), sZ(0) * sZ(1)]
 
     fakeQVM = Mock(spec=QVMConnection())
