@@ -75,10 +75,11 @@ def get_parity(pauli_terms, bitstring_results):
              `pauli_terms` associated with the n measurement results.
     :rtype: np.ndarray
     """
-    max_weight_pauli_index = np.argmax(
-        [len(term.get_qubits()) for term in pauli_terms])
-    active_qubit_indices = sorted(
-        pauli_terms[max_weight_pauli_index]._ops.keys())
+    qubit_set = []
+    for term in pauli_terms:
+        qubit_set.extend(list(term.get_qubits()))
+    active_qubit_indices = sorted(list(set(qubit_set)))
+
     index_mapper = dict(zip(active_qubit_indices,
                             range(len(active_qubit_indices))))
 
