@@ -12,7 +12,7 @@ from pyquil.api import QVMConnection
 from grove.measurements.estimation import (remove_imaginary_terms,
                                            get_rotation_program,
                                            get_parity,
-                                           estimate_pauli_set,
+                                           estimate_pauli_sum,
                                            CommutationError)
 
 
@@ -82,7 +82,7 @@ def test_get_parity():
     assert np.allclose(test_parity_results, parity_results)
 
 
-def test_estimate_pauli_set():
+def test_estimate_pauli_sum():
     """
     Full test of the estimation procedures
     """
@@ -90,11 +90,15 @@ def test_estimate_pauli_set():
 
     # type checks
     with pytest.raises(TypeError):
-        estimate_pauli_set('5', {0: 'X', 1: 'Z'}, Program(), 1.0E-3,
+        estimate_pauli_sum('5', {0: 'X', 1: 'Z'}, Program(), 1.0E-3,
                            quantum_resource)
 
     with pytest.raises(CommutationError):
-        estimate_pauli_set([sX(0), sY(0)], {0: 'X', 1: 'Z'}, Program(), 1.0E-3,
+        estimate_pauli_sum([sX(0), sY(0)], {0: 'X', 1: 'Z'}, Program(), 1.0E-3,
+                           quantum_resource)
+
+    with pytest.raises(TypeError):
+        estimate_pauli_sum(sX(0), {0: 'X', 1: 'Z'}, Program(), 1.0E-3,
                            quantum_resource)
 
     # mock out qvm
@@ -107,7 +111,7 @@ def test_estimate_pauli_set():
 
     fakeQVM = Mock(spec=QVMConnection())
     fakeQVM.run_and_measure = Mock(return_value=two_qubit_measurements)
-    mean, cov, estimator_var, shots = estimate_pauli_set(pauli_terms,
+    mean, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
                                                          {0: 'Z', 1: 'Z'},
                                                          Program(),
                                                          1.0E-1, fakeQVM)
@@ -125,7 +129,7 @@ def test_estimate_pauli_set():
 
     # Double the shots by ever so slightly decreasing variance bound
     double_two_q_measurements = two_qubit_measurements + two_qubit_measurements
-    mean, cov, estimator_var, shots = estimate_pauli_set(pauli_terms,
+    mean, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
                                                          {0: 'Z', 1: 'Z'},
                                                          Program(),
                                                          variance_to_beat - \

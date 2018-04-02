@@ -69,8 +69,11 @@ def get_parity(pauli_terms, bitstring_results):
     this method returns a 1 x 2 numpy array with values [[-1, 1]]
 
     :param List pauli_terms: A list of Pauli terms operators to use
-    :param bitstring_results:
-    :return:
+    :param bitstring_results: A list of projective measurement results.  Each
+                              element is a list of single-qubit measurements.
+    :return: Array (m x n) of {+1, -1} eigenvalues for the m-operators in
+             `pauli_terms` associated with the n measurement results.
+    :rtype: np.ndarray
     """
     max_weight_pauli_index = np.argmax(
         [len(term.get_qubits()) for term in pauli_terms])
@@ -93,7 +96,7 @@ def get_parity(pauli_terms, bitstring_results):
     return results
 
 
-def estimate_pauli_set(pauli_terms, basis_transform_dict, program,
+def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
                        variance_bound, quantum_resource,
                        commutation_check=True):
     """
@@ -107,7 +110,8 @@ def estimate_pauli_set(pauli_terms, basis_transform_dict, program,
         \mathrm{Cov}(\hat{\langle P_{i} \rangle}, \hat{\langle P_{j} \rangle})
         \end{align}
 
-    :param pauli_terms: list of pauli terms to measure simultaneously
+    :param pauli_terms: list of pauli terms to measure simultaneously or a
+                        PauliSum object
     :param basis_transform_dict: basis transform dictionary where the key is
                                  the qubit index and the value is the basis to
                                  rotate into. Valid basis is [I, X, Y, Z].
@@ -122,8 +126,11 @@ def estimate_pauli_set(pauli_terms, basis_transform_dict, program,
     :return: estimated expected value, covariance matrix, variance of the
              estimator, and the number of shots taken
     """
-    if not isinstance(pauli_terms, list):
-        raise TypeError("pauli_term_set needs to be a list")
+    if not isinstance(pauli_terms, (list, PauliSum)):
+        raise TypeError("pauli_terms needs to be a list or a PauliSum")
+
+    if isinstance(pauli_terms, PauliSum):
+        pauli_terms = PauliSum.terms
 
     # check if each term commutes with everything
     if commutation_check:
