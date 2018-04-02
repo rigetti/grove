@@ -146,3 +146,4 @@ def test_term_grouping():
                 ('Y', 'Y', 'Y', 'Y'): set(map(lambda x: x.id(), yyyy_terms))}
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
+
