@@ -79,7 +79,6 @@ def get_parity(pauli_terms, bitstring_results):
     for term in pauli_terms:
         qubit_set.extend(list(term.get_qubits()))
     active_qubit_indices = sorted(list(set(qubit_set)))
-
     index_mapper = dict(zip(active_qubit_indices,
                             range(len(active_qubit_indices))))
 
@@ -140,6 +139,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
 
     pauli_for_rotations = PauliTerm.from_list(
         [(value, key) for key, value in basis_transform_dict.items()])
+
     post_rotations = get_rotation_program(pauli_for_rotations)
 
     coeff_vec = np.array(

@@ -6,7 +6,9 @@ from pyquil.paulis import sI, sX, sY, sZ, PauliSum, PauliTerm
 from grove.measurements.term_grouping import (check_trivial_commutation,
                                               commuting_sets_by_indices,
                                               commuting_sets_by_zbasis,
-                                              commuting_sets_trivial)
+                                              commuting_sets_trivial,
+                                              get_diagonalizing_basis,
+                                              diagonal_basis_commutes)
 
 
 def test_check_trivial_commutation_type():
@@ -114,6 +116,19 @@ def test_commuting_sets_4():
     assert actual == desired
 
 
+def test_term_grouping_weird_term():
+    term1 = PauliTerm.from_list([('X', 1), ('Z', 2), ('Y', 3), ('Y', 5),
+                                 ('Z', 6), ('X', 7)],
+                                coefficient=0.012870253243021476)
+
+    term2 = PauliTerm.from_list([('Z', 0), ('Z', 6)],
+                                coefficient=0.13131672212575296)
+
+    term_dictionary = commuting_sets_by_zbasis(term1 + term2)
+    true_term_key = ((0, 'Z'), (1, 'X'), (2, 'Z'), (3, 'Y'), (5, 'Y'), (6, 'Z'), (7, 'X'))
+    assert list(term_dictionary.keys())[0] == true_term_key
+
+
 def test_term_grouping():
     """
     Test clumping terms into terms that share the same diagonal basis
@@ -124,8 +139,9 @@ def test_term_grouping():
     zz_term = sZ(0) * sZ(1)
     h2_hamiltonian = zz_term + z2_term + z1_term + x_term
     clumped_terms = commuting_sets_by_zbasis(h2_hamiltonian)
-    true_set = {('X', 'X'): set([x_term.id()]),
-                ('Z', 'Z'): set([z1_term.id(), z2_term.id(), zz_term.id()])}
+    true_set = {((0, 'X'), (1, 'X')): set([x_term.id()]),
+                ((0, 'Z'), (1, 'Z')): set([z1_term.id(), z2_term.id(), zz_term.id()])}
+
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
 
@@ -140,10 +156,38 @@ def test_term_grouping():
     pauli_sum = zzzz_terms + xzxz_terms + xxxx_terms + yyyy_terms
     clumped_terms = commuting_sets_by_zbasis(pauli_sum)
 
-    true_set = {('Z', 'Z', 'Z', 'Z'): set(map(lambda x: x.id(), zzzz_terms)),
-                ('X', 'Z', 'X', 'Z'): set(map(lambda x: x.id(), xzxz_terms)),
-                ('X', 'X', 'X', 'X'): set(map(lambda x: x.id(), xxxx_terms)),
-                ('Y', 'Y', 'Y', 'Y'): set(map(lambda x: x.id(), yyyy_terms))}
+    true_set = {((1, 'Z'), (2, 'Z'), (3, 'Z'), (4, 'Z')): set(map(lambda x: x.id(), zzzz_terms)),
+                ((1, 'X'), (2, 'Z'), (3, 'X'), (4, 'Z')): set(map(lambda x: x.id(), xzxz_terms)),
+                ((1, 'X'), (2, 'X'), (3, 'X'), (4, 'X')): set(map(lambda x: x.id(), xxxx_terms)),
+                ((1, 'Y'), (2, 'Y'), (3, 'Y'), (4, 'Y')): set(map(lambda x: x.id(), yyyy_terms))}
     for key, value in clumped_terms.items():
         assert set(map(lambda x: x.id(), clumped_terms[key])) == true_set[key]
+
+
+def test_get_diagonal_basis():
+    xxxx_terms = sX(1) * sX(2) + sX(2) + sX(3) * sX(4) + sX(4) + \
+                 sX(1) * sX(3) * sX(4) + sX(1) * sX(4) + sX(1) * sX(2) * sX(3)
+    true_term = sX(1) * sX(2) * sX(3) * sX(4)
+    assert get_diagonalizing_basis(xxxx_terms.terms) == true_term
+
+    zzzz_terms = sZ(1) * sZ(2) + sZ(3) * sZ(4) + \
+                 sZ(1) * sZ(3) + sZ(1) * sZ(3) * sZ(4)
+    assert get_diagonalizing_basis(zzzz_terms.terms) == sZ(1) * sZ(2) * \
+                                                        sZ(3) * sZ(4)
+
+
+def test_diagonal_basis_commutation():
+    x_term = sX(0) * sX(1)
+    z1_term = sZ(1)
+    z2_term = sZ(0)
+    zz_term = sZ(0) * sZ(1)
+    assert not diagonal_basis_commutes(x_term, z1_term)
+    assert not diagonal_basis_commutes(zz_term, x_term)
+
+    assert diagonal_basis_commutes(z1_term, z2_term)
+    assert diagonal_basis_commutes(zz_term, z2_term)
+    assert diagonal_basis_commutes(zz_term, z1_term)
+    assert diagonal_basis_commutes(zz_term, sI(1))
+    assert diagonal_basis_commutes(zz_term, sI(2))
+    assert diagonal_basis_commutes(zz_term, sX(5) * sY(7))
 
