@@ -115,7 +115,7 @@ class QAOA(object):
         if not isinstance(self.ref_ham, (list, tuple)):
             raise TypeError("ref_ham must be a list of PauliSum objects")
         if not all([isinstance(x, PauliSum) for x in self.ref_ham]):
-            raise TypeError("cost_ham must be a list of PauliSum objects")
+            raise TypeError("ref_ham must be a list of PauliSum objects")
 
         if not isinstance(self.ref_state_prep, pq.Program):
             raise TypeError("Please provide a pyQuil Program object "
