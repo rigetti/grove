@@ -140,14 +140,24 @@ while not game_over:
         p.defgate("Uf", Uf_)
         # set dartboard_B centers
         if results_B == [[0]]:
-            dartboard_B_center = [size_x//2 + dartboard_offset, size_y//2]
+            if score < 10:
+                dartboard_B_center = [size_x//2 + dartboard_offset, size_y//2]
+            elif (score >= 10) and (score < 20):
+                dartboard_B_center = [size_x//2 + dartboard_offset//2, size_y//2 - dartboard_offset//2]
+            else:
+                dartboard_B_center = [size_x//2, size_y//2 - dartboard_offset]
             # run the program for this case
             p.inst(I(0))
             p.inst(("Uf", 0))
             p.measure(0, [0])
             results_A = qvm.run(p, [0])
         elif results_B == [[1]]:
-            dartboard_B_center = [size_x//2 - dartboard_offset, size_y//2]
+            if score < 10:
+                dartboard_B_center = [size_x//2 - dartboard_offset, size_y//2]
+            elif (score >= 10) and (score < 20):
+                dartboard_B_center = [size_x//2 - dartboard_offset//2, size_y//2 + dartboard_offset//2]
+            else:
+                dartboard_B_center = [size_x//2, size_y//2 + dartboard_offset]
             # run the program for this case
             p.inst(X(0))
             p.inst(("Uf", 0))
