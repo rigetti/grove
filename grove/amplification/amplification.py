@@ -17,7 +17,7 @@
 """Module for amplitude amplification, for use in algorithms such as Grover's algorithm.
 
  See G. Brassard, P. Hoyer, M. Mosca (2000) `Quantum Amplitude Amplification and Estimation
- <https://arxiv.org/abs/quant-ph/0005055 arXiv:quant-ph/0005055>`_ for more information.
+ <https://arxiv.org/abs/quant-ph/0005055>`_ for more information.
 """
 import numpy as np
 import pyquil.quil as pq
