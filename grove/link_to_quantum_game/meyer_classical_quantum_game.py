@@ -10,7 +10,6 @@ rect_Q_color = (255, 127.5, 127.5)
 rect_P_color = (127.5, 127.5, 255)
 # boolean controling when game stops
 game_over = False
-color_rect = True
 # frames per second
 fps = 60
 # screen dimensions
@@ -38,7 +37,9 @@ b1 = None
 picard_prob = None
 a2 = None
 b2 = None
-
+# initialize destruction log's parameters
+dest_y = size_y//2
+dest_width = 30
 # boolean controling pyquil program run
 run_quantum_program = False
 
@@ -47,15 +48,9 @@ run_quantum_program = False
 def U_(a, b):
     return np.array([[a, b], [b, -a]])
 
-# will need these often
+# define flip (X) and not flip (I) operators
 X_ = np.array([[0, 1], [1, 0]])
 I_ = np.array([[1, 0], [0, 1]])
-
-# initialize pyquil
-qvm = api.QVMConnection()
-p = Program()
-# create classical register
-classical_reg = [0]
 
 # initialize pygame
 pygame.init()
@@ -198,6 +193,8 @@ while not game_over:
         run_quantum_program = True
 
     if run_quantum_program:
+        # draw DESTRUCTION! log
+        pygame.draw.rect(screen, (0, 0, 0), (0, dest_y, size_x, dest_width))
         ### Carry out program
         # initialize program
         qvm = api.QVMConnection()
@@ -229,6 +226,19 @@ while not game_over:
 
         result_1s = (len([i for i in result if i == [1]]))
         result_0s = (len([i for i in result if i == [0]]))
+
+        Picard_score = result_1s
+        Q_score = result_0s
+
+        # move DESTRUCTION! log according to scores
+        delta_y = size_y/1000
+        dest_y -= int(delta_y * Picard_score)
+        dest_y += int(delta_y * Q_score)
+
+        if dest_y > size_y - dest_width:
+            dest_y = size_y - dest_width
+        elif dest_y < 0:
+            dest_y = 0
 
         text_1s = font.render("Picard's score: " + str(result_1s), True, (0, 0, 0))
         screen.blit(text_1s, [size_x/2, size_y/2])

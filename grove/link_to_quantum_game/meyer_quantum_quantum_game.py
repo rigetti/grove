@@ -10,7 +10,6 @@ rect_Q_color = (255, 127.5, 127.5)
 rect_P_color = (127.5, 127.5, 255)
 # boolean controling when game stops
 game_over = False
-color_rect = True
 # frames per second
 fps = 60
 # screen dimensions
@@ -39,24 +38,20 @@ P_a1 = None
 P_b1 = None
 Q_a2 = None
 Q_b2 = None
-
-# controling whether to run pyquil program
-run_quantum_program = 0
+# initialize destruction log's parameters
+dest_y = size_y//2
+dest_width = 30
+# boolean controling when to run pyquil program
+run_quantum_program = False
 
 
 # generate unitary matrix
 def U_(a, b):
     return np.array([[a, b], [b, -a]])
 
-# will need these often
+# define flip (X) and not flip (I) operators
 X_ = np.array([[0, 1], [1, 0]])
 I_ = np.array([[1, 0], [0, 1]])
-
-# initialize pyquil
-qvm = api.QVMConnection()
-p = Program()
-# create classical register
-classical_reg = [0]
 
 # initialize pygame
 pygame.init()
@@ -110,7 +105,7 @@ while not game_over:
     # set game color
     screen.fill(blue)
 
-    # draw rectangles
+    # draw Picard and Q (as rectangles)
     pygame.draw.rect(screen, rect_Q_color, (rect_Q_x, rect_Q_y, rect_h, rect_h))
     pygame.draw.rect(screen, rect_P_color, (rect_P_x, rect_P_y, rect_h, rect_h))
 
@@ -136,7 +131,7 @@ while not game_over:
         elif third_move:
             rect_Q_x += 5
 
-    # keep rectangle within screen
+    # keep rectangles within screen
     if rect_Q_x > size_x - rect_h:
         rect_Q_x = size_x - rect_h
     elif rect_Q_x < 0:
@@ -200,6 +195,8 @@ while not game_over:
         run_quantum_program = True
 
     if run_quantum_program:
+        # draw DESTRUCTION! log
+        pygame.draw.rect(screen, (0, 0, 0), (0, dest_y, size_x, dest_width))
         ### Carry out program
         # initialize program
         qvm = api.QVMConnection()
@@ -223,6 +220,19 @@ while not game_over:
 
         result_1s = (len([i for i in result if i == [1]]))
         result_0s = (len([i for i in result if i == [0]]))
+
+        Picard_score = result_1s
+        Q_score = result_0s
+
+        # move DESTRUCTION! log according to scores
+        delta_y = size_y/1000
+        dest_y -= int(delta_y * Picard_score)
+        dest_y += int(delta_y * Q_score)
+
+        if dest_y > size_y - dest_width:
+            dest_y = size_y - dest_width
+        elif dest_y < 0:
+            dest_y = 0
 
         text_1s = font.render("Picard's score: " + str(result_1s), True, (0, 0, 0))
         screen.blit(text_1s, [size_x/2, size_y/2])
