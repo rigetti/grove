@@ -1,1 +1,1 @@
-/Applications/Blender/blenderplayer.app/Contents/MacOS/blenderplayer  qgame.blend
+/Applications/Blender/blender.app/Contents/MacOS/blender  qgame.blend
