@@ -252,6 +252,19 @@ while not done:
 
     ## sticky movement
     sticky(x_coord,y_coord)
+    
+    
+    # see which cell the sticky is in
+    x, y = get_cell(x_coord,y_coord)
+    
+    if x==(L2+1) and y==0:
+        print("top")
+    elif x==0 and y==(L2+1):
+        print("left")
+    elif x==(2*L2+strip-1) and y==(L2+1):
+        print("right")
+    elif x==(L2+1) and y==(2*L2+strip-1):
+        print("bottom")
 
     
     pygame.display.flip()
