@@ -1,5 +1,5 @@
 import pygame
-
+import os
 import numpy
 
 from pyquil.quil import Program
@@ -8,6 +8,11 @@ from pyquil.gates import I, H, CZ, RY
 
 sim = True
 trials = 1000
+
+qgame_blend_played = False
+meyer_classical_quantum_game_played = False
+meyer_quantum_quantum_game_played = False
+quantum_darts_played = False
 
 pygame.init()
 
@@ -257,14 +262,22 @@ while not done:
     # see which cell the sticky is in
     x, y = get_cell(x_coord,y_coord)
     
-    if x==(L2+1) and y==0:
-        print("top")
-    elif x==0 and y==(L2+1):
-        print("left")
-    elif x==(2*L2+strip-1) and y==(L2+1):
-        print("right")
-    elif x==(L2+1) and y==(2*L2+strip-1):
-        print("bottom")
+    if (x==(L2+1) and y==0) and (not qgame_blend_played):
+        # print("top")
+        os.system('run_blender.sh')
+        qgame_blend_played = True
+    elif (x==0 and y==(L2+1)) and (not meyer_classical_quantum_game_played):
+        # print("left")
+        os.system('pythonw meyer_classical_quantum_game.py')
+        meyer_classical_quantum_game_played = True
+    elif (x==(2*L2+strip-1) and y==(L2+1)) and (not meyer_quantum_quantum_game_played):
+        # print("right")
+        os.system('pythonw meyer_quantum_quantum_game.py')
+        meyer_quantum_quantum_game_played = True
+    elif (x==(L2+1) and y==(2*L2+strip-1)) and (not quantum_darts_played):
+        # print("bottom")
+        os.system('pythonw quantum_darts.py')
+        quantum_darts_played = True
 
     
     pygame.display.flip()
