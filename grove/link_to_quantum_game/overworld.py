@@ -46,9 +46,7 @@ x_change = 0
 y_change = 0
 
 # randomly generate world
-def generate_world () :
-    
-    world = [["grass" for x in range(L)] for y in range(L)]
+def calculate_probs () :
     
     results = {}
     for basis in ["XX","ZZ","XZ","ZX"]:
@@ -64,10 +62,9 @@ def generate_world () :
         script.inst( H(0) )
         script.inst( H(5) )
         script.inst( CZ(0,5) )
-        script.inst( H(5) )
-        
-        # wee rotation
         script.inst( RY( numpy.pi/4, 0 ) )
+        script.inst( H(0) )
+        script.inst( H(5) )
         
         # set up bases
         
@@ -78,23 +75,45 @@ def generate_world () :
             script.inst( H(5) ) 
 
         # get and store results
-        #results[basis] = engine.run_and_measure(script, [0,5], trials=trials)
+        results[basis] = engine.run_and_measure(script, [0,5], trials=trials)
     
-    for x in range(L2):
-        for y in range(L2):
-            
-            #for basis in ["XX","ZZ","XZ","ZX"]:
-                
-            
-            
-            obj = numpy.random.choice(["grass","pond","trees","rock"],p=[0.5,0.0,0.5,0.0])
-            for dx in [0,L2+2]:
-                for dy in [0,L2+2]:
-                    world[x+dx][y+dy] = obj
-            
-        
-    return world
+    p = {}
+    
+    p["XI"] = 0
+    for basis in ["XX","XZ"]:
+        for sample in results[basis]:
+            p["XI"] += sample[0]/(2*trials)
+                           
+    p["ZI"] = 0
+    for basis in ["ZX","ZZ"]:
+        for sample in results[basis]:
+            p["ZI"] += sample[0]/(2*trials)
+                           
+    p["IX"] = 0
+    for basis in ["XX","ZX"]:
+        for sample in results[basis]:
+            p["IX"] += sample[1]/(2*trials)
+                           
+    p["IZ"] = 0
+    for basis in ["XZ","ZZ"]:
+        for sample in results[basis]:
+            p["IZ"] += sample[1]/(2*trials)
+       
+    for basis in ["XX","ZZ","XZ","ZX"]:
+        p[basis] = 0
+        for sample in results[basis]:
+            p[basis] += (sample[0]==sample[1])/trials
+        print(basis,p[basis])
 
+    #p["XX"] = 0
+    #p["XZ"] = 1
+    #p["ZX"] = 1
+    #p["ZZ"] = 1
+            
+    return p
+
+p = calculate_probs()
+          
 # initialize world
 world = [["dark" for x in range(L)] for y in range(L)]
 for dx in range(3):
@@ -155,13 +174,17 @@ while not done:
                                 # make it agree, or disagree for both x
                                 prev_xx = (xx+L2+strip)*(qubit==0) + (xx-L2-strip)*(qubit==1)
                                 prev_yy = yy
-                                if (pairs[xp,yp][0]["basis"]+basis) != "xx":
+                                # choose with probs from simulation
+                                bases = str.upper(pairs[xp,yp][0]["basis"]+basis)
+                                prob = p[bases]
+                                if numpy.random.random()<prob:
                                     world[xx][yy] = world[prev_xx][prev_yy]
                                 else:
                                     if world[prev_xx][prev_yy]=="grass":
                                         world[xx][yy] = "trees"
                                     else:
                                         world[xx][yy] = "grass"
+                                            
                         else: # if more than one measurement has been made on this pair
                             world[xx][yy] = numpy.random.choice(["trees","grass"]) # choose randomly
                             # see if it has previously been measured
