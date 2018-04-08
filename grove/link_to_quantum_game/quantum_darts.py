@@ -4,8 +4,9 @@ import pyquil.api as api
 from pyquil.gates import *
 from pyquil.quil import Program
 
-# open a QVM connection
-qvm = api.QVMConnection()
+## open a QVM/QPU connection
+# cxn = api.QVMConnection()
+cxn = api.QPUConnection('19Q-Acorn')
 
 # define colors
 red = (255, 0, 0)
@@ -35,7 +36,7 @@ dartboard_offset = 150
 
 # initialize program with random measurement of either 0 or 1
 p = Program(H(0)).measure(0, [0])
-results_A = qvm.run(p, [0])
+results_A = cxn.run(p, [0])
 results_B = []
 
 # initialize pygame
@@ -114,14 +115,14 @@ while not game_over:
             p.inst(I(0))
             p.inst(("Uf", 0))
             p.measure(0, [0])
-            results_B = qvm.run(p, [0])
+            results_B = cxn.run(p, [0])
         elif results_A == [[1]]:
             dartboard_A_center = [size_x//2, size_y//2 + dartboard_offset]
             # run the program for this case
             p.inst(X(0))
             p.inst(("Uf", 0))
             p.measure(0, [0])
-            results_B = qvm.run(p, [0])
+            results_B = cxn.run(p, [0])
 
     elif color_code % 3 == 1:
         screen.fill(red)
@@ -150,7 +151,7 @@ while not game_over:
             p.inst(I(0))
             p.inst(("Uf", 0))
             p.measure(0, [0])
-            results_A = qvm.run(p, [0])
+            results_A = cxn.run(p, [0])
         elif results_B == [[1]]:
             if score < 10:
                 dartboard_B_center = [size_x//2 - dartboard_offset, size_y//2]
@@ -162,13 +163,10 @@ while not game_over:
             p.inst(X(0))
             p.inst(("Uf", 0))
             p.measure(0, [0])
-            results_A = qvm.run(p, [0])
+            results_A = cxn.run(p, [0])
 
     elif color_code % 3 == 2:
         screen.fill(blue)
-
-    pressed = pygame.mouse.get_pressed()
-    mouse_pos = pygame.mouse.get_pos()
 
     text_score = font.render(str_text_score, True, black)
     screen.blit(text_score, [100, size_y//2])
@@ -190,10 +188,6 @@ while not game_over:
     screen.blit(text_score, [size_x - 150, 20])
     text_attempts = font.render("Attempts: " + str(attempts), True, black)
     screen.blit(text_attempts, [size_x - 150, 40])
-    # text_resultsA = font.render("Results_A: " + str(Results_A), True, black)
-    # screen.blit(text_resultsA, [size_x - 150, 80])
-    # text_resultsB = font.render("Results_A: " + str(Results_B), True, black)
-    # screen.blit(text_resultsA, [size_x - 150, 100])
 
     pygame.display.flip()
 
