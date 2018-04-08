@@ -264,7 +264,7 @@ while not done:
     
     if (x==(L2+1) and y==0) and (not qgame_blend_played):
         # print("top")
-        os.system('run_blender.sh')
+        os.system('source ./run_blender.sh')
         qgame_blend_played = True
     elif (x==0 and y==(L2+1)) and (not meyer_classical_quantum_game_played):
         # print("left")

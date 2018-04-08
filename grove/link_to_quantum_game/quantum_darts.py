@@ -5,8 +5,8 @@ from pyquil.gates import *
 from pyquil.quil import Program
 
 ## open a QVM/QPU connection
-# cxn = api.QVMConnection()
-cxn = api.QPUConnection('19Q-Acorn')
+cxn = api.QVMConnection()
+# cxn = api.QPUConnection('19Q-Acorn')
 
 # define colors
 red = (255, 0, 0)
