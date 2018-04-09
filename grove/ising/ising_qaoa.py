@@ -21,6 +21,9 @@ def energy_value(h, J, sol):
     :rtype: Integer or float.
 
     """
+    # Solution string is reversed when obtained from qvm/qpu
+    sol = list(reversed(sol))
+
     ener_ising = 0
     for elm in J.keys():
         paired_indices =  [(a, b) for a, b in zip(elm, elm)]
