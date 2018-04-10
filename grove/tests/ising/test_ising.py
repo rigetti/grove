@@ -11,7 +11,7 @@ def test_energy_value():
     sol = [1, -1]
     ener_ising = energy_value(h, J, sol)
 
-    assert(np.isclose(ener_ising, -9.9))
+    assert(np.isclose(ener_ising, 5.3))
 
     J = {(0, 1, 2): 1.2, (0, 1, 2, 3): 2.5, (0, 2, 3): 0.5, (1, 3): 3.1}
     h = {0: -2.4, 1: 5.2, 3: -0.3}
@@ -37,7 +37,7 @@ def test_ising_mock():
     most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
 
     assert most_freq_string_ising == [-1, -1, 1, -1]
-    assert energy_ising == -9
+    assert energy_ising == 5
 
     with patch("pyquil.api.QVMConnection") as cxn:
         # Mock the response
@@ -65,7 +65,7 @@ def test_ising_mock():
     most_freq_string_ising, energy_ising, circuit = ising_qaoa(h, J, num_steps=p, vqe_option=None, connection=cxn)
 
     assert most_freq_string_ising == [-1, 1, -1, 1]
-    assert energy_ising == -4
+    assert energy_ising == 4
 
     with patch("pyquil.api.QVMConnection") as cxn:
         # Mock the response
