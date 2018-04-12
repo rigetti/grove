@@ -3,7 +3,7 @@ Utilities for estimating expected values of Pauli terms given pyquil programs
 """
 import numpy as np
 from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
-                           term_with_coeff, is_identity)
+                           term_with_coeff, is_identity, is_zero)
 from pyquil.quil import Program
 from pyquil.gates import RY, RX
 from grove.measurements.term_grouping import commuting_sets_by_zbasis
@@ -211,7 +211,12 @@ def operator_estimation_diagonal_basis_commuting(program, pauli_sum,
     pauli_sum, identity_term = remove_identity(pauli_sum)
     psets = commuting_sets_by_zbasis(pauli_sum)
     variance_bound_per_set = variance_bound / len(psets)
-    expected_value = identity_term[0].coefficient
+
+    if np.isclose(identity_term, 0):
+        expected_value = 0
+    else:
+        expected_value = identity_term[0].coefficient
+
     total_shots = 0
     estimator_variance = 0
 
