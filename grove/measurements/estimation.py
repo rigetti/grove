@@ -3,9 +3,10 @@ Utilities for estimating expected values of Pauli terms given pyquil programs
 """
 import numpy as np
 from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
-                           term_with_coeff)
+                           term_with_coeff, is_identity)
 from pyquil.quil import Program
 from pyquil.gates import RY, RX
+from grove.measurements.term_grouping import commuting_sets_by_zbasis
 
 
 class CommutationError(Exception):
@@ -176,3 +177,52 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
 
     return coeff_vec.T.dot(np.mean(results, axis=1)), covariance_mat, \
            sample_variance, results.shape[1]
+
+
+def remove_identity(psum):
+    """
+    Remove the identity term from a Pauli sum
+
+    :param psum:
+    :return:
+    """
+    new_psum = []
+    identity_terms = []
+    for term in psum:
+        if not is_identity(term):
+            new_psum.append(term)
+        else:
+            identity_terms.append(term)
+    return sum(new_psum), sum(identity_terms)
+
+
+def operator_estimation_diagonal_basis_commuting(program, pauli_sum,
+                                                 variance_bound,
+                                                 quantum_resource):
+    """
+    Estimate the expected value of a Pauli sum to fixed precision
+
+    :param program: state preparation program
+    :param pauli_sum: pauli sum of operators to estimate expected value
+    :param variance_bound: variance bound on the estimator
+    :param quantum_resource: quantum abstract machine object
+    :return: expected value, estimator variance, total number of experiments
+    """
+    pauli_sum, identity_term = remove_identity(pauli_sum)
+    psets = commuting_sets_by_zbasis(pauli_sum)
+    variance_bound_per_set = variance_bound / len(psets)
+    expected_value = identity_term[0].coefficient
+    total_shots = 0
+    estimator_variance = 0
+
+    for qubit_op_key, pset in psets.items():
+        results = estimate_pauli_sum(pset, dict(qubit_op_key), program,
+                                     variance_bound_per_set,
+                                     quantum_resource,
+                                     commutation_check=False)
+
+        expected_value += results[0].real
+        total_shots += results[3]
+        estimator_variance += results[2]
+
+    return expected_value, estimator_variance, total_shots
