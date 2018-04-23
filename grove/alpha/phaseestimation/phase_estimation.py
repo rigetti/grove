@@ -18,7 +18,7 @@ import pyquil.quil as pq
 from pyquil.gates import H
 import numpy as np
 from math import log
-from grove.qft.fourier import qft
+from grove.qft.fourier import inverse_qft
 
 
 def controlled(m):
@@ -68,7 +68,7 @@ def phase_estimation(U, accuracy, reg_offset=0):
         # apply it
         p.inst((name, i) + tuple(U_qubits))
     # Compute the QFT
-    p = p + qft(output_qubits)
+    p = p + inverse_qft(output_qubits)
     # Perform the measurements
     for i in output_qubits:
         p.measure(i, reg_offset + i)
