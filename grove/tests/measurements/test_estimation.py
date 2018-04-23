@@ -14,7 +14,8 @@ from grove.measurements.estimation import (remove_imaginary_terms,
                                            get_parity,
                                            estimate_pauli_sum,
                                            CommutationError,
-                                           remove_identity)
+                                           remove_identity,
+                                           estimate_locally_commuting_operator)
 
 
 def test_imaginary_removal():
@@ -47,7 +48,7 @@ def test_rotation_programs():
     test_term = sZ(0) * sX(20) * sI(100) * sY(5)
     # note: string comparison of programs requires gates to be in the same order
     true_rotation_program = Program().inst(
-        [RX(np.pi / 2)(5), RY(-np.pi / 2)(20)])
+        [RY(-np.pi / 2)(20), RX(np.pi / 2)(5)])
     test_rotation_program = get_rotation_program(test_term)
     assert true_rotation_program.out() == test_rotation_program.out()
 
@@ -156,4 +157,3 @@ def test_identity_removal():
     new_psum, identity_term_result = remove_identity(identity_term + test_term)
     assert test_term == new_psum
     assert identity_term_result == identity_term
-

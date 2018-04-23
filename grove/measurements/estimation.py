@@ -196,7 +196,7 @@ def remove_identity(psum):
     return sum(new_psum), sum(identity_terms)
 
 
-def operator_estimation_diagonal_basis_commuting(program, pauli_sum,
+def estimate_locally_commuting_operator(program, pauli_sum,
                                                  variance_bound,
                                                  quantum_resource):
     """
@@ -212,10 +212,20 @@ def operator_estimation_diagonal_basis_commuting(program, pauli_sum,
     psets = commuting_sets_by_zbasis(pauli_sum)
     variance_bound_per_set = variance_bound / len(psets)
 
-    if np.isclose(identity_term, 0):
-        expected_value = 0
+    if isinstance(identity_term, int):
+        if np.isclose(identity_term, 0):
+            expected_value = 0
+        else:
+            expected_value = identity_term
+
+    elif isinstance(identity_term, (PauliTerm, PauliSum)):
+        if isinstance(identity_term, PauliTerm):
+            expected_value = identity_term.coefficient
+        else:
+            expected_value = identity_term[0].coefficient
     else:
-        expected_value = identity_term[0].coefficient
+        print(type(identity_term))
+        raise TypeError("identity_term must be a PauliTerm or integer")
 
     total_shots = 0
     estimator_variance = 0
