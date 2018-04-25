@@ -37,7 +37,7 @@ cvxpy = ut.import_cvxpy()
 UNIT_TRACE = 'unit_trace'
 POSITIVE = 'positive'
 DEFAULT_STATE_TOMO_SETTINGS = TomographySettings(
-    constraints={UNIT_TRACE, POSITIVE},
+    constraints={UNIT_TRACE},
     solver_kwargs=DEFAULT_SOLVER_KWARGS
 )
 
