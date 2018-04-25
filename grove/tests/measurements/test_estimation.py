@@ -48,7 +48,7 @@ def test_rotation_programs():
     test_term = sZ(0) * sX(20) * sI(100) * sY(5)
     # note: string comparison of programs requires gates to be in the same order
     true_rotation_program = Program().inst(
-        [RY(-np.pi / 2)(20), RX(np.pi / 2)(5)])
+        [RX(np.pi / 2)(5), RY(-np.pi / 2)(20)])
     test_rotation_program = get_rotation_program(test_term)
     assert true_rotation_program.out() == test_rotation_program.out()
 
