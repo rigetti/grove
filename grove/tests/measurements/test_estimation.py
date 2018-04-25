@@ -13,7 +13,9 @@ from grove.measurements.estimation import (remove_imaginary_terms,
                                            get_rotation_program,
                                            get_parity,
                                            estimate_pauli_sum,
-                                           CommutationError)
+                                           CommutationError,
+                                           remove_identity,
+                                           estimate_locally_commuting_operator)
 
 
 def test_imaginary_removal():
@@ -146,3 +148,12 @@ def test_estimate_pauli_sum():
     assert np.isclose(shots, 2 * n)
     assert np.isclose(np.sum(cov) / (2 * n), estimator_var)
 
+
+def test_identity_removal():
+    test_term = 0.25 * sX(1) * sZ(2) * sX(3) + 0.25j * sX(1) * sZ(2) * sY(3)
+    test_term += -0.25j * sY(1) * sZ(2) * sX(3) + 0.25 * sY(1) * sZ(2) * sY(3)
+    identity_term = 200 * sI(5)
+
+    new_psum, identity_term_result = remove_identity(identity_term + test_term)
+    assert test_term == new_psum
+    assert identity_term_result == identity_term
