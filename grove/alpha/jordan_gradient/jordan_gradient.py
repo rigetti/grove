@@ -18,7 +18,7 @@ def gradient_program(f_h, precision):
     """
 
     # encode oracle values into phase
-    phase_factor = np.exp(-1.0j * 2 * np.pi * abs(f_h))
+    phase_factor = np.exp(1.0j * 2 * np.pi * abs(f_h))
     U = np.array([[phase_factor, 0],
                   [0, phase_factor]])
     p_gradient = phase_estimation(U, precision)

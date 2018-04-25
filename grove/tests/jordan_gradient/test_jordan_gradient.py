@@ -17,7 +17,7 @@ def test_gradient_program():
     
     result_prog = pq.Program([H(0), H(1)])
 
-    phase_factor = np.exp(-1.0j * 2 * np.pi * abs(f_h))
+    phase_factor = np.exp(1.0j * 2 * np.pi * abs(f_h))
     U = np.array([[phase_factor, 0],
                   [0, phase_factor]])
     q_out = range(precision, precision+1)
@@ -29,8 +29,8 @@ def test_gradient_program():
         result_prog.defgate(name, cU)
         result_prog.inst((name, i) + tuple(q_out))
 
-    result_prog.inst([H(1), CPHASE(1.5707963267948966, 0, 1), H(0), 
-                     SWAP(0, 1), MEASURE(0, [0]), MEASURE(1, [1])])
+    result_prog.inst([SWAP(0, 1), H(0), CPHASE(-1.5707963267948966, 0, 1),
+                      H(1), MEASURE(0, [0]), MEASURE(1, [1])])
 
     assert(trial_prog == result_prog)
 
