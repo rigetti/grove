@@ -1,6 +1,8 @@
 """
 Utilities for estimating expected values of Pauli terms given pyquil programs
 """
+from collections import namedtuple
+
 import numpy as np
 from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
                            term_with_coeff, is_identity, is_zero)
@@ -97,6 +99,10 @@ def get_parity(pauli_terms, bitstring_results):
     return results
 
 
+EstimationResult = namedtuple('EstimationResult',
+                              ('expected_value', 'covariance', 'variance', 'n_shots'))
+
+
 def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
                        variance_bound, quantum_resource,
                        commutation_check=True):
@@ -172,11 +178,12 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
 
         # calculate the expected values....
         covariance_mat = np.cov(results)
-        sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / \
-                          results.shape[1]
+        sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / results.shape[1]
 
-    return coeff_vec.T.dot(np.mean(results, axis=1)), covariance_mat, \
-           sample_variance, results.shape[1]
+    return EstimationResult(expected_value=coeff_vec.T.dot(np.mean(results, axis=1)),
+                            covariance=covariance_mat,
+                            variance=sample_variance,
+                            n_shots=results.shape[1])
 
 
 def remove_identity(psum):
@@ -236,8 +243,8 @@ def estimate_locally_commuting_operator(program, pauli_sum,
                                      quantum_resource,
                                      commutation_check=False)
 
-        expected_value += results[0].real
-        total_shots += results[3]
-        estimator_variance += results[2]
+        expected_value += results.expected_value.real
+        total_shots += results.n_shots
+        estimator_variance += results.variance
 
     return expected_value, estimator_variance, total_shots
