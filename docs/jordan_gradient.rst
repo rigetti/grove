@@ -5,16 +5,16 @@ Overview
 --------
 
 This is an implementation of Stephen Jordan's "Fast Quantum Algorithm for
-Numerical Gradient Estimation" [1]_. It utilizes an oracle to sample some
-function at some distance, h, from the point of evaluation. These distances are
-encoded into the phase of an unitary operator via a technique referred to as a
-phase kickback. A quantum Fourier transform (QFT) is then used to pull the kickbacked
-phase from the unitary operator. 
+Numerical Gradient Estimation" [1]_. Jordan's algorithm utilizes an oracle to sample some
+function at some distance, h, from the point of evaluation. 
+These samples are then `kicked back` to output register via modular addition.
+A quantum Fourier transform (QFT) is then used to transform the output register and
+recover the oracle outputs. To first approximation, this can be used to
+estimate the gradient of the function of interest.
 
-In our implementation, the
-``phase_estimation`` algorithm is used to perform the phase kickback and QFT
-transformation, which to a first order approximation, will
-give you the gradient of your function.
+In our implementation, the ``phase_estimation`` algorithm is used to perform the phase kickback and QFT
+transformation. Note that this is computationally more
+expensive than the original formulation by Jordan.
 
 See the ``examples`` folder, ``JordanGradient.ipynb`` for more details on using this module.
 
