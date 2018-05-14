@@ -9,7 +9,9 @@ Numerical Gradient Estimation" [1]_. It utilizes an oracle to sample some
 function at some distance, h, from the point of evaluation. These distances are
 encoded into the phase of an unitary operator via a technique referred to as a
 phase kickback. A quantum Fourier transform (QFT) is then used to pull the kickbacked
-phase from the unitary operator. In our implementation, the
+phase from the unitary operator. 
+
+In our implementation, the
 ``phase_estimation`` algorithm is used to perform the phase kickback and QFT
 transformation, which to a first order approximation, will
 give you the gradient of your function.
