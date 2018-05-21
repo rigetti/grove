@@ -26,7 +26,7 @@ from functools import reduce
 
 class QAOA(object):
     def __init__(self, qvm, qubits, steps=1, init_betas=None,
-                 init_gammas=None, cost_ham=[],
+                 init_gammas=None, embedding=None, cost_ham=[],
                  ref_hamiltonian=[], driver_ref=None,
                  minimizer=None, minimizer_args=[],
                  minimizer_kwargs={}, rand_seed=None,
@@ -45,6 +45,8 @@ class QAOA(object):
                            mixing terms. Default=None.
         :param init_gammas: (list) Initial values for the gamma parameters on the
                             cost function. Default=None.
+        :param embedding: (dict) Dictionary mapping logical qubits to physical
+                    qubits on the Rigetti QPU. Logical qubits must be the dict keys.
         :param cost_ham: list of clauses in the cost function. Must be
                     PauliSum objects
         :param ref_hamiltonian: list of clauses in the cost function. Must be
@@ -69,13 +71,20 @@ class QAOA(object):
         self.qvm = qvm
         self.steps = steps
         self.qubits = qubits
-        self.nstates = 2 ** len(qubits)
-        if store_basis:
-            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
-                           self.nstates)]
         self.betas = init_betas
         self.gammas = init_gammas
         self.vqe_options = vqe_options
+        if embedding is not None:
+            self.embedding = embedding
+            self.inv_embedding = {embedding[k]:k for k in embedding.keys()}
+        else:
+            # create identity dictionary
+            self.embedding = {i: i for i in qubits}
+            self.inv_embedding = None
+        self.nstates = 2 ** (max(self.embedding.values())+1)
+        if store_basis:
+            self.states = [np.binary_repr(i, width=len(self.qubits)) for i in range(
+                           self.nstates)]
 
         if driver_ref is not None:
             if not isinstance(driver_ref, pq.Program):
@@ -85,7 +94,7 @@ class QAOA(object):
                 self.ref_state_prep = driver_ref
         else:
             ref_prog = pq.Program()
-            for i in qubits:
+            for i in self.embedding.values():
                 ref_prog.inst(H(i))
             self.ref_state_prep = ref_prog
 
@@ -139,7 +148,7 @@ class QAOA(object):
         cost_para_programs = []
         driver_para_programs = []
 
-        for idx in range(self.steps):
+        for _ in range(self.steps):
             cost_list = []
             driver_list = []
             for cost_pauli_sum in self.cost_ham:
@@ -243,10 +252,29 @@ class QAOA(object):
         stacked_params = np.hstack((betas, gammas))
         sampling_prog = param_prog(stacked_params)
 
+        classical_register = list(sorted(self.embedding.values()))
         bitstring_samples = self.qvm.run_and_measure(sampling_prog,
-                                                     self.qubits,
+                                                     classical_register,
                                                      trials=samples)
+        if self.inv_embedding is not None:
+            for i, solution in enumerate(bitstring_samples):
+                bitstring_samples[i] = self.unembed_solution(bitstring_samples[i])
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
-        most_frequent_bit_string = max(freq, key=lambda x: freq[x])
-        return most_frequent_bit_string, freq
+        most_freq_bit_string = max(freq, key=lambda x: freq[x])
+        return most_freq_bit_string, freq
+
+
+    def unembed_solution(self, embedded_solution):
+        """
+        In case an embedding of logical to physical qubits was used.
+        Unembedding the solution string since QAOA returns solution string
+        that is sorted based on indices of physical qubits which might not
+        match up with qubit ordering in logical space.
+
+        :param embedded_solution: (list) Solution string returned from QAOA.
+        :return: Unembedded (correctly ordered) solution string.
+        :rtype: List.
+        """
+        pos_list = [x[1] for x in sorted(self.inv_embedding.items(),key=lambda x: x[0])]
+        return tuple([embedded_solution[i] for i,_ in sorted(enumerate(pos_list),key=lambda x: x[1])])
