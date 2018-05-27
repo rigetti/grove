@@ -67,7 +67,7 @@ class QAOA(object):
                             Default=False.
         """
 
-        # Randomize seed
+        # Seed the random number generator, if a seed is provided.
         if rand_seed is not None:
             np.random.seed(rand_seed)
 
@@ -97,7 +97,7 @@ class QAOA(object):
 
         self.ref_state_prep = (
             driver_ref or
-            pq.Program(*[H(i) for i in self.qubits])
+            pq.Program([H(i) for i in self.qubits])
         )
 
         if store_basis:
@@ -153,8 +153,7 @@ class QAOA(object):
             :return: a pyquil program object
             """
             if len(params) != 2*self.steps:
-                raise ValueError("params doesn't match the number of parameters set "
-                                    "by `steps`")
+                raise ValueError("params doesn't match the number of parameters set by `steps`")
             betas = params[:self.steps]
             gammas = params[self.steps:]
 
