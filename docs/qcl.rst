@@ -133,6 +133,7 @@ We fit a QCL estimator based on our data and labels, get the results for inspect
 (Training can take a while as :math:`3*n_qubits*depth*m*3*epochs=12960` expectation values need to be simulated on QVM machine.)
 
 .. code:: python
+
    est.fit(X,y)
    results = est.get_results()
 
@@ -163,6 +164,7 @@ In this example, QCL will try to perform a simple nonlinear classification task.
 The algorithm structure is very similar to the QCL regression example. We generate a data with sklearn make_circles method:
 
 .. code:: python
+
    from sklearn.datasets import make_circles
    np.random.seed(0)
    m = 10
@@ -171,6 +173,7 @@ The algorithm structure is very similar to the QCL regression example. We genera
 Next, we produce a function generating input, output and gradient states. The default methods of QCL can be used.
 
 .. code:: python
+
    from grove.pyqcl.qcl import (ising_prog_gen, default_input_state_gen, 
                     default_output_state_gen, default_grad_state_gen)
 
@@ -186,6 +189,7 @@ We increase the number of qubits and depth of quantum circuit in comparison to r
 (Training can take a while as many expectation values need to be simulated on QVM machine.)
 
 .. code:: python
+
    initial_theta = np.random.uniform(0.0, 2*np.pi, size=3*n_qubits*depth)
    operator = [pq.Program(Z(n_qubits-1)), pq.Program(Z(n_qubits-2))] 
    est = QCL(state_generators, initial_theta, loss="binary_crossentropy",  
@@ -198,6 +202,7 @@ We increase the number of qubits and depth of quantum circuit in comparison to r
 Now, we can plot the decision surface of a fitted QCL estimator:
 
 .. code:: python
+
    import matplotlib.pyplot as plt
    from matplotlib.colors import ListedColormap
    cm = plt.cm.RdBu
