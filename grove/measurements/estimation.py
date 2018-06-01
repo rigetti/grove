@@ -7,7 +7,7 @@ import numpy as np
 from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
                            term_with_coeff, is_identity, is_zero)
 from pyquil.quil import Program
-from pyquil.gates import RY, RX
+from pyquil.gates import RY, RX, MEASURE
 from grove.measurements.term_grouping import commuting_sets_by_zbasis
 
 
@@ -149,6 +149,11 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
 
     post_rotations = get_rotation_program(pauli_for_rotations)
 
+    program = program + post_rotations
+    qubits = sorted(list(basis_transform_dict.keys()))
+    for qubit in qubits:
+        program.inst(MEASURE(qubit, qubit))
+
     coeff_vec = np.array(
         list(map(lambda x: x.coefficient, pauli_terms))).reshape((-1, 1))
 
@@ -159,12 +164,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
     number_of_samples = 0
     while (sample_variance > variance_bound and
            number_of_samples < num_sample_ubound):
-        # note: bit string values are returned according to their listed order
-        # in run_and_measure.  Therefore, sort beforehand to keep alpha numeric
-        tresults = quantum_resource.run_and_measure(
-            program + post_rotations,
-            sorted(list(basis_transform_dict.keys())),
-            trials=min(10000, num_sample_ubound))
+        tresults = quantum_resource.run(program, qubits, trials=min(10000, num_sample_ubound))
         number_of_samples += len(tresults)
 
         parity_results = get_parity(pauli_terms, tresults)
