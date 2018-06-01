@@ -37,6 +37,8 @@ class QAOA(object):
         Contains all information for running the QAOA algorthm to find the
         ground state of the list of cost clauses.
 
+        N.B. This only works if all the terms in the cost Hamiltonian commute with each other.
+
         :param qvm: (Connection) The qvm connection to use for the algorithm.
         :param qubits: (list of ints) The number of qubits to use for the algorithm.
         :param steps: (int) The number of mixing and cost function steps to use.
@@ -124,7 +126,7 @@ class QAOA(object):
     def get_parameterized_program(self):
         """
         Return a function that accepts parameters and returns a new Quil
-        program
+        program.
 
         :returns: a function
         """
