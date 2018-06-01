@@ -112,7 +112,7 @@ def test_estimate_pauli_sum():
     pauli_terms = [sZ(0), sZ(1), sZ(0) * sZ(1)]
 
     fakeQVM = Mock(spec=QVMConnection())
-    fakeQVM.run_and_measure = Mock(return_value=two_qubit_measurements)
+    fakeQVM.run = Mock(return_value=two_qubit_measurements)
     mean, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
                                                          {0: 'Z', 1: 'Z'},
                                                          Program(),
