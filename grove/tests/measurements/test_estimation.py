@@ -46,11 +46,14 @@ def test_rotation_programs():
     Testing the generation of post rotations
     """
     test_term = sZ(0) * sX(20) * sI(100) * sY(5)
-    # note: string comparison of programs requires gates to be in the same order
-    true_rotation_program = Program().inst(
-        [RX(np.pi / 2)(5), RY(-np.pi / 2)(20)])
+    rotations_to_do = [RX(np.pi / 2)(5), RY(-np.pi / 2)(20)]
     test_rotation_program = get_rotation_program(test_term)
-    assert true_rotation_program.out() == test_rotation_program.out()
+    # Since the rotations commute, it's sufficient to test membership in the program,
+    # without ordering. However, it's true that a more complicated rotation could be performed,
+    #  where the elements would not be free to be permuted. We ignore this possibility, for now.
+    assert len(rotations_to_do) == len(test_rotation_program)
+    for rotation in test_rotation_program:
+        assert rotation in rotations_to_do
 
 
 def test_get_parity():
