@@ -84,7 +84,7 @@ class DeutschJosza(object):
         Builds the Deutsch-Jozsa circuit. Which can determine whether a function f mapping
         :math:`\{0,1\}^n \to \{0,1\}` is constant or balanced, provided that it is one of them.
 
-        :return: A program corresponding to the desired instance of Simon's Algorithm.
+        :return: A program corresponding to the desired instance of Deutsch Jozsa's Algorithm.
         :rtype: Program
         """
         dj_prog = pq.Program()
