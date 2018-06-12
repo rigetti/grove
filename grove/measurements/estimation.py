@@ -242,7 +242,7 @@ def estimate_locally_commuting_operator(program, pauli_sum,
                                      quantum_resource,
                                      commutation_check=False)
 
-        expected_value += results.expected_value.real
+        expected_value += results.expected_value
         total_shots += results.n_shots
         estimator_variance += results.variance
 
