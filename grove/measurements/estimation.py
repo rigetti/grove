@@ -100,7 +100,8 @@ def get_parity(pauli_terms, bitstring_results):
 
 
 EstimationResult = namedtuple('EstimationResult',
-                              ('expected_value', 'covariance', 'variance', 'n_shots'))
+                              ('expected_value', 'term_wise_expected_value',
+                               'covariance', 'variance', 'n_shots'))
 
 
 def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
@@ -180,6 +181,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / results.shape[1]
 
     return EstimationResult(expected_value=coeff_vec.T.dot(np.mean(results, axis=1)),
+                            term_wise_expected_value=np.mean(results, axis=1),
                             covariance=covariance_mat,
                             variance=sample_variance,
                             n_shots=results.shape[1])
