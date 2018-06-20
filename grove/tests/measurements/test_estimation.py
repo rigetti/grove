@@ -116,7 +116,7 @@ def test_estimate_pauli_sum():
 
     fakeQVM = Mock(spec=QVMConnection())
     fakeQVM.run = Mock(return_value=two_qubit_measurements)
-    mean, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
+    mean, means, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
                                                          {0: 'Z', 1: 'Z'},
                                                          Program(),
                                                          1.0E-1, fakeQVM)
@@ -128,13 +128,14 @@ def test_estimate_pauli_sum():
 
     assert np.allclose(np.cov(parity_results), cov)
     assert np.isclose(np.sum(np.mean(parity_results, axis=1)), mean)
+    assert np.allclose(np.mean(parity_results, axis=1), means)
     assert np.isclose(shots, n)
     variance_to_beat = np.sum(cov) / n
     assert np.isclose(variance_to_beat, estimator_var)
 
     # Double the shots by ever so slightly decreasing variance bound
     double_two_q_measurements = two_qubit_measurements + two_qubit_measurements
-    mean, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
+    mean, means, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
                                                          {0: 'Z', 1: 'Z'},
                                                          Program(),
                                                          variance_to_beat - \
@@ -148,6 +149,7 @@ def test_estimate_pauli_sum():
 
     assert np.allclose(np.cov(parity_results), cov)
     assert np.isclose(np.sum(np.mean(parity_results, axis=1)), mean)
+    assert np.allclose(np.mean(parity_results, axis=1), means)
     assert np.isclose(shots, 2 * n)
     assert np.isclose(np.sum(cov) / (2 * n), estimator_var)
 
