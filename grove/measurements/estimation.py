@@ -139,7 +139,8 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
              the sum, covariance matrix, variance of the estimator, and the
              number of shots taken.  The objected returned is a named tuple with
              field names as follows: expected_value, pauli_expectations,
-             covariance, variance, n_shots
+             covariance, variance, n_shots.
+             `expected_value' == coef_vec.dot(pauli_expectations)
     :rtype: EstimationResult
     """
     if not isinstance(pauli_terms, (list, PauliSum)):
