@@ -100,7 +100,7 @@ def get_parity(pauli_terms, bitstring_results):
 
 
 EstimationResult = namedtuple('EstimationResult',
-                              ('expected_value', 'term_wise_expected_value',
+                              ('expected_value', 'pauli_expectations',
                                'covariance', 'variance', 'n_shots'))
 
 
@@ -118,6 +118,10 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         \mathrm{Cov}(\hat{\langle P_{i} \rangle}, \hat{\langle P_{j} \rangle})
         \end{align}
 
+    The expectation value of each Pauli operator (term and coefficient) is
+    also returned.  It can be accessed through the named-tuple field
+    `pauli_expectations'.
+
     :param pauli_terms: list of pauli terms to measure simultaneously or a
                         PauliSum object
     :param basis_transform_dict: basis transform dictionary where the key is
@@ -131,8 +135,12 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
     :param Bool commutation_check: Optional flag toggling a safety check
                                    ensuring all terms in `pauli_terms`
                                    commute with each other
-    :return: estimated expected value, covariance matrix, variance of the
-             estimator, and the number of shots taken
+    :return: estimated expected value, expected value of each Pauli term in
+             the sum, covariance matrix, variance of the estimator, and the
+             number of shots taken.  The objected returned is a named tuple with
+             field names as follows: expected_value, pauli_expectations,
+             covariance, variance, n_shots
+    :rtype: EstimationResult
     """
     if not isinstance(pauli_terms, (list, PauliSum)):
         raise TypeError("pauli_terms needs to be a list or a PauliSum")
@@ -181,7 +189,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / results.shape[1]
 
     return EstimationResult(expected_value=coeff_vec.T.dot(np.mean(results, axis=1)),
-                            term_wise_expected_value=np.mean(results, axis=1),
+                            pauli_expectations=np.multiply(coeff_vec, np.mean(results, axis=1)),
                             covariance=covariance_mat,
                             variance=sample_variance,
                             n_shots=results.shape[1])
