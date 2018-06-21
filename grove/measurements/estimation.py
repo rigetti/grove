@@ -147,7 +147,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         raise TypeError("pauli_terms needs to be a list or a PauliSum")
 
     if isinstance(pauli_terms, PauliSum):
-        pauli_terms = PauliSum.terms
+        pauli_terms = pauli_terms.terms
 
     # check if each term commutes with everything
     if commutation_check:
@@ -190,7 +190,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / results.shape[1]
 
     return EstimationResult(expected_value=coeff_vec.T.dot(np.mean(results, axis=1)),
-                            pauli_expectations=np.multiply(coeff_vec, np.mean(results, axis=1)),
+                            pauli_expectations=np.multiply(coeff_vec.flatten(), np.mean(results, axis=1).flatten()),
                             covariance=covariance_mat,
                             variance=sample_variance,
                             n_shots=results.shape[1])
