@@ -46,7 +46,7 @@ def test_rotation_programs():
     Testing the generation of post rotations
     """
     test_term = sZ(0) * sX(20) * sI(100) * sY(5)
-    rotations_to_do = [RX(np.pi / 2)(5), RY(-np.pi / 2)(20)]
+    rotations_to_do = [RX(np.pi / 2, 5), RY(-np.pi / 2, 20)]
     test_rotation_program = get_rotation_program(test_term)
     # Since the rotations commute, it's sufficient to test membership in the program,
     # without ordering. However, it's true that a more complicated rotation could be performed,

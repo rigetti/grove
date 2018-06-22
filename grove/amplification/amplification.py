@@ -101,13 +101,13 @@ def decomposed_diffusion_program(qubits):
     else:
         program.inst([X(q) for q in qubits])
         program.inst(H(qubits[-1]))
-        program.inst(RZ(-np.pi)(qubits[0]))
+        program.inst(RZ(-np.pi, qubits[0]))
         program += (ControlledProgramBuilder()
                               .with_controls(qubits[:-1])
                               .with_target(qubits[-1])
                               .with_operation(X_GATE)
                               .with_gate_name(X_GATE_LABEL).build())
-        program.inst(RZ(-np.pi)(qubits[0]))
+        program.inst(RZ(-np.pi, qubits[0]))
         program.inst(H(qubits[-1]))
         program.inst([X(q) for q in qubits])
     return program

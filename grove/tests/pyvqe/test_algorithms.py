@@ -85,7 +85,7 @@ def test_expectation():
         state = np.array([[1], [0]])
         return RX_gate(phi).dot(state)
 
-    prog = Program([RX(-2.5)(0)])
+    prog = Program([RX(-2.5, 0)])
     hamiltonian = PauliTerm("Z", 0, 1.0)
 
     minimizer = MagicMock()
