@@ -62,9 +62,9 @@ SEED = 137
 SOLVER = "SCS"
 if qt:
     TOMOGRAPHY_GATES = OrderedDict([(I, QI),
-                                    (RX(np.pi / 2), (-1j * np.pi / 4 * QX).expm()),
-                                    (RY(np.pi / 2), (-1j * np.pi / 4 * QY).expm()),
-                                    (RX(np.pi), (-1j * np.pi / 2 * QX).expm())])
+                                    (lambda q: RX(np.pi / 2, q), (-1j * np.pi / 4 * QX).expm()),
+                                    (lambda q: RY(np.pi / 2, q), (-1j * np.pi / 4 * QY).expm()),
+                                    (lambda q: RX(np.pi, q), (-1j * np.pi / 2 * QX).expm())])
 else:  # pragma no coverage
     TOMOGRAPHY_GATES = {}
 
