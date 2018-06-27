@@ -53,7 +53,7 @@ def _core_qft(qubits, coeff):
         for idx, i in enumerate(range(n - 1, 0, -1)):
             q_idx = qs[idx]
             angle = math.pi / 2 ** (n - i)
-            cR.append(CPHASE(coeff * angle)(q, q_idx))
+            cR.append(CPHASE(coeff * angle, q, q_idx))
         return _core_qft(qs, coeff) + list(reversed(cR)) + [H(q)]
 
 
