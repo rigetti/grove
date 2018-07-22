@@ -14,9 +14,9 @@ def energy_value(h, J, sol):
     """
     Obtain energy of an Ising solution for a given Ising problem (h,J).
 
-    :param h: (dict) External magnetic term of the Ising problem.
-    :param J: (dict) Interaction terms of the Ising problem (may be k-local).
-    :param sol: (list) Ising solution.
+    :param dict h: External magnetic term of the Ising problem.
+    :param dict J: Interaction terms of the Ising problem (may be k-local).
+    :param list sol: Ising solution as returned from QVM/QPU.
     :return: Energy of the Ising string.
     :rtype: Integer or float.
 
@@ -49,7 +49,7 @@ def ising_trans(x):
     """
     Transformation to Ising notation.
 
-    :param x: (int) Value of a single binary bit from {0, 1}.
+    :param int x: Value of a single binary bit from {0, 1}.
     :return: Transformed bit value from {-1, 1}.
     :rtype: Integer.
     """
@@ -66,8 +66,8 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     """
     Ising set up method for QAOA. Supports 2-local as well as k-local interaction terms.
 
-    :param h: (dict) External magnectic term of the Ising problem.
-    :param J: (dict) Interaction terms of the Ising problem (may be k-local).
+    :param dict h: External magnectic term of the Ising problem.
+    :param dict J: Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
     :param driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
@@ -80,7 +80,7 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     :param connection: (Optional) connection to the QVM. Default is None.
     :param samples: (Optional. Default=None) VQE option. Number of samples
                     (circuit preparation and measurement) to use in operator
-                    averaging. Required when using QPU backend.
+                    averaging.
     :param initial_beta: (Optional. Default=None) Initial guess for beta
                          parameters.
     :param initial_gamma: (Optional. Default=None) Initial guess for gamma
@@ -99,7 +99,7 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     if num_steps == 0:
         num_steps = 2 * len(h)
 
-    qubit_indices = set([ index for tuple_ in list(J.keys()) for index in tuple_]
+    qubit_indices = set([index for tuple_ in list(J.keys()) for index in tuple_]
                       + list(h.keys()))
     n_nodes = len(qubit_indices)
 
