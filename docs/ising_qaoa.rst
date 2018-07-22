@@ -215,6 +215,7 @@ such that it looks like this:
 .. image:: ising_qaoa/triangle_desired.png
    :align: center
    :scale: 75%
+
 Let's again define that we colour vertex \\( i \\) black if \\( \\sigma_{i} = -1 \\) and white if \\( \\sigma_{i} = +1 \\).
 To get the desired colouring we define a strongly negative 3-local interaction term \\( J_{0,1,2} \\). This ensures that
 either all vertices are coloured white or two vertices are coloured black. In order to incentivize the latter,
@@ -253,7 +254,7 @@ Source Code Docs
 Here you can find documentation for the different functions of Ising QAOA.
 
 grove.ising.ising_qaoa.ising_qaoa
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: grove.ising.ising_qaoa.ising_qaoa
 
