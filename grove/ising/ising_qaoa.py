@@ -26,8 +26,7 @@ def energy_value(h, J, sol):
 
     ener_ising = 0
     for elm in J.keys():
-        paired_indices =  [(a, b) for a, b in zip(elm, elm)]
-        if len(paired_indices) != len(set(paired_indices)):
+        if len(elm) != len(set(elm)):
             raise TypeError("Interaction term must connect different variables. "
                             "The term {} contains a duplicate.".format(elm))
         else:
