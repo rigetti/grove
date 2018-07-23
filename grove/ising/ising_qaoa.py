@@ -104,7 +104,6 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     n_nodes = len(qubit_indices)
 
     cost_operators = []
-    driver_operators = []
     for key in J.keys():
         # first PauliTerm is multiplied with coefficient obtained from J
         pauli_product = PauliTerm("Z", key[0], J[key])
