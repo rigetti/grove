@@ -30,10 +30,9 @@ def energy_value(h, J, sol):
             raise TypeError("Interaction term must connect different variables. "
                             "The term {} contains a duplicate.".format(elm))
         else:
-            multipliers = int(sol[elm[0]]) * int(sol[elm[1]])
-            # if locality > 2 then add more multipliers
-            for i in range(2, len(elm)):
-                multipliers *= sol[elm[i]]
+            multipliers = 1
+            for idx in elm:
+                multipliers *= sol[idx]
             ener_ising += J[elm] * multipliers
     for i in h.keys():
         ener_ising += h[i] * int(sol[i])
@@ -69,10 +68,10 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
     :param dict J: Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
-    :param driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
+    :param list driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
                 Hamiltonian used in QAOA. Can be used to enforce hard constraints
                 and ensure that solution stays in feasible subspace.
-                Must be PauliSum objects.
+                Must be list of PauliSum objects.
     :param verbose: (Optional.Default=True) Verbosity of the code.
     :param rand_seed: (Optional. Default=None) random seed when beta and
                       gamma angles are not provided.
@@ -121,7 +120,7 @@ def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
         driver_operators = []
         # default to X mixer
         for i in qubit_indices:
-            driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
+            driver_operators.append(PauliSum([PauliTerm("X", i, 1.0)]))
 
     if connection is None:
         connection = CXN
