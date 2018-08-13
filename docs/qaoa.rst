@@ -71,7 +71,7 @@ calculate the probability.
 
 .. code-block:: python
 
-    for state_index in range(2**inst.n_qubits):
+    for state_index in range(2**n_qubits):
         print(inst.states[state_index], np.conj(wf[state_index])*wf[state_index])
 
 You should then see that the algorithm converges on the expected solutions of 0101 and 1010! ::
