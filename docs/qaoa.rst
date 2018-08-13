@@ -63,6 +63,7 @@ quil program that gives us \\(\\mid \\beta, \\gamma \\rangle \\)  and evaluate t
     prog = param_prog(t)
     wf = qvm_connection.wavefunction(prog)
     wf = wf.amplitudes
+    n_qubits = len(inst.qubits)
 
 ``wf`` is now a numpy array of complex-valued amplitudes for each computational
 basis state.  To visualize the distribution iterate over the states and
