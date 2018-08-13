@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import bernoulli
 from pyquil.paulis import sX, sY, sZ, sI, PauliSum, is_zero
 from pyquil.quil import Program
-from pyquil.gates import RY, RX
+from pyquil.gates import RY, RX, I
 from pyquil.api import QVMConnection
 from grove.measurements.estimation import (remove_imaginary_terms,
                                            get_rotation_program,
@@ -162,3 +162,25 @@ def test_identity_removal():
     new_psum, identity_term_result = remove_identity(identity_term + test_term)
     assert test_term == new_psum
     assert identity_term_result == identity_term
+
+
+def test_mutation_free_estimation():
+    """
+    Make sure the estimation routines do not mutate the programs the user sends
+
+    This is accomplished by a deep copy in `estimate_pauli_sum'.
+    """
+    prog = Program().inst(I(0))
+    pauli_sum = sX(0)  # measure in the X-basis
+
+    # set up fake QVM
+    fakeQVM = Mock(spec=QVMConnection())
+    fakeQVM.run = Mock(return_value=[[0], [1]])
+
+    expected_value, estimator_variance, total_shots = \
+        estimate_locally_commuting_operator(prog, PauliSum([pauli_sum]),
+                                            1.0E-3, quantum_resource=fakeQVM)
+
+    # make sure RY(-pi/2) 0\nMEASURE 0 [0] was not added to the program the
+    # user sees
+    assert prog.out() == 'I 0\n'

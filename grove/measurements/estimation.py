@@ -2,6 +2,7 @@
 Utilities for estimating expected values of Pauli terms given pyquil programs
 """
 from collections import namedtuple
+import copy
 
 import numpy as np
 from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
@@ -127,7 +128,9 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
     :param basis_transform_dict: basis transform dictionary where the key is
                                  the qubit index and the value is the basis to
                                  rotate into. Valid basis is [I, X, Y, Z].
-    :param program: program generating a state to sample from
+    :param program: program generating a state to sample from.  The program
+                    is deep copied to ensure no mutation of gates or program
+                    is perceived by the user.
     :param variance_bound:  Bound on the variance of the estimator for the
                             PauliSum. Remember this is the SQUARE of the
                             standard error!
@@ -154,6 +157,7 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         if len(commuting_sets(sum(pauli_terms))) != 1:
             raise CommutationError("Not all terms commute in the expected way")
 
+    program = copy.deepcopy(program)
     pauli_for_rotations = PauliTerm.from_list(
         [(value, key) for key, value in basis_transform_dict.items()])
 
