@@ -1,4 +1,3 @@
-
 """
 Finding the minimum energy for an Ising problem by QAOA.
 """
@@ -15,20 +14,27 @@ def energy_value(h, J, sol):
     """
     Obtain energy of an Ising solution for a given Ising problem (h,J).
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
-    :param sol: Ising solution. List.
+    :param dict h: External magnetic term of the Ising problem.
+    :param dict J: Interaction terms of the Ising problem (may be k-local).
+    :param list sol: Ising solution as returned from QVM/QPU.
     :return: Energy of the Ising string.
     :rtype: Integer or float.
 
     """
+    # Solution string is reversed when obtained from qvm/qpu
+    sol = list(reversed(sol))
+
     ener_ising = 0
     for elm in J.keys():
-        if elm[0] == elm[1]:
-            raise TypeError("""Interaction term must connect two different variables""")
+        if len(elm) != len(set(elm)):
+            raise TypeError("Interaction term must connect different variables. "
+                            "The term {} contains a duplicate.".format(elm))
         else:
-            ener_ising += J[elm] * int(sol[elm[0]]) * int(sol[elm[1]])
-    for i in range(len(h)):
+            multipliers = 1
+            for idx in elm:
+                multipliers *= sol[idx]
+            ener_ising += J[elm] * multipliers
+    for i in h.keys():
         ener_ising += h[i] * int(sol[i])
     return ener_ising
 
@@ -38,23 +44,34 @@ def print_fun(x):
 
 
 def ising_trans(x):
-    # Transformation to Ising notation
+    """
+    Transformation to Ising notation.
+
+    :param int x: Value of a single binary bit from {0, 1}.
+    :return: Transformed bit value from {-1, 1}.
+    :rtype: Integer.
+    """
     if x == 1:
         return -1
     else:
         return 1
 
 
-def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samples=None,
-          initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
-          vqe_option=None):
+def ising_qaoa(h, J, num_steps=0, driver_operators=None, verbose=True,
+               rand_seed=None, connection=None, samples=None,
+               initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
+               vqe_option=None):
     """
-    Ising set up method
+    Ising set up method for QAOA. Supports 2-local as well as k-local interaction terms.
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
+    :param dict h: External magnectic term of the Ising problem.
+    :param dict J: Interaction terms of the Ising problem (may be k-local).
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
+    :param list driver_operators: (Optional. Default: X on all qubits.) The mixer/driver
+                Hamiltonian used in QAOA. Can be used to enforce hard constraints
+                and ensure that solution stays in feasible subspace.
+                Must be list of PauliSum objects.
     :param verbose: (Optional.Default=True) Verbosity of the code.
     :param rand_seed: (Optional. Default=None) random seed when beta and
                       gamma angles are not provided.
@@ -68,11 +85,9 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
                           parameters.
     :param minimizer_kwargs: (Optional. Default=None). Minimizer optional
                              arguments.  If None set to
-                             {'method': 'Nelder-Mead',
-                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
-                                        'disp': False}
-    :param vqe_option: (Optional. Default=None). VQE optional
-                             arguments.  If None set to
+                             {'method': 'Nelder-Mead', 'options': {'ftol': 1.0e-2,
+                             'xtol': 1.0e-2, disp': False}
+    :param vqe_option: (Optional. Default=None). VQE optional arguments. If None set to
                        vqe_option = {'disp': print_fun, 'return_all': True,
                        'samples': samples}
     :return: Most frequent Ising string, Energy of the Ising string, Circuit used to obtain result.
@@ -82,18 +97,30 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
     if num_steps == 0:
         num_steps = 2 * len(h)
 
-    n_nodes = len(h)
+    qubit_indices = set([index for tuple_ in list(J.keys()) for index in tuple_]
+                      + list(h.keys()))
+    n_nodes = len(qubit_indices)
 
     cost_operators = []
-    driver_operators = []
-    for i, j in J.keys():
-        cost_operators.append(PauliSum([PauliTerm("Z", i, J[(i, j)]) * PauliTerm("Z", j)]))
+    for key in J.keys():
+        # first PauliTerm is multiplied with coefficient obtained from J
+        pauli_product = PauliTerm("Z", key[0], J[key])
 
-    for i in range(n_nodes):
+        for i in range(1,len(key)):
+            # multiply with additional Z PauliTerms depending
+            # on the locality of the interaction terms
+            pauli_product *= PauliTerm("Z", key[i])
+
+        cost_operators.append(PauliSum([pauli_product]))
+
+    for i in h.keys():
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
 
-    for i in range(n_nodes):
-        driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
+    if driver_operators is None:
+        driver_operators = []
+        # default to X mixer
+        for i in qubit_indices:
+            driver_operators.append(PauliSum([PauliTerm("X", i, 1.0)]))
 
     if connection is None:
         connection = CXN
@@ -119,8 +146,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
                      vqe_options=vqe_option)
 
     betas, gammas = qaoa_inst.get_angles()
-    most_freq_string, sampling_results = qaoa_inst.get_string(
-        betas, gammas)
+    most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()
