@@ -1,12 +1,10 @@
 import numpy as np
 from mock import patch
-
+from pyquil import Program
 from pyquil.gates import H, CPHASE, SWAP, MEASURE
-import pyquil.quil as pq
 
 from grove.alpha.phaseestimation.phase_estimation import controlled
-from grove.alpha.jordan_gradient.jordan_gradient import gradient_program, \
-    estimate_gradient
+from grove.alpha.jordan_gradient.jordan_gradient import gradient_program, estimate_gradient
 
 
 def test_gradient_program():
@@ -15,7 +13,7 @@ def test_gradient_program():
     
     trial_prog = gradient_program(f_h, precision)
     
-    result_prog = pq.Program([H(0), H(1)])
+    result_prog = Program([H(0), H(1)])
 
     phase_factor = np.exp(1.0j * 2 * np.pi * abs(f_h))
     U = np.array([[phase_factor, 0],
