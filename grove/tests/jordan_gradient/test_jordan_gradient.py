@@ -30,7 +30,7 @@ def test_gradient_program():
         result_prog.inst((name, i) + tuple(q_out))
 
     result_prog.inst([SWAP(0, 1), H(0), CPHASE(-1.5707963267948966, 0, 1),
-                      H(1), MEASURE(0, [0]), MEASURE(1, [1])])
+                      H(1), MEASURE(0, 0), MEASURE(1, 1)])
 
     assert(trial_prog == result_prog)
 
