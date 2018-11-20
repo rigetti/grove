@@ -68,7 +68,7 @@ def run_swap_test(program_a, program_b, number_of_measurements, quantum_resource
     swap_test_program = Program()
     swap_test_program += program_a + program_b
     swap_test_program += swap_circuit_generator(register_a, register_b, ancilla)
-    swap_test_program.measure(ancilla, [classical_memory])
+    swap_test_program.measure(ancilla, classical_memory)
 
     # TODO: instead of number of measurements have user set precision of overlap
     # estimate and calculate number of shots to be within this precision
