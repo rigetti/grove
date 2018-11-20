@@ -1,13 +1,15 @@
 """
 Tests on the swap test in the circuit_primitives module
 """
+import numpy as np
 import pytest
 from mock import patch
-import numpy as np
-from pyquil.quil import Program
+from pyquil import Program
 from pyquil.gates import CSWAP, H
+
 from grove.circuit_primitives.swap import (swap_circuit_generator,
-                                           run_swap_test,  RegisterSizeMismatch)
+                                           run_swap_test,
+                                           RegisterSizeMismatch)
 
 def test_swap_circuit_gen_type():
     """
