@@ -14,7 +14,7 @@
 #    limitations under the License.
 ##############################################################################
 import numpy as np
-import pyquil.quil as pq
+from pyquil import Program
 from pyquil.gates import X, H, Z, RZ, CZ, CNOT
 
 from grove.amplification.amplification import (amplification_circuit,
@@ -22,9 +22,9 @@ from grove.amplification.amplification import (amplification_circuit,
                                                diffusion_program)
 
 
-triple_hadamard = pq.Program().inst(H(2)).inst(H(1)).inst(H(0))
-cz_gate = pq.Program(CZ(0, 1))
-oracle = pq.Program().inst()
+triple_hadamard = Program().inst(H(2)).inst(H(1)).inst(H(0))
+cz_gate = Program(CZ(0, 1))
+oracle = Program().inst()
 qubits = [0, 1, 2]
 iters = 2
 
@@ -34,7 +34,7 @@ def test_diffusion_operator():
     Checks that the diffusion operator outputs the correct operation
     """
     created = decomposed_diffusion_program(qubits[:2])
-    desired = pq.Program()
+    desired = Program()
     for def_gate in created.defined_gates:
         desired.defgate(def_gate.name, def_gate.matrix)
     qubit0 = qubits[0]
@@ -73,5 +73,5 @@ def test_amplify():
 def test_trivial_diffusion():
     qubits = [0]
     created = decomposed_diffusion_program(qubits)
-    desired = pq.Program().inst(Z(qubits[0]))
+    desired = Program().inst(Z(qubits[0]))
     assert created == desired
