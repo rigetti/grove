@@ -69,7 +69,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
     :param minimizer_kwargs: (Optional. Default=None). Minimizer optional
                              arguments.  If None set to
                              {'method': 'Nelder-Mead',
-                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
+                             'options': {'fatol': 1.0e-2, 'xatol': 1.0e-2,
                                         'disp': False}
     :param vqe_option: (Optional. Default=None). VQE optional
                              arguments.  If None set to
@@ -100,7 +100,7 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
 
     if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',
-                            'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
+                            'options': {'fatol': 1.0e-2, 'xatol': 1.0e-2,
                                         'disp': False}}
     if vqe_option is None:
         vqe_option = {'disp': print_fun, 'return_all': True,
