@@ -31,6 +31,6 @@ def test_phase_estimation():
     
     result_prog += inverse_qft(range(precision))
     
-    result_prog += [MEASURE(i, [i]) for i in range(precision)]
+    result_prog += [MEASURE(i, i) for i in range(precision)]
     
     assert(trial_prog == result_prog)
