@@ -14,18 +14,22 @@
 #    limitations under the License.
 ##############################################################################
 
-import pyquil.quil as pq
-from pyquil.gates import H
+from math import log2
+
 import numpy as np
-from math import log
+from pyquil import Program, get_qc
+from pyquil.api import WavefunctionSimulator
+from pyquil.gates import H
+from scipy.linalg import expm
+
 from grove.qft.fourier import inverse_qft
 
 
-def controlled(m):
+def controlled(m: np.ndarray) -> np.ndarray:
     """
     Make a one-qubit-controlled version of a matrix.
 
-    :param m: (numpy.ndarray) A matrix.
+    :param m: A matrix.
     :return: A controlled version of that matrix.
     """
     rows, cols = m.shape
@@ -38,21 +42,22 @@ def controlled(m):
     return controlled_m
 
 
-def phase_estimation(U, accuracy, reg_offset=0):
+def phase_estimation(U: np.ndarray, accuracy: int, reg_offset: int = 0) -> Program:
     """
     Generate a circuit for quantum phase estimation.
 
-    :param U: (numpy.ndarray) A unitary matrix.
-    :param accuracy: (int) Number of bits of accuracy desired.
-    :param reg_offset: (int) Where to start writing measurements (default 0).
+    :param U: A unitary matrix.
+    :param accuracy: Number of bits of accuracy desired.
+    :param reg_offset: Where to start writing measurements (default 0).
     :return: A Quil program to perform phase estimation.
     """
     assert isinstance(accuracy, int)
     rows, cols = U.shape
-    m = int(log(rows, 2))
+    m = int(log2(rows))
     output_qubits = range(0, accuracy)
     U_qubits = range(accuracy, accuracy + m)
-    p = pq.Program()
+    p = Program()
+    ro = p.declare('ro', 'BIT', len(output_qubits))
 
     # Hadamard initialization
     for i in output_qubits:
@@ -71,21 +76,25 @@ def phase_estimation(U, accuracy, reg_offset=0):
     p = p + inverse_qft(output_qubits)
     # Perform the measurements
     for i in output_qubits:
-        p.measure(i, reg_offset + i)
+        p.measure(i, ro[reg_offset + i])
 
     return p
 
 
 if __name__ == '__main__':
-    import pyquil.api as api
-    import scipy.linalg
-    qvm = api.QVMConnection()
+    qc = get_qc("9q-square-qvm")
+
     X = np.asarray([[0.0, 1.0], [1.0, 0.0]])
     Y = np.asarray([[0.0, -1.0j], [1.0j, 0.0]])
-    Rx = scipy.linalg.expm(1j * X * np.pi / 8)
-    Ry = scipy.linalg.expm(1j * Y * np.pi / 16)
+    Rx = expm(1j * X * np.pi / 8)
+    Ry = expm(1j * Y * np.pi / 16)
     U = np.kron(Rx, Ry)
+
     p = phase_estimation(U, 3)
-    print(p)
-    print(qvm.run(p, range(3+2), 10))
-    print(qvm.wavefunction(p))
+    print(p.out())
+    print(WavefunctionSimulator().wavefunction(p))
+
+    num_shots = 100
+    p.wrap_in_numshots_loop(num_shots)
+    executable = qc.compiler.native_quil_to_executable(p)
+    bitstrings = qc.run(executable)

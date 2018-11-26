@@ -55,7 +55,7 @@ class BKTransform(object):
         :return: qubit operators corresponding to fermion creation
         :rtype: PauliSum
         """
-        return self._operator_generator(index, -1.0)
+        return self._operator_generator(index, -1)
 
     def kill(self, index):
         """
@@ -66,7 +66,7 @@ class BKTransform(object):
         :return: qubit operators corresponding to fermion annihilation
         :rtype: PauliSum
         """
-        return self._operator_generator(index, +1.0)
+        return self._operator_generator(index, +1)
 
     def product_ops(self, indices, conjugate):
         """
