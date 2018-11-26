@@ -11,7 +11,7 @@ involve finding gates to be applied in the reversed circuit.
 """
 import numpy as np
 import pyquil.quil as pq
-from pyquil.api import QVMConnection
+from pyquil.api import WavefunctionSimulator
 from pyquil.gates import *
 from six.moves import input
 
@@ -292,14 +292,16 @@ def create_arbitrary_state(vector, qubits=None):
 if __name__ == "__main__":
     print("Example list: -3.2+1j, -7, -0.293j, 1, 0, 0")
     v = input("Input a comma separated list of complex numbers:\n")
-    if isinstance(v, int):
+    try:
+        v = int(v)
         v = [v]
-    else:
+    except ValueError:
         v = list(v)
-    p = create_arbitrary_state(v)
-    qvm = QVMConnection()
-    wf = qvm.wavefunction(p)
+        # TODO: fix parsing. Giving [0,1] at the prompt gives ['[', '0', ',', '1', ']']
     print("Normalized Vector: ", list(v / np.linalg.norm(v)))
+
+    p = create_arbitrary_state(v)
+    wf = WavefunctionSimulator().wavefunction(p)
     print("Generated Wavefunction: ", wf)
     if input("Show Program? (y/n): ") == 'y':
         print("----------Quil Code Used----------")
