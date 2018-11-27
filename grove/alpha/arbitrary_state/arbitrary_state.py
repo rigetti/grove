@@ -10,7 +10,7 @@ and brings it to the all zero state. Thus, many of this module's functions
 involve finding gates to be applied in the reversed circuit.
 """
 import numpy as np
-import pyquil.quil as pq
+from pyquil import Program
 from pyquil.api import WavefunctionSimulator
 from pyquil.gates import *
 from six.moves import input
@@ -163,7 +163,7 @@ def get_reversed_unification_program(angles, control_indices,
             reversed_gates.append(CNOT(controls[control_indices[j] - 1],
                                        target))
 
-    return pq.Program().inst(reversed_gates[::-1])
+    return Program().inst(reversed_gates[::-1])
 
 
 def create_arbitrary_state(vector, qubits=None):
@@ -223,11 +223,11 @@ def create_arbitrary_state(vector, qubits=None):
     # and makes it into the |0> state,
     # the gates will be applied in reverse order
     # from the circuit given in the paper
-    reversed_prog = pq.Program()
+    reversed_prog = Program()
 
     for step in range(n):
         # Will hold reversed program corresponding to this particular step.
-        reversed_step_prog = pq.Program()
+        reversed_step_prog = Program()
 
         # get the y and z rotation angles needed to unify pairs
         # of phases and magnitudes, respectively,
@@ -279,10 +279,10 @@ def create_arbitrary_state(vector, qubits=None):
         reversed_prog = reversed_step_prog + reversed_prog
 
     # Add Hadamard gates to remove superposition
-    reversed_prog = pq.Program().inst(list(map(H, qubits))) + reversed_prog
+    reversed_prog = Program().inst(list(map(H, qubits))) + reversed_prog
 
     # Correct the overall phase
-    reversed_prog = pq.Program().inst(RZ(-2 * phases[0], qubits[0])) \
+    reversed_prog = Program().inst(RZ(-2 * phases[0], qubits[0])) \
                       .inst(PHASE(2 * phases[0], qubits[0])) + reversed_prog
 
     # Apply all gates in reverse

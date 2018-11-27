@@ -1,6 +1,8 @@
 """Tests for utils"""
 
 import pytest
+from pyquil import Program
+from pyquil.api import WavefunctionSimulator
 
 from grove.alpha.arbitrary_state.arbitrary_state import *
 
@@ -139,7 +141,7 @@ class TestGetReversedUnificationProgram(object):
             get_reversed_unification_program(angles, control_indices,
                                              target, controls, "phase")
 
-        expected_prog = pq.Program().inst(CNOT(8, 0)) \
+        expected_prog = Program().inst(CNOT(8, 0)) \
             .inst(RZ(np.pi / 18, 0)) \
             .inst(CNOT(3, 0)) \
             .inst(RZ(-np.pi / 7, 0)) \
@@ -160,7 +162,7 @@ class TestGetReversedUnificationProgram(object):
             get_reversed_unification_program(angles, control_indices,
                                              target, controls, "magnitude")
 
-        expected_prog = pq.Program().inst(CNOT(2, 4)) \
+        expected_prog = Program().inst(CNOT(2, 4)) \
             .inst(RY(-np.pi / 4, 4)) \
             .inst(CNOT(1, 4)) \
             .inst(RY(np.pi / 3, 4)) \
@@ -182,8 +184,8 @@ class TestGetReversedUnificationProgram(object):
 def _state_generation_test_helper(v, qubits=None):
     # encode vector in quantum state
     p = create_arbitrary_state(v, qubits)
-    qvm = QVMConnection()
-    wf = qvm.wavefunction(p)
+    wf = WavefunctionSimulator().wavefunction(p)
+
 
     # normalize and pad with zeros
     v_norm = v / np.linalg.norm(v)
