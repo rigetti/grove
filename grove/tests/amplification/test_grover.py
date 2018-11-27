@@ -88,10 +88,10 @@ def test_optimal_grover(x_oracle):
 def test_find_bitstring():
     bitstring_map = {"0": 1, "1": -1}
     builder = Grover()
-    with patch("pyquil.api.JobConnection") as qvm:
+    with patch("pyquil.api.QuantumComputer") as qc:
         expected_bitstring = [0, 1]
-        qvm.run_and_measure.return_value = ["".join([str(bit) for bit in expected_bitstring])]
-    returned_bitstring = builder.find_bitstring(qvm, bitstring_map)
+        qc.run.return_value = ["".join([str(bit) for bit in expected_bitstring])]
+    returned_bitstring = builder.find_bitstring(qc, bitstring_map)
     prog = builder.grover_circuit
     # Make sure it only defines the ORACLE gate and the DIFFUSION gate.
     assert len(prog.defined_gates) == 2
