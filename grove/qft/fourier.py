@@ -13,33 +13,33 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
-import pyquil.quil as pq
-from pyquil.gates import SWAP, H, CPHASE
 import math
+from typing import List
+
+from pyquil import Program
+from pyquil.gates import SWAP, H, CPHASE
 
 
-def bit_reversal(qubits):
+def bit_reversal(qubits: List[int]) -> Program:
     """
     Generate a circuit to do bit reversal.
 
     :param qubits: Qubits to do bit reversal with.
     :return: A program to do bit reversal.
     """
-    p = pq.Program()
+    p = Program()
     n = len(qubits)
     for i in range(int(n / 2)):
         p.inst(SWAP(qubits[i], qubits[-i - 1]))
     return p
 
 
-def _core_qft(qubits, coeff):
+def _core_qft(qubits: List[int], coeff: int) -> Program:
     """
     Generates the core program to perform the quantum Fourier transform
     
     :param qubits: A list of qubit indexes.
-    :param coeff: A modifier for the angle used in rotations (-1 for inverse 
-                  QFT, 1 for QFT)
+    :param coeff: A modifier for the angle used in rotations (-1 for inverse QFT, 1 for QFT)
     :return: A Quil program to compute the core (inverse) QFT of the qubits.
     """
     
@@ -57,32 +57,29 @@ def _core_qft(qubits, coeff):
         return _core_qft(qs, coeff) + list(reversed(cR)) + [H(q)]
 
 
-def qft(qubits):
+def qft(qubits: List[int]) -> Program:
     """
-    Generate a program to compute the quantum Fourier transform on
-    a set of qubits.
+    Generate a program to compute the quantum Fourier transform on a set of qubits.
 
     :param qubits: A list of qubit indexes.
     :return: A Quil program to compute the Fourier transform of the qubits.
     """
 
-    p = pq.Program().inst(_core_qft(qubits, 1))
+    p = Program().inst(_core_qft(qubits, 1))
     return p + bit_reversal(qubits)
 
 
-def inverse_qft(qubits):
+def inverse_qft(qubits: List[int]) -> Program:
     """
-    Generate a program to compute the inverse quantum Fourier transform on
-    a set of qubits.
+    Generate a program to compute the inverse quantum Fourier transform on a set of qubits.
 
     :param qubits: A list of qubit indexes.
-    :return: A Quil program to compute the inverse Fourier transform of the 
-             qubits.
+    :return: A Quil program to compute the inverse Fourier transform of the qubits.
     """
     
-    qft_result = pq.Program().inst(_core_qft(qubits, -1))
+    qft_result = Program().inst(_core_qft(qubits, -1))
     qft_result += bit_reversal(qubits)
-    inverse_qft = pq.Program()
+    inverse_qft = Program()
     while len(qft_result) > 0:
         new_inst = qft_result.pop()
         inverse_qft.inst(new_inst)

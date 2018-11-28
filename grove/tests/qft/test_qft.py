@@ -13,30 +13,28 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
+from pyquil import Program
+from pyquil.gates import H, X, CPHASE, SWAP
 
-from pyquil.gates import *
 from grove.qft.fourier import inverse_qft
-import pyquil.quil as pq
 
 
 def test_simple_inverse_qft():
-    
-    trial_prog = pq.Program()
+    trial_prog = Program()
     trial_prog.inst(X(0))
     trial_prog = trial_prog + inverse_qft([0])
     
-    result_prog = pq.Program().inst([X(0), H(0)])
+    result_prog = Program().inst([X(0), H(0)])
     
     assert trial_prog == result_prog
 
 
 def test_multi_qubit_qft():
-    
-    trial_prog = pq.Program()
+    trial_prog = Program()
     trial_prog.inst(X(0), X(1), X(2))
     trial_prog = trial_prog + inverse_qft([0, 1, 2])
     
-    result_prog = pq.Program().inst([X(0), X(1), X(2),
+    result_prog = Program().inst([X(0), X(1), X(2),
                                      SWAP(0, 2), H(0),
                                      CPHASE(-1.5707963267948966, 0, 1),
                                      CPHASE(-0.7853981633974483, 0, 2),
