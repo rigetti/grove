@@ -4,7 +4,7 @@ from os.path import abspath, dirname
 
 import numpy as np
 from mock import patch
-from pyquil.quil import Program
+from pyquil import Program
 
 from grove.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap
 
@@ -33,9 +33,9 @@ def test_simon_class():
     https://cs.uwaterloo.ca/~watrous/CPSC519/LectureNotes/06.pdf"""
     simon_algo = Simon()
 
-    with patch("pyquil.api.QVMConnection") as qvm:
+    with patch("pyquil.api.QuantumComputer") as qc:
         # Need to mock multiple returns as an iterable
-        qvm.run_and_measure.side_effect = [
+        qc.run.side_effect = [
             (np.asarray([1, 1, 1], dtype=int), ),
             (np.asarray([1, 1, 1], dtype=int), ),
             (np.asarray([1, 0, 0], dtype=int), ),
@@ -56,7 +56,7 @@ def test_simon_class():
         '111': '010'
     }
 
-    mask = simon_algo.find_mask(qvm, bit_string_mapping)
+    mask = simon_algo.find_mask(qc, bit_string_mapping)
 
     assert simon_algo.n_qubits == 3
     assert simon_algo.n_ancillas == 3

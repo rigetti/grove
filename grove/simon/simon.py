@@ -37,18 +37,22 @@ For more information, see [Simon1995]_, [Loceff2015]_, [Watrous2006]_
 
 from collections import defaultdict
 from operator import xor
+from typing import Dict, Tuple
 
 import numpy as np
 import numpy.random as rd
-import pyquil.quil as pq
-from pyquil.gates import H
+from pyquil import Program
+from pyquil.api import QuantumComputer
+from pyquil.gates import H, MEASURE
 
 import grove.simon.utils as utils
 
 
-def create_1to1_bitmap(mask):
+def create_1to1_bitmap(mask: str) -> Dict[str, str]:
     """
-    A helper to create a bit map function (as a dictionary) for a given mask. E.g. for a mask
+    Create a bit map function (as a dictionary) for a given mask.
+
+    e.g., for a mask
     :math:`m = 10` the return is a dictionary:
 
     >>> create_1to1_bitmap('10')
@@ -59,10 +63,9 @@ def create_1to1_bitmap(mask):
     ...     '11': '01'
     ... }
 
-    :param String mask: binary mask as a string of 0's and 1's
-    :return: dictionary containing a mapping of all possible bit strings of the same length as the
-        mask's string and their mapped bit-string value
-    :rtype: Dict[String, String]
+    :param mask: A binary mask as a string of 0's and 1's.
+    :return: A dictionary containing a mapping of all possible bit strings of the same length as the
+        mask's string and their mapped bit-string value.
     """
     n_bits = len(mask)
     form_string = "{0:0" + str(n_bits) + "b}"
@@ -73,7 +76,7 @@ def create_1to1_bitmap(mask):
     return bit_map_dct
 
 
-def create_valid_2to1_bitmap(mask, random_seed=None):
+def create_valid_2to1_bitmap(mask: str, random_seed: int = None) -> Dict[str, str]:
     """
     A helper to create a 2-to-1 binary function that is invariant with respect to the application of
     a specified XOR bitmask. This property must be satisfied if a 2-to-1 function is to be used in
@@ -99,10 +102,9 @@ def create_valid_2to1_bitmap(mask, random_seed=None):
     Note that, e.g. both `000` and `110` map to the same value `101` and
     :math:`000 \oplus 110 = 110`. The same holds true for other pairs.
 
-    :param String mask: mask input that defines the periodicity of f
-    :param Integer random_seed: (optional) integer to set numpy.random.seed parameter.
-    :return: dictionary containing the truth table of a valid 2-to-1 boolean function
-    :rtype: Dict[String, String]
+    :param mask: A mask input that defines the periodicity of f.
+    :param random_seed: An (optional) integer to set numpy.random.seed parameter.
+    :return: A dictionary containing the truth table of a valid 2-to-1 boolean function.
     """
     if random_seed is not None:
         rd.seed(random_seed)
@@ -148,7 +150,7 @@ class Simon(object):
         self.bit_map = None
         self.classical_register = None
 
-    def _construct_simon_circuit(self):
+    def _construct_simon_circuit(self) -> Program:
         """
         Implementation of the quantum portion of Simon's Algorithm.
 
@@ -157,9 +159,8 @@ class Simon(object):
         the oracle.
 
         :return: A program corresponding to the desired instance of Simon's Algorithm.
-        :rtype: Program
         """
-        simon_circuit = pq.Program()
+        simon_circuit = Program()
 
         oracle_name = "SIMON_ORACLE"
         simon_circuit.defgate(oracle_name, self.unitary_function_mapping)
@@ -169,14 +170,12 @@ class Simon(object):
         simon_circuit.inst([H(i) for i in self.computational_qubits])
         return simon_circuit
 
-    def _init_attr(self, bitstring_map):
+    def _init_attr(self, bitstring_map: Dict[str, str]) -> None:
         """
         Acts instead of __init__ method to instantiate the necessary Simon Object state.
 
-        :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
-        dictionary format
+        :param bitstring_map: A truth-table of the input bitstring map in dictionary format.
         :return: None
-        :rtype: NoneType
         """
         self.bit_map = bitstring_map
         self.n_qubits = len(list(bitstring_map.keys())[0])
@@ -190,21 +189,20 @@ class Simon(object):
         self.mask = None
 
     @staticmethod
-    def _compute_unitary_oracle_matrix(bitstring_map):
+    def _compute_unitary_oracle_matrix(bitstring_map: Dict[str, str]) -> Tuple[np.ndarray,
+                                                                               Dict[str, str]]:
         """
         Computes the unitary matrix that encodes the orcale function for Simon's algorithm
 
-        :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
-        dictionary format
-        :return: a dense matrix containing the permutation of the bit strings and a dictionary
-        containing the indices of the non-zero elements of the computed permutation matrix as
-        key-value-pairs
-        :rtype: Tuple[2darray, Dict[String, String]]
+        :param bitstring_map: A truth-table of the input bitstring map in dictionary format.
+        :return: A dense matrix containing the permutation of the bit strings and a dictionary
+            containing the indices of the non-zero elements of the computed permutation matrix as
+            key-value-pairs.
         """
         n_bits = len(list(bitstring_map.keys())[0])
 
         # We instantiate an empty matrix of size 2 * n_bits to encode the mapping from n qubits
-        # to n ancillas, which explains the factor 2 overhead.
+        # to n ancillae, which explains the factor 2 overhead.
         # To construct the matrix we go through all possible state transitions and pad the index
         # according to all possible states the ancilla-subsystem could be in
         ufunc = np.zeros(shape=(2 ** (2 * n_bits), 2 ** (2 * n_bits)))
@@ -222,22 +220,20 @@ class Simon(object):
                 ufunc[i, j] = 1
         return ufunc, index_mapping_dct
 
-    def find_mask(self, cxn, bitstring_map):
+    def find_mask(self, qc: QuantumComputer, bitstring_map: Dict[str, str]) -> str:
         """
         Runs Simon's mask_array algorithm to find the mask.
 
-        :param QVMConnection cxn: the connection to the Rigetti cloud to run pyQuil programs
-        :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
-            whose period is  to be found.
-
+        :param qc: Connection object to a QuantumComputer.
+        :param bitstring_map: A truth table describing the boolean function, whose period is to be
+            found.
         :return: Returns the mask of the bitstring map or raises an Exception if the mask cannot be
             found.
-        :rtype: String
         """
         self._init_attr(bitstring_map)
 
         # create the samples of linearly independent bit-vectors
-        self._sample_independent_bit_vectors(cxn)
+        self._sample_independent_bit_vectors(qc)
         # try to invert the mask and check validity
         self._invert_mask_equation()
 
@@ -246,22 +242,28 @@ class Simon(object):
         else:
             raise Exception("No valid mask found")
 
-    def _sample_independent_bit_vectors(self, cxn):
-        """This method samples :math:`n-1` linearly independent vectors using the Simon Circuit.
+    def _sample_independent_bit_vectors(self, qc: QuantumComputer) -> None:
+        """
+        This method samples :math:`n-1` linearly independent vectors using the Simon Circuit.
         It attempts to put the sampled bitstring into a dictionary and only terminates once the
         dictionary contains :math:`n-1` samples
 
-        :param cxn: Connection object to a QVM or QPU
+        :param qc: Connection object to a QuantumComputer.
         :return: None
-        :rtype: NoneType
         """
         while len(self._dict_of_linearly_indep_bit_vectors) < self.n_qubits - 1:
-            sampled_bit_string = np.array(cxn.run_and_measure(self.simon_circuit,
-                                                              self.computational_qubits)[0],
-                                          dtype=int)
-            self._add_to_dict_of_indep_bit_vectors(sampled_bit_string.tolist())
 
-    def _invert_mask_equation(self):
+            prog = Program()
+            simon_ro = prog.declare('ro', 'BIT', len(self.computational_qubits))
+            prog += self.simon_circuit
+            prog += [MEASURE(qubit, ro) for qubit, ro in zip(self.computational_qubits, simon_ro)]
+            prog.wrap_in_numshots_loop(1)
+            executable = qc.compiler.native_quil_to_executable(prog)
+            sampled_bit_string = np.array(qc.run(executable)[0], dtype=int)
+
+            self._add_to_dict_of_indep_bit_vectors(sampled_bit_string)
+
+    def _invert_mask_equation(self) -> None:
         """
         This method tries to infer the bit mask of the input function from the sampled :math:`n-1`
         linearly independent bit vectors.
@@ -277,7 +279,6 @@ class Simon(object):
         matrix.
 
         :return: None
-        :rtype: NoneType
         """
         missing_msb = self._add_missing_msb_vector()
         upper_triangular_matrix = np.asarray(
@@ -290,7 +291,7 @@ class Simon(object):
 
         self.mask = utils.binary_back_substitute(upper_triangular_matrix, msb_unit_vec).tolist()
 
-    def _add_to_dict_of_indep_bit_vectors(self, z):
+    def _add_to_dict_of_indep_bit_vectors(self, z: np.ndarray) -> None:
         """
         This method adds a bit-vector z to the dictionary of independent vectors. It checks the
         provenance (most significant bit) of the vector and only adds it to the dictionary if the
@@ -299,9 +300,8 @@ class Simon(object):
 
         :param z: array containing the bit-vector
         :return: None
-        :rtype: NoneType
         """
-        if all(np.asarray(z) == 0) or all(np.asarray(z) == 1):
+        if (z == 0).all() or (z == 1).all():
             return None
         msb_z = utils.most_significant_bit(z)
 
@@ -315,19 +315,18 @@ class Simon(object):
         else:
             conflict_z = self._dict_of_linearly_indep_bit_vectors[msb_z]
             not_z = [xor(conflict_z[idx], z[idx]) for idx in range(len(z))]
-            if all(np.asarray(not_z) == 0):
+            if (np.asarray(not_z) == 0).all():
                 return None
-            msb_not_z = utils.most_significant_bit(not_z)
+            msb_not_z = utils.most_significant_bit(np.asarray(not_z))
             if msb_not_z not in self._dict_of_linearly_indep_bit_vectors.keys():
                 self._dict_of_linearly_indep_bit_vectors[msb_not_z] = not_z
 
-    def _add_missing_msb_vector(self):
+    def _add_missing_msb_vector(self) -> int:
         """
         Finds the missing provenance value in the collection of :math:`n-1` linearly independent
         bit vectors and adds a unit vector corresponding to the missing provenance to the collection
 
-        :return: Missing provenance value as int
-        :rtype: Int
+        :return: Missing provenance value
         """
         missing_msb = None
         for idx in range(self.n_qubits):
@@ -342,13 +341,12 @@ class Simon(object):
         self._dict_of_linearly_indep_bit_vectors[missing_msb] = augment_vec.astype(int).tolist()
         return missing_msb
 
-    def _check_mask_correct(self):
+    def _check_mask_correct(self) -> bool:
         """
         Checks if a given mask correctly reproduces the function that was provided to the Simon
         algorithm. This can be done in :math:`O(n)` as it is a simple list traversal.
 
         :return: True if mask reproduces the input function
-        :rtype: Bool
         """
         mask_str = ''.join([str(b) for b in self.mask])
         return all([self.bit_map[k] == self.bit_map[utils.bitwise_xor(k, mask_str)]
