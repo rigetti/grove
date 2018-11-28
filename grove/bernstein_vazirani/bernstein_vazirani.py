@@ -24,17 +24,18 @@ For more information, see [Loceff2015]_
 .. _`"A Course in Quantum Computing for the Community College"`: http://lapastillaroja.net/
  wp-content/uploads/2016/09/Intro_to_QC_Vol_1_Loceff.pdf
 """
-
 from collections import defaultdict
+from typing import Dict, Tuple
 
 import numpy as np
-import pyquil.quil as pq
-from pyquil.gates import H, X
+from pyquil import Program
+from pyquil.api import QuantumComputer
+from pyquil.gates import H, X, MEASURE
 
 from grove.bernstein_vazirani import utils
 
 
-def create_bv_bitmap(dot_product_vector, dot_product_bias):
+def create_bv_bitmap(dot_product_vector: str, dot_product_bias: str) -> Dict[str, str]:
     """
     This function creates a map from bitstring to function value for a boolean formula :math:`f`
     with a dot product vector :math:`a` and a dot product bias :math:`b`
@@ -47,12 +48,11 @@ def create_bv_bitmap(dot_product_vector, dot_product_bias):
 
            (\\mathbf{a}\\in\\{0,1\\}^n, b\\in\\{0,1\\})
 
-    :param String dot_product_vector: a string of 0's and 1's that represents the dot-product
+    :param dot_product_vector: a string of 0's and 1's that represents the dot-product
         partner in :math:`f`
-    :param String dot_product_bias: 0 or 1 as a string representing the bias term in :math:`f`
+    :param dot_product_bias: 0 or 1 as a string representing the bias term in :math:`f`
     :return: A dictionary containing all possible bitstring of length equal to :math:`a` and the
         function value :math:`f`
-    :rtype: Dict[String, String]
     """
     n_bits = len(dot_product_vector)
     bit_map = {}
@@ -84,7 +84,8 @@ class BernsteinVazirani(object):
         self.input_bitmap = None
 
     @staticmethod
-    def _compute_unitary_oracle_matrix(bitstring_map):
+    def _compute_unitary_oracle_matrix(bitstring_map: Dict[str, str]) -> Tuple[np.ndarray,
+                                                                               Dict[str, str]]:
         """
         Computes the unitary matrix that encodes the oracle function  used in the Bernstein-Vazirani
         algorithm. It generates a dense matrix for a function :math:`f`
@@ -101,10 +102,10 @@ class BernsteinVazirani(object):
         elements of the corresponding qubit and ancilla subsystems.
 
         :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
-        dictionary format
+            dictionary format
         :return: a dense matrix containing the permutation of the bit strings and a dictionary
-        containing the indices of the non-zero elements of the computed permutation matrix as
-        key-value-pairs
+            containing the indices of the non-zero elements of the computed permutation matrix as
+            key-value-pairs
         :rtype: Tuple[2darray, Dict[String, String]]
         """
         n_bits = len(list(bitstring_map.keys())[0])
@@ -129,7 +130,7 @@ class BernsteinVazirani(object):
                 ufunc[i, j] = 1
         return ufunc, index_mapping_dct
 
-    def _create_bv_circuit(self, bit_map):
+    def _create_bv_circuit(self, bit_map: Dict[str, str]) -> Program:
         """
         Implementation of the Bernstein-Vazirani Algorithm.
 
@@ -138,11 +139,11 @@ class BernsteinVazirani(object):
         query to the given oracle.
 
         :param Dict[String, String] bit_map: truth-table of a function for Bernstein-Vazirani with
-        the keys being all possible bit vectors strings and the values being the function values
+            the keys being all possible bit vectors strings and the values being the function values
         :rtype: Program
         """
         unitary, _ = self._compute_unitary_oracle_matrix(bit_map)
-        full_bv_circuit = pq.Program()
+        full_bv_circuit = Program()
 
         full_bv_circuit.defgate("BV-ORACLE", unitary)
 
@@ -155,7 +156,7 @@ class BernsteinVazirani(object):
         full_bv_circuit.inst([H(i) for i in self.computational_qubits])
         return full_bv_circuit
 
-    def run(self, cxn, bitstring_map):
+    def run(self, qc: QuantumComputer, bitstring_map: Dict[str, str]) -> 'BernsteinVazirani':
         """
         Runs the Bernstein-Vazirani algorithm.
 
@@ -163,12 +164,10 @@ class BernsteinVazirani(object):
         to the function represented by the oracle function that will be constructed from the
         bitstring map.
 
-        :param Connection cxn: connection to the QPU or QVM
-        :param Dict[String, String] bitstring_map: a truth table describing the boolean function,
-            whose dot-product vector and bias is to be found
-        :rtype: BernsteinVazirani
+        :param qc: connection to the QPU or QVM
+        :param bitstring_map: a truth table describing the boolean function, whose dot-product
+            vector and bias is to be found
         """
-
         # initialize all attributes
         self.input_bitmap = bitstring_map
         self.n_qubits = len(list(bitstring_map.keys())[0])
@@ -179,17 +178,29 @@ class BernsteinVazirani(object):
         self.bv_circuit = self._create_bv_circuit(bitstring_map)
 
         # find vector by running the full bv circuit
-        results = cxn.run_and_measure(self.bv_circuit, self.computational_qubits)
-        bv_vector = results[0][::-1]
+        full_circuit = Program()
+        full_ro = full_circuit.declare('ro', 'BIT', len(self.computational_qubits) + 1)
+        full_circuit += self.bv_circuit
+        full_circuit += [MEASURE(i, full_ro[i]) for i in range(len(self.computational_qubits))]
+        full_circuit.wrap_in_numshots_loop(1)
+        full_executable = qc.compiler.native_quil_to_executable(full_circuit)
+        full_results = qc.run(full_executable)
+        bv_vector = full_results[0][::-1]
 
         # To get the bias term we skip the Walsh-Hadamard transform
-        results = cxn.run_and_measure(self.bv_circuit, [self.ancilla])
-        bv_bias = results[0][0]
+        ancilla_circuit = Program()
+        ancilla_ro = ancilla_circuit.declare('ro', 'BIT', len(self.computational_qubits) + 1)
+        ancilla_circuit += self.bv_circuit
+        ancilla_circuit += [MEASURE(self.ancilla, ancilla_ro[self.ancilla])]
+        ancilla_circuit.wrap_in_numshots_loop(1)
+        ancilla_executable = qc.compiler.native_quil_to_executable(ancilla_circuit)
+        ancilla_results = qc.run(ancilla_executable)
+        bv_bias = ancilla_results[0][0]
 
         self.solution = ''.join([str(b) for b in bv_vector]), str(bv_bias)
         return self
 
-    def get_solution(self):
+    def get_solution(self) -> Tuple[str, str]:
         """
         Returns the solution of the BV algorithm
 
@@ -200,7 +211,7 @@ class BernsteinVazirani(object):
             raise AssertionError("You need to `run` this algorithm first")
         return self.solution
 
-    def check_solution(self):
+    def check_solution(self) -> bool:
         """
         Checks if the the found solution correctly reproduces the input.
 
