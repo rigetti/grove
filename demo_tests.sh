@@ -11,8 +11,10 @@ jupyter nbconvert --to script *.ipynb
 echo "Running notebooks"
 for f in *.py;
 do
-echo "Running $f";
-ipython $f;
+	if [ "$f" != "Tomography.py" ]; then
+		echo "Running $f";
+		ipython $f;
+	fi
 done
 
 popd

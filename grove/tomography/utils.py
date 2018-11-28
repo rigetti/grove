@@ -29,7 +29,7 @@ import numpy as np
 import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
-from pyquil.api.errors import QPUError
+from pyquil.api._errors import QPUError
 from pyquil.gates import I, X, H, CZ
 from pyquil.quil import Program
 from pyquil.quilbase import Pragma

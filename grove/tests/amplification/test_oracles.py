@@ -1,5 +1,6 @@
 import pytest
-from pyquil.quil import Program
+from pyquil import Program
+from pyquil.quilatom import QubitPlaceholder
 
 from grove.amplification.oracles import basis_selector_oracle
 
@@ -9,8 +10,8 @@ def test_basis_selector_oracle():
      test that it gives the right result on a basis set of vectors. Currently we aren't implementing
      this behavior in the Grove tests, so we just write tests for code coverage here."""
     prog = Program()
-    qubit0 = prog.alloc()
-    qubit1 = prog.alloc()
+    qubit0, qubit1 = QubitPlaceholder.register(2)
+
     _ = basis_selector_oracle([0], "0")
     _ = basis_selector_oracle([0, 1], "01")
     _ = basis_selector_oracle([qubit0, qubit1], "11")

@@ -15,14 +15,12 @@
 ##############################################################################
 import pytest
 
-import grove.tomography.utils
-
 from grove.tomography.tomography import _SDP_SOLVER
-from grove.tomography.utils import notebook_mode
+from grove.tomography.utils import import_cvxpy, import_qutip, notebook_mode, NOTEBOOK_MODE
 
 
-qt = grove.tomography.utils.import_qutip()
-cvxpy = grove.tomography.utils.import_cvxpy()
+qt = import_qutip()
+cvxpy = import_cvxpy()
 
 if not qt:
     pytest.skip("Qutip not installed, skipping tests", allow_module_level=True)
@@ -38,4 +36,4 @@ def test_SDP_SOLVER():
 def test_notebook_mode():
     for mode in [True, False]:
         notebook_mode(mode)
-        assert grove.tomography.utils.NOTEBOOK_MODE == mode
+        assert NOTEBOOK_MODE == mode

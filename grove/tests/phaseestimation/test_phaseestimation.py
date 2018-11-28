@@ -1,11 +1,9 @@
 import numpy as np
+from pyquil import Program
+from pyquil.gates import H, MEASURE
 
-from pyquil.gates import H, CPHASE, SWAP, MEASURE
-import pyquil.quil as pq
-
+from grove.alpha.phaseestimation.phase_estimation import controlled, phase_estimation
 from grove.qft.fourier import inverse_qft
-from grove.alpha.phaseestimation.phase_estimation import controlled
-from grove.alpha.phaseestimation.phase_estimation import phase_estimation
 
 
 def test_phase_estimation():
@@ -18,7 +16,9 @@ def test_phase_estimation():
     
     trial_prog = phase_estimation(U, precision)
     
-    result_prog = pq.Program([H(i) for i in range(precision)])
+    result_prog = Program()
+    ro = result_prog.declare('ro', 'BIT', precision)
+    result_prog += [H(i) for i in range(precision)]
     
     q_out = range(precision, precision+1)
     for i in range(precision):
@@ -31,6 +31,6 @@ def test_phase_estimation():
     
     result_prog += inverse_qft(range(precision))
     
-    result_prog += [MEASURE(i, [i]) for i in range(precision)]
+    result_prog += [MEASURE(i, ro[i]) for i in range(precision)]
     
     assert(trial_prog == result_prog)

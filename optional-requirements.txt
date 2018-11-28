@@ -1,4 +1,1 @@
-cython
-qutip
-cvxpy
 scs

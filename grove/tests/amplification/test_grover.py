@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
-from mock import patch, Mock
-from pyquil.gates import X, Z, H
-from pyquil.quil import Program
+from mock import patch
+from pyquil import Program
+from pyquil.gates import H, X
+from pyquil.quilatom import QubitPlaceholder
 
-from grove.amplification.grover import Grover
 from grove.amplification.amplification import HADAMARD_DIFFUSION_LABEL
+from grove.amplification.grover import Grover
 
 identity_oracle = Program()
 """Does nothing on all inputs."""
@@ -30,7 +31,7 @@ def check_instructions(intended_instructions, actual_instructions):
 def x_oracle():
     """Applies an X gate to the ancilla on all inputs. Returns the program, and the query Qubit."""
     p = Program()
-    qubit = p.alloc()
+    qubit = QubitPlaceholder()
     p.inst(X(qubit))
     return p, qubit
 
@@ -48,11 +49,9 @@ def test_trivial_grover():
 def test_x_oracle_one_grover(x_oracle):
     """Testing that Grover's algorithm with an oracle that applies an X gate to the query bit works,
      with one iteration."""
-    x_oracle_grover = Program()
-    qubit0 = x_oracle_grover.alloc()
-    qubits = [qubit0]
-    oracle, query_qubit = x_oracle
-    generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, 1)
+    qubits = [0]
+    oracle, _ = x_oracle
+    generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, num_iter=1)
     gates = [H, X, H, HADAMARD_DIFFUSION_LABEL, H]
     check_instructions(gates, generated_x_oracle_grover)
 
@@ -61,8 +60,8 @@ def test_x_oracle_two_grover(x_oracle):
     """Testing that Grover's algorithm with an oracle that applies an X gate to the query bit works,
      with two iterations."""
     qubits = [0]
-    oracle, query_qubit = x_oracle
-    generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, 2)
+    oracle, _ = x_oracle
+    generated_x_oracle_grover = Grover().oracle_grover(oracle, qubits, num_iter=2)
     # First we put the input into uniform superposition.
     gates = [H]
     for _ in range(2):
@@ -79,14 +78,14 @@ def test_optimal_grover(x_oracle):
     """Testing that Grover's algorithm with an oracle that applies an X gate to the query bit works,
      and defaults to the optimal number of iterations."""
     qubits = [0]
-    oracle, query_qubit = x_oracle
+    oracle, _ = x_oracle
     generated_one_iter_grover = Grover().oracle_grover(oracle, qubits)
     # First we put the input into uniform superposition.
     gates = [H, X, H, HADAMARD_DIFFUSION_LABEL, H]
     check_instructions(gates, generated_one_iter_grover)
 
 
-def test_find_bistring():
+def test_find_bitstring():
     bitstring_map = {"0": 1, "1": -1}
     builder = Grover()
     with patch("pyquil.api.JobConnection") as qvm:

@@ -19,7 +19,7 @@ import pytest
 from matplotlib.pyplot import figure
 from mock import Mock, patch, call
 from mpl_toolkits.mplot3d import Axes3D
-from pyquil.api import QPUConnection
+from pyquil.api import QuantumComputer
 from pyquil.gates import X, Y, I
 from pyquil.quil import Program
 
@@ -147,7 +147,7 @@ def test_visualization():
 
 
 def test_run_in_parallel():
-    cxn = Mock(spec=QPUConnection)
+    cxn = Mock(spec=QuantumComputer)
     programsXY = [[Program(I(0)), Program(X(0))],
                   [Program(I(1)), Program(X(1))]]
     nsamples = 100
