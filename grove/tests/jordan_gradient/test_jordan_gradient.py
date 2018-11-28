@@ -38,11 +38,11 @@ def test_estimate_gradient():
     test_precision = 3
     test_measurements = 10
 
-    with patch("pyquil.api.SyncConnection") as cxn:
-        cxn.run.return_value = [[0, 1, 0, 0] for i in range(test_measurements)]
+    with patch("pyquil.api.QuantumComputer") as qc:
+        qc.run.return_value = np.asarray([[0, 1, 0, 0] for i in range(test_measurements)])
 
     gradient_estimate = estimate_gradient(test_perturbation, test_precision,
                                           n_measurements=test_measurements,
-                                          cxn=cxn)
+                                          qc=qc)
 
     assert(np.isclose(gradient_estimate, test_perturbation))

@@ -1,14 +1,15 @@
+from typing import Union
+
 import numpy as np
 
 
-def binary_to_real(number):
-    """Convert binary fraction to real decimal
-
-    :param string number: String representation of binary fraction.
-    :return: Real decimal representation of binary fraction.
-    :rtype: float
+def binary_float_to_decimal_float(number: Union[float, str]) -> float:
     """
+    Convert binary floating point to decimal floating point.
 
+    :param number: Binary floating point.
+    :return: Decimal floating point representation of binary floating point.
+    """
     if isinstance(number, str):
         if number[0] == '-':
             n_sign = -1
@@ -26,16 +27,20 @@ def binary_to_real(number):
     return deci
 
 
-def measurements_to_bf(measurements):
-    """Convert measurements into gradient binary fraction
-
-    :param list measurements: Output measurements of gradient program.
-    :return: Binary fraction representation of gradient estimate.
-    :rtype: float
+def measurements_to_bf(measurements: np.ndarray) -> float:
     """
+    Convert measurements into gradient binary fraction.
 
-    measurements = np.array(measurements)
-    stats = measurements.sum(axis=0) / len(measurements)
+    :param measurements: Output measurements of gradient program.
+    :return: Binary fraction representation of gradient estimate.
+    """
+    try:
+        measurements.sum(axis=0)
+    except AttributeError:
+        measurements = np.asarray(measurements)
+    finally:
+        stats = measurements.sum(axis=0) / len(measurements)
+
     stats_str = [str(int(i)) for i in np.round(stats[::-1][1:])]
     bf_str = '0.' + ''.join(stats_str)
     bf = float(bf_str)
