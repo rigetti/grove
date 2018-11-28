@@ -181,7 +181,8 @@ class BernsteinVazirani(object):
         full_circuit = Program()
         full_ro = full_circuit.declare('ro', 'BIT', len(self.computational_qubits) + 1)
         full_circuit += self.bv_circuit
-        full_circuit += [MEASURE(i, full_ro[i]) for i in range(len(self.computational_qubits))]
+        full_circuit += [MEASURE(qubit, ro) for qubit, ro in zip(self.computational_qubits,
+                                                                 full_ro)]
         full_circuit.wrap_in_numshots_loop(1)
         full_executable = qc.compiler.native_quil_to_executable(full_circuit)
         full_results = qc.run(full_executable)

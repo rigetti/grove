@@ -16,9 +16,12 @@
 """
 Module for the Deutsch-Jozsa Algorithm.
 """
+from typing import Dict
+
 import numpy as np
-import pyquil.quil as pq
-from pyquil.gates import X, H, CNOT
+from pyquil import Program
+from pyquil.api import QuantumComputer
+from pyquil.gates import X, H, CNOT, MEASURE
 
 
 SWAP_MATRIX = np.array([[1, 0, 0, 0],
@@ -40,7 +43,7 @@ class DeutschJosza(object):
         self.computational_qubits = None
         self.deutsch_jozsa_circuit = None
 
-    def is_constant(self, cxn, bitstring_map):
+    def is_constant(self, qc: QuantumComputer, bitstring_map: Dict[str, str]) -> bool:
         """Computes whether bitstring_map represents a constant function, given that it is constant
          or balanced. Constant means all inputs map to the same value, balanced means half of the
          inputs maps to one value, and half to the other.
@@ -53,13 +56,20 @@ class DeutschJosza(object):
         :rtype: bool
         """
         self._init_attr(bitstring_map)
-        returned_bitstring = cxn.run_and_measure(self.deutsch_jozsa_circuit, self.computational_qubits)
+
+        prog = Program()
+        dj_ro = prog.declare('ro', 'BIT', len(self.computational_qubits))
+        prog += self.deutsch_jozsa_circuit
+        prog += [MEASURE(qubit, ro) for qubit, ro in zip(self.computational_qubits, dj_ro)]
+        prog.wrap_in_numshots_loop(1)
+        executable = qc.compiler.native_quil_to_executable(prog)
+        returned_bitstring = qc.run(executable)
         # We are only running a single shot, so we are only interested in the first element.
         bitstring = np.array(returned_bitstring, dtype=int)
         constant = all([bit == 0 for bit in bitstring])
         return constant
 
-    def _init_attr(self, bitstring_map):
+    def _init_attr(self, bitstring_map: Dict[str, str]):
         """
         Acts instead of __init__ method to instantiate the necessary Deutsch-Jozsa state.
 
@@ -87,7 +97,7 @@ class DeutschJosza(object):
         :return: A program corresponding to the desired instance of Deutsch Jozsa's Algorithm.
         :rtype: Program
         """
-        dj_prog = pq.Program()
+        dj_prog = Program()
 
         # Put the first ancilla qubit (query qubit) into minus state
         dj_prog.inst(X(self.ancillas[0]), H(self.ancillas[0]))
@@ -96,7 +106,7 @@ class DeutschJosza(object):
         dj_prog.inst([H(qubit) for qubit in self.computational_qubits])
 
         # Build the oracle
-        oracle_prog = pq.Program()
+        oracle_prog = Program()
         oracle_prog.defgate(ORACLE_GATE_NAME, self.unitary_matrix)
 
         scratch_bit = self.ancillas[1]
@@ -112,10 +122,9 @@ class DeutschJosza(object):
         return dj_prog
 
     @staticmethod
-    def unitary_function(mappings):
+    def unitary_function(mappings: Dict[str, str]) -> np.ndarray:
         """
-        Creates a unitary transformation that maps each state to the values specified
-        in mappings.
+        Creates a unitary transformation that maps each state to the values specified in mappings.
 
         Some (but not all) of these transformations involve a scratch qubit, so room for one is
         always provided. That is, if given the mapping of n qubits, the calculated transformation
@@ -126,9 +135,7 @@ class DeutschJosza(object):
 
             >>> {'00': '0', '01': '1', '10': '1', '11': '0'}
 
-        :type mappings: Dict[String, Int]
         :return: ndarray representing specified unitary transformation.
-        :rtype: np.ndarray
         """
         num_qubits = int(np.log2(len(mappings)))
         bitsum = sum([int(bit) for bit in mappings.values()])
