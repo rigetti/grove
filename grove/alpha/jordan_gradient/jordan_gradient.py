@@ -34,7 +34,7 @@ def estimate_gradient(f_h: float, precision: int,
 
     :param f_h: Oracle output at perturbation h.
     :param precision: Bit precision of gradient.
-    :param gradient_max: OOM estimate of largest gradient value
+    :param gradient_max: OOM estimate of largest gradient value.
     :param n_measurements: Number of times to measure system.
     :param qc: The QuantumComputer object.
     :return: Decimal estimate of gradient.
@@ -49,7 +49,7 @@ def estimate_gradient(f_h: float, precision: int,
 
     # run gradient program
     if qc is None:
-        qc = get_qc("9q-square-qvm")
+        qc = get_qc(f"{len(p_gradient.get_qubits())}q-qvm")
 
     p_gradient.wrap_in_numshots_loop(n_measurements)
     executable = qc.compiler.native_quil_to_executable(p_gradient)

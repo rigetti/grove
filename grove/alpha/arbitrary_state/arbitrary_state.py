@@ -291,7 +291,7 @@ def create_arbitrary_state(vector, qubits=None):
 
 if __name__ == "__main__":
     print("Example list: -3.2+1j, -7, -0.293j, 1, 0, 0")
-    v = input("Input a comma separated list of complex numbers:\n")
+    v = input("Input a comma-separated list of complex and/or floating point numbers:\n")
     try:
         v = int(v)
         v = [v]
