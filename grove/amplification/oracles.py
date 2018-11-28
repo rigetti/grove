@@ -13,18 +13,21 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-"""Module containing implementations of oracle Programs.
 """
+Module containing implementations of oracle Programs.
+"""
+from typing import List
 
 import numpy as np
-import pyquil.quil as pq
-from pyquil.gates import X, Z, CNOT
+from pyquil import Program
+from pyquil.gates import X, Z
 
 from grove.utils.utility_programs import ControlledProgramBuilder
 
 
-def basis_selector_oracle(qubits, bitstring):
-    """Defines an oracle that selects the ith element of the computational basis.
+def basis_selector_oracle(qubits: List[int], bitstring: str) -> Program:
+    """
+    Defines an oracle that selects the ith element of the computational basis.
 
     Flips the sign of the state :math:`\\vert x\\rangle>`
     if and only if x==bitstring and does nothing otherwise.
@@ -33,18 +36,17 @@ def basis_selector_oracle(qubits, bitstring):
      most significant qubit to least significant qubit.
     :param bitstring: The desired bitstring, given as a string of ones and zeros. e.g. "101"
     :return: A program representing this oracle.
-    :rtype: Program
     """
     if len(qubits) != len(bitstring):
         raise ValueError("The bitstring should be the same length as the number of qubits.")
-    oracle_prog = pq.Program()
+    oracle_prog = Program()
 
     # In the case of one qubit, we just want to flip the phase of state relative to the other.
     if len(bitstring) == 1:
         oracle_prog.inst(Z(qubits[0]))
         return oracle_prog
     else:
-        bitflip_prog = pq.Program()
+        bitflip_prog = Program()
         for i, qubit in enumerate(qubits):
             if bitstring[i] == '0':
                 bitflip_prog.inst(X(qubit))

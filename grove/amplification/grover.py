@@ -106,7 +106,7 @@ class Grover(object):
         executable = qc.compiler.native_quil_to_executable(self.grover_circuit)
         sampled_bitstring = qc.run(executable)
 
-        return "".join([str(bit) for bit in sampled_bitstring])
+        return "".join([str(bit) for bit in sampled_bitstring[0]])
 
     @staticmethod
     def oracle_grover(oracle: Program, qubits: List[int], num_iter: int = None) -> Program:
