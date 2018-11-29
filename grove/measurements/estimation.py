@@ -1,14 +1,16 @@
 """
 Utilities for estimating expected values of Pauli terms given pyquil programs
 """
-from collections import namedtuple
 import copy
+from collections import namedtuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
-from pyquil.paulis import (PauliSum, PauliTerm, commuting_sets, sI,
-                           term_with_coeff, is_identity, is_zero)
-from pyquil.quil import Program
+from pyquil import Program
+from pyquil.api import QuantumComputer
 from pyquil.gates import RY, RX, MEASURE
+from pyquil.paulis import PauliSum, PauliTerm, commuting_sets, sI, term_with_coeff, is_identity
+
 from grove.measurements.term_grouping import commuting_sets_by_zbasis
 
 
@@ -16,13 +18,12 @@ class CommutationError(Exception):
     pass
 
 
-def remove_imaginary_terms(pauli_sums):
+def remove_imaginary_terms(pauli_sums: PauliSum) -> PauliSum:
     """
-    Remove the imaginary component of each term in a Pauli sum
+    Remove the imaginary component of each term in a Pauli sum.
 
-    :param PauliSum pauli_sums: The Pauli sum to process.
-    :return: a purely hermitian Pauli sum.
-    :rtype: PauliSum
+    :param pauli_sums: The Pauli sum to process.
+    :return: a purely Hermitian Pauli sum.
     """
     if not isinstance(pauli_sums, PauliSum):
         raise TypeError("not a pauli sum. please give me one")
@@ -33,14 +34,12 @@ def remove_imaginary_terms(pauli_sums):
     return new_term
 
 
-def get_rotation_program(pauli_term):
+def get_rotation_program(pauli_term: PauliTerm) -> Program:
     """
-    Generate a rotation program so that the pauli term is diagonal
+    Generate a rotation program so that the pauli term is diagonal.
 
-    :param PauliTerm pauli_term: The Pauli term used to generate diagonalizing
-                                 one-qubit rotations.
+    :param pauli_term: The Pauli term used to generate diagonalizing one-qubit rotations.
     :return: The rotation program.
-    :rtype: Program
     """
     meas_basis_change = Program()
     for index, gate in pauli_term:
@@ -56,12 +55,12 @@ def get_rotation_program(pauli_term):
     return meas_basis_change
 
 
-def get_parity(pauli_terms, bitstring_results):
+def get_parity(pauli_terms: List[PauliTerm], bitstring_results: List[np.ndarray]) -> np.ndarray:
     """
-    Calculate the eigenvalues of Pauli operators given results of projective measurements
+    Calculate the eigenvalues of Pauli operators given results of projective measurements.
 
-    The single-qubit projective measurement results (elements of
-    `bitstring_results`) are listed in physical-qubit-label numerical order.
+    The single-qubit projective measurement results (elements of `bitstring_results`) are listed in
+    physical-qubit-label numerical order.
 
     An example:
 
@@ -72,12 +71,11 @@ def get_parity(pauli_terms, bitstring_results):
     are the two projective measurement results in `bitstring_results` then
     this method returns a 1 x 2 numpy array with values [[-1, 1]]
 
-    :param List pauli_terms: A list of Pauli terms operators to use
-    :param bitstring_results: A list of projective measurement results.  Each
-                              element is a list of single-qubit measurements.
-    :return: Array (m x n) of {+1, -1} eigenvalues for the m-operators in
-             `pauli_terms` associated with the n measurement results.
-    :rtype: np.ndarray
+    :param pauli_terms: A list of Pauli terms operators to use
+    :param bitstring_results: A list of projective measurement results.  Each element is a list of
+        single-qubit measurements.
+    :return: Array (m x n) of {+1, -1} eigenvalues for the m-operators in `pauli_terms` associated
+        with the n measurement results.
     """
     qubit_set = []
     for term in pauli_terms:
@@ -105,11 +103,14 @@ EstimationResult = namedtuple('EstimationResult',
                                'covariance', 'variance', 'n_shots'))
 
 
-def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
-                       variance_bound, quantum_resource,
-                       commutation_check=True):
+def estimate_pauli_sum(pauli_terms: List[PauliTerm],
+                       basis_transform_dict: Dict[int, str],
+                       program: Program,
+                       variance_bound: float,
+                       quantum_resource: QuantumComputer,
+                       commutation_check: bool = True) -> EstimationResult:
     """
-    Estimate the mean of a sum of pauli terms to set variance
+    Estimate the mean of a sum of pauli terms to set variance.
 
     The sample variance is calculated by
 
@@ -135,16 +136,15 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
                             PauliSum. Remember this is the SQUARE of the
                             standard error!
     :param quantum_resource: quantum abstract machine object
-    :param Bool commutation_check: Optional flag toggling a safety check
-                                   ensuring all terms in `pauli_terms`
-                                   commute with each other
+    :param commutation_check: Optional flag toggling a safety check
+                              ensuring all terms in `pauli_terms`
+                              commute with each other
     :return: estimated expected value, expected value of each Pauli term in
              the sum, covariance matrix, variance of the estimator, and the
              number of shots taken.  The objected returned is a named tuple with
              field names as follows: expected_value, pauli_expectations,
              covariance, variance, n_shots.
              `expected_value' == coef_vec.dot(pauli_expectations)
-    :rtype: EstimationResult
     """
     if not isinstance(pauli_terms, (list, PauliSum)):
         raise TypeError("pauli_terms needs to be a list or a PauliSum")
@@ -177,7 +177,11 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
     number_of_samples = 0
     while (sample_variance > variance_bound and
            number_of_samples < num_sample_ubound):
-        tresults = quantum_resource.run(program, qubits, trials=min(10000, num_sample_ubound))
+        ro = program.declare('ro', 'BIT', len(qubits))
+        program += [MEASURE(qubit, ro_reg) for qubit, ro_reg in zip(qubits, ro)]
+        program.wrap_in_numshots_loop(min(10000, num_sample_ubound))
+        executable = quantum_resource.compiler.native_quil_to_executable(program)
+        tresults = quantum_resource.run(executable)
         number_of_samples += len(tresults)
 
         parity_results = get_parity(pauli_terms, tresults)
@@ -194,18 +198,20 @@ def estimate_pauli_sum(pauli_terms, basis_transform_dict, program,
         sample_variance = coeff_vec.T.dot(covariance_mat).dot(coeff_vec) / results.shape[1]
 
     return EstimationResult(expected_value=coeff_vec.T.dot(np.mean(results, axis=1)),
-                            pauli_expectations=np.multiply(coeff_vec.flatten(), np.mean(results, axis=1).flatten()),
+                            pauli_expectations=np.multiply(coeff_vec.flatten(),
+                                                           np.mean(results, axis=1).flatten()),
                             covariance=covariance_mat,
                             variance=sample_variance,
                             n_shots=results.shape[1])
 
 
-def remove_identity(psum):
+def remove_identity(psum: PauliSum) -> Tuple[Union[PauliSum, PauliTerm],
+                                             Union[float, PauliSum, PauliTerm]]:
     """
-    Remove the identity term from a Pauli sum
+    Remove the identity term from a Pauli sum.
 
-    :param psum:
-    :return:
+    :param psum: The PauliSum to process.
+    :return: The sums of the non-identity and identity PauliSums.
     """
     new_psum = []
     identity_terms = []
@@ -217,17 +223,20 @@ def remove_identity(psum):
     return sum(new_psum), sum(identity_terms)
 
 
-def estimate_locally_commuting_operator(program, pauli_sum,
-                                                 variance_bound,
-                                                 quantum_resource):
+def estimate_locally_commuting_operator(program: Program,
+                                        pauli_sum: PauliSum,
+                                        variance_bound: float,
+                                        quantum_resource: QuantumComputer) -> Tuple[float,
+                                                                                    float,
+                                                                                    int]:
     """
-    Estimate the expected value of a Pauli sum to fixed precision
+    Estimate the expected value of a Pauli sum to fixed precision.
 
-    :param program: state preparation program
-    :param pauli_sum: pauli sum of operators to estimate expected value
-    :param variance_bound: variance bound on the estimator
-    :param quantum_resource: quantum abstract machine object
-    :return: expected value, estimator variance, total number of experiments
+    :param program: The state preparation program.
+    :param pauli_sum: The pauli sum of operators to estimate expected value.
+    :param variance_bound: The variance bound on the estimator.
+    :param quantum_resource: The QuantumComputer object to address.
+    :return: expected value, estimator variance, total number of experiments.
     """
     pauli_sum, identity_term = remove_identity(pauli_sum)
     psets = commuting_sets_by_zbasis(pauli_sum)
