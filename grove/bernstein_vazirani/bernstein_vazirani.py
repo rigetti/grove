@@ -183,8 +183,7 @@ class BernsteinVazirani(object):
         full_circuit += self.bv_circuit
         full_circuit += [MEASURE(qubit, ro) for qubit, ro in zip(self.computational_qubits,
                                                                  full_ro)]
-        full_circuit.wrap_in_numshots_loop(1)
-        full_executable = qc.compiler.native_quil_to_executable(full_circuit)
+        full_executable = qc.compile(full_circuit)
         full_results = qc.run(full_executable)
         bv_vector = full_results[0][::-1]
 
@@ -193,8 +192,7 @@ class BernsteinVazirani(object):
         ancilla_ro = ancilla_circuit.declare('ro', 'BIT', len(self.computational_qubits) + 1)
         ancilla_circuit += self.bv_circuit
         ancilla_circuit += [MEASURE(self.ancilla, ancilla_ro[self.ancilla])]
-        ancilla_circuit.wrap_in_numshots_loop(1)
-        ancilla_executable = qc.compiler.native_quil_to_executable(ancilla_circuit)
+        ancilla_executable = qc.compile(ancilla_circuit)
         ancilla_results = qc.run(ancilla_executable)
         bv_bias = ancilla_results[0][0]
 

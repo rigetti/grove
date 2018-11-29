@@ -257,8 +257,7 @@ class Simon(object):
             simon_ro = prog.declare('ro', 'BIT', len(self.computational_qubits))
             prog += self.simon_circuit
             prog += [MEASURE(qubit, ro) for qubit, ro in zip(self.computational_qubits, simon_ro)]
-            prog.wrap_in_numshots_loop(1)
-            executable = qc.compiler.native_quil_to_executable(prog)
+            executable = qc.compile(prog)
             sampled_bit_string = np.array(qc.run(executable)[0], dtype=int)
 
             self._add_to_dict_of_indep_bit_vectors(sampled_bit_string)

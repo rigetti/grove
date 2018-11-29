@@ -102,8 +102,7 @@ class Grover(object):
 
         ro = self.grover_circuit.declare('ro', 'BIT', len(self.qubits))
         self.grover_circuit += [MEASURE(qubit, ro[idx]) for idx, qubit in enumerate(self.qubits)]
-        self.grover_circuit.wrap_in_numshots_loop(1)
-        executable = qc.compiler.native_quil_to_executable(self.grover_circuit)
+        executable = qc.compile(self.grover_circuit)
         sampled_bitstring = qc.run(executable)
 
         return "".join([str(bit) for bit in sampled_bitstring[0]])
