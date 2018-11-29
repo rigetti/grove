@@ -263,11 +263,11 @@ class VQE(object):
                             elif gate == 'Y':
                                 meas_basis_change.inst(RX(np.pi / 2, index))
 
-                            meas_outcome = \
-                                expectation_from_sampling(pyquil_prog + meas_basis_change,
-                                                          qubits_to_measure,
-                                                          qvm,
-                                                          samples)
+                        meas_outcome = \
+                            expectation_from_sampling(pyquil_prog + meas_basis_change,
+                                                      qubits_to_measure,
+                                                      qvm,
+                                                      samples)
 
                     expectation += term.coefficient * meas_outcome
 
