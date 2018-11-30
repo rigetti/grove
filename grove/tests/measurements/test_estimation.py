@@ -1,14 +1,15 @@
 """
 Tests for the estimation module
 """
-import pytest
-from mock import Mock
 import numpy as np
-from scipy.stats import bernoulli
-from pyquil.paulis import sX, sY, sZ, sI, PauliSum, is_zero
-from pyquil.quil import Program
+import pytest
+from mock import Mock, patch
+from pyquil import Program
+from pyquil.api import QuantumComputer
 from pyquil.gates import RY, RX, I
-from pyquil.api import QVMConnection
+from pyquil.paulis import sX, sY, sZ, sI, PauliSum
+from scipy.stats import bernoulli
+
 from grove.measurements.estimation import (remove_imaginary_terms,
                                            get_rotation_program,
                                            get_parity,
@@ -91,7 +92,7 @@ def test_estimate_pauli_sum():
     """
     Full test of the estimation procedures
     """
-    quantum_resource = QVMConnection()
+    quantum_resource = Mock(QuantumComputer)
 
     # type checks
     with pytest.raises(TypeError):
@@ -114,12 +115,17 @@ def test_estimate_pauli_sum():
     two_qubit_measurements = list(zip(brv1.rvs(size=n), brv2.rvs(size=n)))
     pauli_terms = [sZ(0), sZ(1), sZ(0) * sZ(1)]
 
-    fakeQVM = Mock(spec=QVMConnection())
-    fakeQVM.run = Mock(return_value=two_qubit_measurements)
-    mean, means, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
-                                                         {0: 'Z', 1: 'Z'},
-                                                         Program(),
-                                                         1.0E-1, fakeQVM)
+    with patch("pyquil.api.QuantumComputer") as qc:
+        # Mock the response
+        qc.run.return_value = two_qubit_measurements
+
+    mean, means, cov, estimator_var, shots = \
+        estimate_pauli_sum(pauli_terms,
+                           basis_transform_dict={0: 'Z', 1: 'Z'},
+                           program=Program(),
+                           variance_bound=1.0E-1,
+                           quantum_resource=qc)
+
     parity_results = np.zeros((len(pauli_terms), n))
     parity_results[0, :] = [-2 * x[0] + 1 for x in two_qubit_measurements]
     parity_results[1, :] = [-2 * x[1] + 1 for x in two_qubit_measurements]
@@ -135,11 +141,12 @@ def test_estimate_pauli_sum():
 
     # Double the shots by ever so slightly decreasing variance bound
     double_two_q_measurements = two_qubit_measurements + two_qubit_measurements
-    mean, means, cov, estimator_var, shots = estimate_pauli_sum(pauli_terms,
-                                                         {0: 'Z', 1: 'Z'},
-                                                         Program(),
-                                                         variance_to_beat - \
-                                                         1.0E-8, fakeQVM)
+    mean, means, cov, estimator_var, shots = \
+        estimate_pauli_sum(pauli_terms,
+                           basis_transform_dict={0: 'Z', 1: 'Z'},
+                           program=Program(),
+                           variance_bound=variance_to_beat - 1.0E-8,
+                           quantum_resource=qc)
 
     parity_results = np.zeros((len(pauli_terms), 2 * n))
     parity_results[0, :] = [-2 * x[0] + 1 for x in double_two_q_measurements]
@@ -166,7 +173,7 @@ def test_identity_removal():
 
 def test_mutation_free_estimation():
     """
-    Make sure the estimation routines do not mutate the programs the user sends
+    Make sure the estimation routines do not mutate the programs the user sends.
 
     This is accomplished by a deep copy in `estimate_pauli_sum'.
     """
@@ -174,13 +181,14 @@ def test_mutation_free_estimation():
     pauli_sum = sX(0)  # measure in the X-basis
 
     # set up fake QVM
-    fakeQVM = Mock(spec=QVMConnection())
-    fakeQVM.run = Mock(return_value=[[0], [1]])
+    with patch("pyquil.api.QuantumComputer") as qc:
+        # Mock the response
+        qc.run.return_value = [[0], [1]]
 
-    expected_value, estimator_variance, total_shots = \
-        estimate_locally_commuting_operator(prog, PauliSum([pauli_sum]),
-                                            1.0E-3, quantum_resource=fakeQVM)
+    _, _, _ = estimate_locally_commuting_operator(prog,
+                                                  pauli_sum=PauliSum([pauli_sum]),
+                                                  variance_bound=1.0E-3,
+                                                  quantum_resource=qc)
 
-    # make sure RY(-pi/2) 0\nMEASURE 0 [0] was not added to the program the
-    # user sees
+    # make sure RY(-pi/2) 0\nMEASURE 0 [0] was not added to the program the user sees
     assert prog.out() == 'I 0\n'

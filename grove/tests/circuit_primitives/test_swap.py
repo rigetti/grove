@@ -56,9 +56,11 @@ def test_run_swap():
     expected_bitstring = [1, 1, 1, 0, 0, 0, 0, 0, 0]
     prog_a = Program().inst(H(0))
     prog_b = Program().inst(H(1))
-    with patch("pyquil.api.QVMConnection") as qvm:
-        qvm.run.return_value = expected_bitstring
-        test_overlap = run_swap_test(prog_a, prog_b, 5, qvm)
+    with patch("pyquil.api.QuantumComputer") as qc:
+        qc.run.return_value = expected_bitstring
+        test_overlap = run_swap_test(prog_a, prog_b,
+                                     number_of_measurements=5,
+                                     quantum_resource=qc)
 
         assert np.isclose(np.sqrt(1 - 2 * np.mean(expected_bitstring)),
                           test_overlap)
@@ -66,8 +68,10 @@ def test_run_swap():
     expected_bitstring = [1, 1, 1, 0, 1]
     prog_a = Program().inst(H(0))
     prog_b = Program().inst(H(1))
-    with patch("pyquil.api.QVMConnection") as qvm:
-        qvm.run.return_value = expected_bitstring
+    with patch("pyquil.api.QuantumComputer") as qc:
+        qc.run.return_value = expected_bitstring
         with pytest.raises(ValueError):
-            test_overlap = run_swap_test(prog_a, prog_b, 5, qvm)
+            test_overlap = run_swap_test(prog_a, prog_b,
+                                         number_of_measurements=5,
+                                         quantum_resource=qc)
 

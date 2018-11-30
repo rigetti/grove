@@ -34,15 +34,15 @@ def test_bv_class_with_bitmap():
         '111': '1'
     }
 
-    with patch("pyquil.api.QVMConnection") as qvm:
+    with patch("pyquil.api.QuantumComputer") as qc:
         # Need to mock multiple returns as an iterable
-        qvm.run_and_measure.side_effect = [
+        qc.run.side_effect = [
             ([0, 1, 1], ),
             ([1], )
         ]
 
     bv = BernsteinVazirani()
-    bv.run(qvm, bit_map).check_solution()
+    bv.run(qc, bit_map).check_solution()
     bv_a, bv_b = bv.solution
     assert bv_a == '110'
     assert bv_b == '1'
@@ -54,15 +54,15 @@ def test_bv_class_with_check_results():
 
     bit_map = create_bv_bitmap(a, b)
 
-    with patch("pyquil.api.QVMConnection") as qvm:
+    with patch("pyquil.api.QuantumComputer") as qc:
         # Need to mock multiple returns as an iterable
-        qvm.run_and_measure.side_effect = [
+        qc.run.side_effect = [
             ([1, 1, 0, 1], ),
             ([0], )
         ]
 
     bv = BernsteinVazirani()
-    bv.run(qvm, bit_map).check_solution()
+    bv.run(qc, bit_map).check_solution()
     bv_a, bv_b = bv.solution
     assert bv_a == a
     assert bv_b == b
@@ -74,15 +74,15 @@ def test_bv_class_with_return_solution():
 
     bit_map = create_bv_bitmap(a, b)
 
-    with patch("pyquil.api.QVMConnection") as qvm:
+    with patch("pyquil.api.QuantumComputer") as qc:
         # Need to mock multiple returns as an iterable
-        qvm.run_and_measure.side_effect = [
+        qc.run.side_effect = [
             ([1, 1, 0, 1], ),
             ([0], )
         ]
 
     bv = BernsteinVazirani()
-    bv_a, bv_b = bv.run(qvm, bit_map).get_solution()
+    bv_a, bv_b = bv.run(qc, bit_map).get_solution()
     assert bv_a == a
     assert bv_b == b
 
