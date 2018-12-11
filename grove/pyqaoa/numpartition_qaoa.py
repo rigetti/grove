@@ -15,18 +15,18 @@
 ##############################################################################
 
 import numpy as np
+from pyquil.api import get_qc
 from pyquil.paulis import PauliTerm, PauliSum
-import pyquil.api as api
 from scipy.optimize import minimize
+
 from grove.pyqaoa.qaoa import QAOA
-CXN = api.QVMConnection()
 
 
 def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
     """
     generate number partition driver and cost functions
 
-    :param asset_list: list to binary parition
+    :param asset_list: list to binary partition
     :param A: (float) optional constant for level separation. Default=1.
     :param minimizer_kwargs: Arguments for the QAOA minimizer
     :param steps: (int) number of steps approximating the solution.
@@ -47,10 +47,12 @@ def numpart_qaoa(asset_list, A=1.0, minimizer_kwargs=None, steps=1):
                                         'xtol': 1.0e-2,
                                         'disp': True}}
 
-    qaoa_inst = QAOA(CXN, len(asset_list), steps=steps, cost_ham=cost_operators,
+    qc = get_qc(f"{len(asset_list)}q-qvm")
+
+    qaoa_inst = QAOA(qc, list(range(len(asset_list))), steps=steps, cost_ham=cost_operators,
                      ref_ham=ref_operators, store_basis=True,
                      minimizer=minimize, minimizer_kwargs=minimizer_kwargs,
-                     vqe_options={'disp': True})
+                     vqe_options={'disp': print})
 
     return qaoa_inst
 
@@ -67,6 +69,5 @@ if __name__ == "__main__":
         print(state, prob)
 
     print("Most frequent bitstring from sampling")
-    most_freq_string, sampling_results = inst.get_string(
-            betas, gammas, samples=100)
+    most_freq_string, sampling_results = inst.get_string(betas, gammas, samples=100)
     print(most_freq_string)

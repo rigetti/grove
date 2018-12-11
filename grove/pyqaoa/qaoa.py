@@ -245,7 +245,7 @@ class QAOA(object):
         sampling_prog += [MEASURE(qubit, r) for qubit, r in zip(self.qubits, ro)]
         sampling_prog.wrap_in_numshots_loop(samples)
         executable = self.qc.compile(sampling_prog)
-        bitstring_samples = self.qc.run(sampling_prog)
+        bitstring_samples = self.qc.run(executable)
         bitstring_tuples = list(map(tuple, bitstring_samples))
         freq = Counter(bitstring_tuples)
         most_frequent_bit_string = max(freq, key=lambda x: freq[x])

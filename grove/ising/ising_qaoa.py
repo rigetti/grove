@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from pyquil import Program
-from pyquil.api import QuantumComputer
+from pyquil.api import QuantumComputer, get_qc
 from pyquil.paulis import PauliSum, PauliTerm
 from scipy.optimize import minimize
 
@@ -32,10 +32,6 @@ def energy_value(h: List[Union[int, float]],
     for i in range(len(h)):
         ener_ising += h[i] * int(sol[i])
     return ener_ising
-
-
-def print_fun(x: Any) -> None:
-    print(x)
 
 
 def ising_trans(x: int) -> int:
@@ -104,14 +100,15 @@ def ising(h: List[int], J: Dict[Tuple[int, int], int],
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
-        connection = QuantumComputer()
+        qubits = list(sum(J.keys(), ()))
+        connection = get_qc(f"{len(qubits)}q-qvm")
 
     if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',
                             'options': {'fatol': 1.0e-2, 'xatol': 1.0e-2,
                                         'disp': False}}
     if vqe_option is None:
-        vqe_option = {'disp': print_fun, 'return_all': True,
+        vqe_option = {'disp': print, 'return_all': True,
                       'samples': samples}
 
     if not verbose:
@@ -128,8 +125,7 @@ def ising(h: List[int], J: Dict[Tuple[int, int], int],
                      store_basis=True)
 
     betas, gammas = qaoa_inst.get_angles()
-    most_freq_string, sampling_results = qaoa_inst.get_string(
-        betas, gammas)
+    most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()

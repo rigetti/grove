@@ -20,6 +20,7 @@ import funcsigs
 import numpy as np
 from pyquil import Program
 from pyquil.api import QuantumComputer, WavefunctionSimulator
+from pyquil.api._qvm import QVM
 from pyquil.gates import RX, RY, MEASURE, STANDARD_GATES
 from pyquil.paulis import PauliTerm, PauliSum
 
@@ -128,8 +129,10 @@ class VQE(object):
                      models will be ineffective""")
 
         if qc is None:
-            qc = QuantumComputer(gate_noise=gate_noise,
-                                 measurement_noise=measurement_noise)
+            qubits = hamiltonian.get_qubits()
+            qc = QuantumComputer(name=f"{len(qubits)}q-noisy-qvm",
+                                 qam=QVM(gate_noise=gate_noise,
+                                         measurement_noise=measurement_noise))
         else:
             self.qc = qc
 
