@@ -13,25 +13,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
-
+import numpy as np
 import pytest
+import pyquil.api as qc_mod
+from mock import Mock, patch
+from pyquil import Program
+from pyquil.gates import H, X, PHASE, CNOT, RZ
+from pyquil.paulis import PauliTerm, PauliSum
+
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 from grove.pyqaoa.qaoa import QAOA
-from pyquil.quil import Program
-from pyquil.paulis import PauliTerm, PauliSum
-from pyquil.gates import H, X, PHASE, CNOT, RZ
-import numpy as np
-from mock import Mock, patch
-import pyquil.api as qvm_mod
 
 
 def test_pass_hamiltonians():
-    ref_ham = [PauliSum([PauliTerm("X", 0, -1.0)]), PauliSum([PauliTerm("X", 1,
-                                                              -1.0)])]
-    cost_ham = [PauliTerm("I", 0, 0.5) + PauliTerm("Z", 0, -0.5) *
-                PauliTerm("Z", 1, 1.0)]
-    fakeQVM = Mock()
-    inst = QAOA(fakeQVM, range(2), steps=1,
+    ref_ham = [PauliSum([PauliTerm("X", 0, -1.0)]), PauliSum([PauliTerm("X", 1, -1.0)])]
+    cost_ham = [PauliTerm("I", 0, 0.5) + PauliTerm("Z", 0, -0.5) * PauliTerm("Z", 1, 1.0)]
+    fake_qc = Mock()
+    inst = QAOA(fake_qc, list(range(2)), steps=1,
                 cost_ham=cost_ham, ref_ham=ref_ham)
 
     c = inst.cost_ham
@@ -44,7 +42,7 @@ def test_pass_hamiltonians():
     assert len(r) == 2
 
     with pytest.raises(TypeError):
-        QAOA(fakeQVM, 2, steps=1,
+        QAOA(fake_qc, 2, steps=1,
              cost_ham=PauliTerm("X", 0, 1.0), ref_ham=ref_ham,
              rand_seed=42)
 
@@ -66,22 +64,22 @@ def test_hamiltonians():
 def test_param_prog_p1_barbell():
     test_graph = [(0, 1)]
     p = 1
-    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qvm_mod):
+    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qc_mod):
         inst = maxcut_qaoa(test_graph, steps=p)
 
-        param_prog = inst.get_parameterized_program()
-        trial_prog = param_prog([1.2, 3.4])
-        result_prog = Program().inst([H(0), H(1), CNOT(0, 1), RZ(3.4, 1),
-                                     CNOT(0, 1), X(0), PHASE(1.7, 0), X(0),
-                                     PHASE(1.7, 0), H(0), RZ(-2.4, 0), H(0), H(1),
-                                     RZ(-2.4, 1), H(1)])
-        trial_prog == result_prog
+    param_prog = inst.get_parameterized_program()
+    trial_prog = param_prog([1.2, 3.4])
+    result_prog = Program().inst([H(0), H(1), CNOT(0, 1), RZ(3.4, 1),
+                                  CNOT(0, 1), X(0), PHASE(1.7, 0), X(0),
+                                  PHASE(1.7, 0), H(0), RZ(-2.4, 0), H(0), H(1),
+                                  RZ(-2.4, 1), H(1)])
+    assert trial_prog == result_prog
 
 
 def test_psiref_bar_p2():
     bar = [(0, 1)]
     p = 2
-    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qvm_mod):
+    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qc_mod):
         inst = maxcut_qaoa(bar, steps=p)
 
     param_prog = inst.get_parameterized_program()
