@@ -14,6 +14,10 @@ def test_energy_value():
 
 
 def test_ising_mock():
+    J = {(0, 1): -2, (2, 3): 3}
+    h = [1, 1, -1, 1]
+    p = 1
+
     with patch("pyquil.api.QuantumComputer") as qc, \
             patch("pyquil.api.WavefunctionSimulator") as wf:
         # Mock the response
@@ -25,13 +29,10 @@ def test_ising_mock():
                                        -0.9859245403423198,
                                        0.9333372094534065]
 
-    J = {(0, 1): -2, (2, 3): 3}
-    h = [1, 1, -1, 1]
-    p = 1
-    most_freq_string_ising, energy_ising, circuit = ising(h, J,
-                                                          num_steps=p,
-                                                          vqe_option=None,
-                                                          connection=qc)
+        most_freq_string_ising, energy_ising, circuit = ising(h, J,
+                                                              num_steps=p,
+                                                              vqe_option=None,
+                                                              connection=qc)
 
     assert most_freq_string_ising == [-1, -1, 1, -1]
     assert energy_ising == -9
