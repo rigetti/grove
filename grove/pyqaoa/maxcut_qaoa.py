@@ -19,7 +19,7 @@ Finding a maximum cut by QAOA.
 """
 import networkx as nx
 import numpy as np
-import pyquil.api as api
+from pyquil.api import get_qc
 from pyquil.paulis import PauliTerm, PauliSum
 from scipy.optimize import minimize
 
@@ -61,7 +61,7 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
-        connection = api.get_qc(f"{len(graph.nodes)}q-qvm")
+        connection = get_qc(f"{len(graph.nodes)}q-qvm")
 
     if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',

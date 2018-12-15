@@ -64,7 +64,7 @@ def test_hamiltonians():
 def test_param_prog_p1_barbell():
     test_graph = [(0, 1)]
     p = 1
-    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qc_mod):
+    with patch('pyquil.api.get_qc', spec=qc_mod):
         inst = maxcut_qaoa(test_graph, steps=p)
 
     param_prog = inst.get_parameterized_program()
@@ -79,7 +79,7 @@ def test_param_prog_p1_barbell():
 def test_psiref_bar_p2():
     bar = [(0, 1)]
     p = 2
-    with patch('grove.pyqaoa.maxcut_qaoa.api', spec=qc_mod):
+    with patch('pyquil.api.get_qc', spec=qc_mod):
         inst = maxcut_qaoa(bar, steps=p)
 
     param_prog = inst.get_parameterized_program()

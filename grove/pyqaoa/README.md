@@ -1,6 +1,6 @@
 # pyQAOA
 A Python implementation of the Quantum Approximate Optimization Algorithm (QAOA) using
-pyQuil and the Rigetti Forest SDK.
+pyQuil.
 
 ## Structure
 
@@ -35,7 +35,6 @@ from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 
 ```
 n_angles = 30
-n_qubits = 4
 steps = 2
 square_ring = [(0,1),(1,2),(2,3),(3,0)]
 

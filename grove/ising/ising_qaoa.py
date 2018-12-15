@@ -95,8 +95,6 @@ def ising(h: List[int], J: Dict[Tuple[int, int], int],
 
     for i in range(n_nodes):
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
-
-    for i in range(n_nodes):
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
