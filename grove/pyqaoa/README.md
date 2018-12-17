@@ -34,20 +34,18 @@ from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
 ```
 
 ```
-n_angles = 30
 steps = 2
 square_ring = [(0,1),(1,2),(2,3),(3,0)]
 
-betas = np.random.uniform(0, np.pi, n_angles); gammas = np.random.uniform(0, 2 * np.pi, n_angles)
 inst = maxcut_qaoa(square_ring, steps=steps)
-inst.get_angles()
+opt_betas, opt_gammas = inst.get_angles()
 ```
 
 To see the final |beta,gamma> state we can rebuild the quil program that gives
 us |beta,gamma> and evaluate the wavefunction.
 
 ```
-t = np.hstack((inst.betas, inst.gammas))
+t = np.hstack((opt_betas, opt_gammas))
 param_prog = inst.get_parameterized_program()
 prog = param_prog(t)
 wf = WavefunctionSimulator().wavefunction(prog)
