@@ -17,17 +17,13 @@
 """
 Finding a maximum cut by QAOA.
 """
-import numpy as np
-import pyquil.api as api
-from pyquil.paulis import PauliTerm, PauliSum
 import networkx as nx
+import numpy as np
+from pyquil.api import get_qc
+from pyquil.paulis import PauliTerm, PauliSum
 from scipy.optimize import minimize
+
 from grove.pyqaoa.qaoa import QAOA
-CXN = api.QVMConnection()
-
-
-def print_fun(x):
-    print(x)
 
 
 def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
@@ -65,14 +61,14 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
-        connection = CXN
+        connection = get_qc(f"{len(graph.nodes)}q-qvm")
 
     if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',
                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
                                         'disp': False}}
     if vqe_option is None:
-        vqe_option = {'disp': print_fun, 'return_all': True,
+        vqe_option = {'disp': print, 'return_all': True,
                       'samples': samples}
 
     qaoa_inst = QAOA(connection, list(graph.nodes()), steps=steps, cost_ham=cost_operators,
@@ -98,6 +94,5 @@ if __name__ == "__main__":
         print(state, prob)
 
     print("Most frequent bitstring from sampling")
-    most_freq_string, sampling_results = inst.get_string(
-            betas, gammas)
+    most_freq_string, sampling_results = inst.get_string(betas, gammas)
     print(most_freq_string)

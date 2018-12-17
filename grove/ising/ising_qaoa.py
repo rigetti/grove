@@ -1,26 +1,27 @@
-
 """
 Finding the minimum energy for an Ising problem by QAOA.
 """
-import pyquil.api as api
-from grove.pyqaoa.qaoa import QAOA
+from typing import Any, Dict, List, Tuple, Union
+
+import numpy as np
+from pyquil import Program
+from pyquil.api import QuantumComputer, get_qc
 from pyquil.paulis import PauliSum, PauliTerm
 from scipy.optimize import minimize
-import numpy as np
 
-CXN = api.QVMConnection()
+from grove.pyqaoa.qaoa import QAOA
 
 
-def energy_value(h, J, sol):
+def energy_value(h: List[Union[int, float]],
+                 J: Dict[Tuple[int, int], Union[int, float]],
+                 sol: List[int]) -> Union[int, float]:
     """
     Obtain energy of an Ising solution for a given Ising problem (h,J).
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
-    :param sol: Ising solution. List.
+    :param h: External magnetic term of the Ising problem.
+    :param J: Interaction term of the Ising problem.
+    :param sol: Ising solution.
     :return: Energy of the Ising string.
-    :rtype: Integer or float.
-
     """
     ener_ising = 0
     for elm in J.keys():
@@ -33,11 +34,7 @@ def energy_value(h, J, sol):
     return ener_ising
 
 
-def print_fun(x):
-    print(x)
-
-
-def ising_trans(x):
+def ising_trans(x: int) -> int:
     # Transformation to Ising notation
     if x == 1:
         return -1
@@ -45,14 +42,23 @@ def ising_trans(x):
         return 1
 
 
-def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samples=None,
-          initial_beta=None, initial_gamma=None, minimizer_kwargs=None,
-          vqe_option=None):
+def ising(h: List[int], J: Dict[Tuple[int, int], int],
+          num_steps: int = 0,
+          verbose: bool = True,
+          rand_seed: int = None,
+          connection: QuantumComputer = None,
+          samples: int = None,
+          initial_beta: List[float] = None,
+          initial_gamma: List[float] = None,
+          minimizer_kwargs: Dict[str, Any] = None,
+          vqe_option: Dict[str, Union[bool, int]] = None) -> Tuple[List[int],
+                                                                   Union[int, float],
+                                                                   Program]:
     """
     Ising set up method
 
-    :param h: External magnectic term of the Ising problem. List.
-    :param J: Interaction term of the Ising problem. Dictionary.
+    :param h: External magnetic term of the Ising problem.
+    :param J: Interaction term of the Ising problem.
     :param num_steps: (Optional.Default=2 * len(h)) Trotterization order for the
                   QAOA algorithm.
     :param verbose: (Optional.Default=True) Verbosity of the code.
@@ -76,8 +82,6 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
                        vqe_option = {'disp': print_fun, 'return_all': True,
                        'samples': samples}
     :return: Most frequent Ising string, Energy of the Ising string, Circuit used to obtain result.
-    :rtype: List, Integer or float, 'pyquil.quil.Program'.
-
     """
     if num_steps == 0:
         num_steps = 2 * len(h)
@@ -91,36 +95,35 @@ def ising(h, J, num_steps=0, verbose=True, rand_seed=None, connection=None, samp
 
     for i in range(n_nodes):
         cost_operators.append(PauliSum([PauliTerm("Z", i, h[i])]))
-
-    for i in range(n_nodes):
         driver_operators.append(PauliSum([PauliTerm("X", i, -1.0)]))
 
     if connection is None:
-        connection = CXN
+        qubits = list(sum(J.keys(), ()))
+        connection = get_qc(f"{len(qubits)}q-qvm")
 
     if minimizer_kwargs is None:
         minimizer_kwargs = {'method': 'Nelder-Mead',
                             'options': {'fatol': 1.0e-2, 'xatol': 1.0e-2,
                                         'disp': False}}
     if vqe_option is None:
-        vqe_option = {'disp': print_fun, 'return_all': True,
+        vqe_option = {'disp': print, 'return_all': True,
                       'samples': samples}
 
     if not verbose:
         vqe_option['disp'] = None
 
-    qaoa_inst = QAOA(connection, range(n_nodes), steps=num_steps, cost_ham=cost_operators,
-                     ref_ham=driver_operators, store_basis=True,
-                     rand_seed=rand_seed,
-                     init_betas=initial_beta,
-                     init_gammas=initial_gamma,
+    qaoa_inst = QAOA(connection, list(range(n_nodes)),
+                     steps=num_steps,
+                     init_betas=initial_beta, init_gammas=initial_gamma,
+                     cost_ham=cost_operators, ref_ham=driver_operators,
                      minimizer=minimize,
                      minimizer_kwargs=minimizer_kwargs,
-                     vqe_options=vqe_option)
+                     rand_seed=rand_seed,
+                     vqe_options=vqe_option,
+                     store_basis=True)
 
     betas, gammas = qaoa_inst.get_angles()
-    most_freq_string, sampling_results = qaoa_inst.get_string(
-        betas, gammas)
+    most_freq_string, sampling_results = qaoa_inst.get_string(betas, gammas)
     most_freq_string_ising = [ising_trans(it) for it in most_freq_string]
     energy_ising = energy_value(h, J, most_freq_string_ising)
     param_prog = qaoa_inst.get_parameterized_program()

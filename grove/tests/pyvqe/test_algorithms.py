@@ -13,24 +13,29 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 ##############################################################################
+from collections import OrderedDict
 
-from grove.pyvqe.vqe import VQE, parity_even_p
-from pyquil.quil import Program
-from pyquil.wavefunction import Wavefunction
-from pyquil.gates import RX, H, RZ
-from pyquil.paulis import PauliSum, PauliTerm
-from mock import Mock, MagicMock, patch
+import funcsigs
 import numpy as np
+import pytest
+from mock import Mock, MagicMock, patch
+from pyquil import Program
+from pyquil.api import WavefunctionSimulator
+from pyquil.gates import H, RX, RZ
+from pyquil.paulis import PauliSum, PauliTerm
+from pyquil.wavefunction import Wavefunction
 from scipy.linalg import expm
 from scipy.optimize import minimize
-import funcsigs
-from collections import OrderedDict
-import pytest
+
+from grove.pyvqe.vqe import VQE, parity_even_p
 
 
 def test_vqe_run():
-    """VQE initialized and then minimizer is called to return result. Checks
-    correct sequence of execution"""
+    """
+    VQE initialized and then minimizer is called to return result.
+
+    Checks correct sequence of execution.
+    """
     def param_prog(alpha):
         return Program([H(0), RZ(alpha)(0)])
 
@@ -69,13 +74,16 @@ def test_vqe_run():
         patch_signature.return_value = func_sigs_fake
         inst = VQE(minimizer)
 
-        t_result = inst.vqe_run(param_prog, hamiltonian, initial_param, qvm=fake_qvm)
+        t_result = inst.vqe_run(param_prog, hamiltonian, initial_param, qc=fake_qvm)
         assert np.isclose(t_result.fun, 1.0)
 
 
 def test_expectation():
-    """expectation() routine can take a PauliSum operator on a matrix.  Check
-    this functionality and the return of the correct scalar value"""
+    """
+    expectation() routine can take a PauliSum operator on a matrix.
+
+    Check this functionality and the return of the correct scalar value.
+    """
     X = np.array([[0, 1], [1, 0]])
 
     def RX_gate(phi):
@@ -93,24 +101,28 @@ def test_expectation():
     fake_result.fun = 1.0
     minimizer.return_value = fake_result
 
-    fake_qvm = Mock(spec=['wavefunction', 'expectation', 'run'])
-    fake_qvm.wavefunction.return_value = (Wavefunction(rotation_wavefunction(-2.5)))
-    fake_qvm.expectation.return_value = [0.28366219]
-    # for testing expectation
-    fake_qvm.run.return_value = [[0], [0]]
 
-    inst = VQE(minimizer)
-    energy = inst.expectation(prog, PauliSum([hamiltonian]), None, fake_qvm)
-    assert np.isclose(energy, 0.28366219)
+    with patch("pyquil.api.QuantumComputer") as fake_qc, \
+            patch("grove.pyvqe.vqe.WavefunctionSimulator") as mock_wfs:
+        fake_qc.run.return_value = [[0], [0]]
 
-    hamiltonian = np.array([[1, 0], [0, -1]])
-    energy = inst.expectation(prog, hamiltonian, None, fake_qvm)
-    assert np.isclose(energy, 0.28366219)
+        fake_wfs = Mock(WavefunctionSimulator)
+        fake_wfs.wavefunction.return_value = Wavefunction(rotation_wavefunction(-2.5))
+        fake_wfs.expectation.return_value = [0.28366219]
+        mock_wfs.return_value = fake_wfs
 
-    prog = Program(H(0))
-    hamiltonian = PauliSum([PauliTerm('X', 0)])
-    energy = inst.expectation(prog, hamiltonian, 2, fake_qvm)
-    assert np.isclose(energy, 1.0)
+        inst = VQE(minimizer)
+        energy = inst.expectation(prog, PauliSum([hamiltonian]), None, fake_qc)
+        assert np.isclose(energy, 0.28366219)
+
+        hamiltonian = np.array([[1, 0], [0, -1]])
+        energy = inst.expectation(prog, hamiltonian, None, fake_qc)
+        assert np.isclose(energy, 0.28366219)
+
+        prog = Program(H(0))
+        hamiltonian = PauliSum([PauliTerm('X', 0)])
+        energy = inst.expectation(prog, hamiltonian, 2, fake_qc)
+        assert np.isclose(energy, 1.0)
 
 
 def test_parity_even_p():

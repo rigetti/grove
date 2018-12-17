@@ -1,61 +1,64 @@
-# pyqaoa
-A python implementation of the Quantum Approximate Optimization Algorithm using
-pyQuil and the Rigetti Forest.
+# pyQAOA
+A Python implementation of the Quantum Approximate Optimization Algorithm (QAOA) using
+pyQuil.
 
 ## Structure
 
 `qaoa.py` contains the base QAOA class and routines for finding the optimal
-rotation angles via the variational-quantum-eigensolver method, state
-preparation methods, storing results, and utilities for probabilities and
-collecting bitstrings after a state preparation.
+rotation angles via the variational-quantum-eigensolver (VQE) method, preparing states,
+and storing results as well as utilities for probabilities and collecting bitstrings after a
+state preparation.
 
-`maxcut_qaoa.py` takes a graph defined with either NetworkX or a list of node
-pairs and implements the cost function for MAX-CUT problems.
+`maxcut_qaoa.py` takes a graph defined with either NetworkX or a list of edges expressed as tuples
+and implements the cost function for max-cut problems.
 
-`numberpartiition_qaoa.py` takes a list of numbers and set sup a QAOA instance
+`numberpartiition_qaoa.py` takes a list of numbers and sets up a QAOA instance
 for determining the equal biparitioning of the list.
 
 ## Run
  
-The simplest way to interact with the QAOA library is through the methods provided for each problem instance.  For example, to run max cut import `maxcut_qaoa` from `maxcut_qaoa.py` and pass graph to the script. 
+The simplest way to interact with the QAOA library is through the methods provided for
+each problem instance.  For example, to run max-cut import `maxcut_qaoa` from `maxcut_qaoa.py`
+and pass a graph to the script.
 This function will return a QAOA instance.  Calling `get_angles()` on the instance will
-start the variational-quantum-eigensolver loop in order to find  the beta, gamma angles.
+start the variational-quantum-eigensolver (VQE) loop in order to find the optimal beta and gamma
+angles.
 
-## Examples using qaoa
+## Examples using QAOA
 
 ```
 import numpy as np
+from pyquil.api import WavefunctionSimulator
+
 from grove.pyqaoa.maxcut_qaoa import maxcut_qaoa
-import pyquil.api as api
-qvm_connection = api.QVMConnection()
 ```
 
 ```
+steps = 2
 square_ring = [(0,1),(1,2),(2,3),(3,0)]
-steps = 2; n_qubits = 4
-betas = np.random.uniform(0, np.pi, p); gammas = np.random.uniform(0, 2*np.pi, p)
+
 inst = maxcut_qaoa(square_ring, steps=steps)
-inst.get_angles()
+opt_betas, opt_gammas = inst.get_angles()
 ```
 
-to see the final |beta,gamma> state we can rebuild the quil program that gives
-us |beta,gamma> and evaluate the wave function using the **qvm**
+To see the final |beta,gamma> state we can rebuild the quil program that gives
+us |beta,gamma> and evaluate the wavefunction.
 
 ```
-t = np.hstack((inst.betas, inst.gammas))
+t = np.hstack((opt_betas, opt_gammas))
 param_prog = inst.get_parameterized_program()
 prog = param_prog(t)
-wf = qvm_connection.wavefunction(prog)
+wf = WavefunctionSimulator().wavefunction(prog)
 wf = wf.amplitudes
 ```
 
 `wf` is now a numpy array of complex-valued amplitudes for each computational
-basis state.  To visualize the distribution iterate over the states and
+basis state.  To visualize the distribution, iterate over the states and
 calculate the probability.
 
 ```
-for state_index in range(2**inst.n_qubits):
-    print inst.states[state_index], np.conj(wf[state_index])*wf[state_index]
+for state_index in range(inst.nstates):
+    print(inst.states[state_index], np.conj(wf[state_index]) * wf[state_index])
 ```
 
 You should then see that the algorithm converges on the expected solutions of 0101 and 1010!
@@ -84,7 +87,7 @@ Dependencies
 
 * Numpy
 * Scipy
-* pyQuil
+* pyQuil >= 2.0.0
 * Mock (for development testing)
 * NetworkX (for building and analyzing graphs)
 * Matplotlib (useful for plotting)
@@ -98,4 +101,4 @@ make html
 ```
 
 To view the docs navigate to the `docs/_build` directory in the pyQAOA root
-directory and open the index.html file a browser. 
+directory and open the `index.html` file in a browser.
