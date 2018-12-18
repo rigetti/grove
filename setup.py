@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
-        'pyquil >= 1.6.1',
+        'pyquil >= 2.0.0',
         'funcsigs',
         'mock',
         'networkx',
