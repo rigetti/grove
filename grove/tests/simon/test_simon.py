@@ -3,7 +3,7 @@
 from os.path import abspath, dirname
 
 import numpy as np
-from mock import patch
+from unittest.mock import patch
 from pyquil import Program
 
 from grove.simon.simon import Simon, create_1to1_bitmap, create_valid_2to1_bitmap

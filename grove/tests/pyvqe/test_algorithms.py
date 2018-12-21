@@ -18,7 +18,7 @@ from collections import OrderedDict
 import funcsigs
 import numpy as np
 import pytest
-from mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch
 from pyquil import Program
 from pyquil.api import WavefunctionSimulator
 from pyquil.gates import H, RX, RZ

@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 from matplotlib.pyplot import figure
-from mock import Mock, patch, call
+from unittest.mock import Mock, patch, call
 from mpl_toolkits.mplot3d import Axes3D
 from pyquil.api import QuantumComputer
 from pyquil.gates import X, Y, I

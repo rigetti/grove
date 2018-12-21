@@ -3,7 +3,7 @@ Tests for the estimation module
 """
 import numpy as np
 import pytest
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from pyquil import Program
 from pyquil.api import QuantumComputer
 from pyquil.gates import RY, RX, I

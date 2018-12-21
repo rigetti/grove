@@ -3,7 +3,7 @@ Tests on the swap test in the circuit_primitives module
 """
 import numpy as np
 import pytest
-from mock import patch
+from unittest.mock import patch
 from pyquil import Program
 from pyquil.gates import CSWAP, H
 

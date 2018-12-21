@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from mock import patch
+from unittest.mock import patch
 from pyquil import Program
 from pyquil.gates import X, H, CNOT
 
