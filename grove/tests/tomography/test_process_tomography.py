@@ -17,8 +17,7 @@
 import pytest
 import os
 import numpy as np
-from mock import patch
-from mock import MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 import json
 
 from pyquil.api import Job, QVMConnection

@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 import pyquil.api as qc_mod
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from pyquil import Program
 from pyquil.gates import H, X, PHASE, CNOT, RZ
 from pyquil.paulis import PauliTerm, PauliSum

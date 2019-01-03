@@ -15,7 +15,7 @@
 ##############################################################################
 
 import numpy as np
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from pyquil import Program
 from pyquil.api import QuantumComputer, WavefunctionSimulator
 from pyquil.gates import X, Y, Z

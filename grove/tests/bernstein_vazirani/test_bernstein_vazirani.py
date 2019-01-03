@@ -1,5 +1,5 @@
 import numpy as np
-from mock import patch
+from unittest.mock import patch
 
 from grove.bernstein_vazirani.bernstein_vazirani import BernsteinVazirani, create_bv_bitmap
 

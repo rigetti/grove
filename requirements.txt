@@ -14,7 +14,6 @@ jupyter_contrib_nbextensions
 # test dependencies
 tox
 pytest >= 3.0.0
-mock
 pytest-cov
 codeclimate-test-reporter
 

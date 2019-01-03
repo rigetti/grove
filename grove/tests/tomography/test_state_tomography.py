@@ -20,8 +20,7 @@ import os
 import numpy as np
 import pytest
 
-from mock import MagicMock
-from mock import patch
+from unittest.mock import MagicMock, patch
 from pyquil.api import Job, QVMConnection
 
 from grove.tomography.operator_utils import make_diagonal_povm

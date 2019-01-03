@@ -50,7 +50,6 @@ setup(
     tests_require=[
         'tox',
         'pytest >= 3.0.0',
-        'mock'
     ],
     license='LICENSE',
     keywords='quantum quil programming hybrid'

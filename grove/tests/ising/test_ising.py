@@ -1,5 +1,5 @@
 import numpy as np
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from pyquil.api import WavefunctionSimulator
 
 from grove.ising.ising_qaoa import energy_value, ising
