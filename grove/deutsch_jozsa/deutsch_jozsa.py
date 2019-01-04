@@ -64,7 +64,7 @@ class DeutschJosza(object):
         executable = qc.compile(prog)
         returned_bitstring = qc.run(executable)
         # We are only running a single shot, so we are only interested in the first element.
-        bitstring = np.array(returned_bitstring, dtype=int)
+        bitstring = returned_bitstring[0]
         constant = all([bit == 0 for bit in bitstring])
         return constant
 
