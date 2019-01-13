@@ -4,7 +4,7 @@ Grove
 A collection of quantum algorithms built using the Rigetti Forest platform.
 Grove is licensed under the [Apache 2.0 license](https://github.com/rigetticomputing/grove/blob/master/LICENSE).
 
-[![Build Status](https://semaphoreci.com/api/v1/rigetti/grove/branches/master/badge.svg)](https://semaphoreci.com/rigetti/grove)
+[![pipeline status](https://gitlab.com/rigetti/grove/badges/master/pipeline.svg)](https://gitlab.com/rigetti/grove/commits/master)
 [![Documentation Status](https://readthedocs.org/projects/grove-docs/badge/)](http://grove-docs.readthedocs.io/en/latest/)
 
 Grove currently includes:
@@ -134,6 +134,6 @@ bibTeX:
 
 Text:
 ```
-R. Smith, M. J. Curtis and W. J. Zeng, "A Practical Quantum Instruction Set Architecture," (2015), 
+R. Smith, M. J. Curtis and W. J. Zeng, "A Practical Quantum Instruction Set Architecture," (2015),
   arXiv:1608.03355 [quant-ph], https://arxiv.org/abs/1608.03355
 ```
