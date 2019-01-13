@@ -1,0 +1,8 @@
+test:
+  tags:
+    - github
+  image: python:3.6
+  script:
+    - apt-get update && apt-get install -y libblas-dev liblapack-dev
+    - pip install tox
+    - tox
