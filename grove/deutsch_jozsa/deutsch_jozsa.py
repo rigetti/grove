@@ -65,8 +65,8 @@ class DeutschJosza(object):
         returned_bitstring = qc.run(executable)
         # We are only running a single shot, so we are only interested in the first element.
         bitstring = np.array(returned_bitstring, dtype=int)
-        constant = all([bit == 0 for bit in bitstring])
-        return constant
+        constant = np.array([bit == 0 for bit in bitstring])
+        return constant.all()
 
     def _init_attr(self, bitstring_map: Dict[str, str]):
         """
