@@ -226,10 +226,9 @@ class VQE(object):
 
             if samples is None:
                 result_overlaps = WavefunctionSimulator().expectation(pyquil_prog, pauli_sum.terms)
-                result_overlaps = list(result_overlaps)
-                assert len(result_overlaps) == len(pauli_sum),\
+                assert result_overlaps.size == len(pauli_sum),\
                     """Somehow we didn't get the correct number of results back from the QVM"""
-                expectation = sum(result_overlaps)
+                expectation = np.sum(result_overlaps)
                 return expectation.real
             else:
                 if not isinstance(samples, int):
