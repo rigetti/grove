@@ -225,21 +225,11 @@ class VQE(object):
                 pauli_sum = PauliSum([pauli_sum])
 
             if samples is None:
-                operator_progs = []
-                operator_coeffs = []
-                for p_term in pauli_sum.terms:
-                    op_prog = Program()
-                    for qindex, op in p_term:
-                        op_prog.inst(STANDARD_GATES[op](qindex))
-                    operator_progs.append(op_prog)
-                    operator_coeffs.append(p_term.coefficient)
-
                 result_overlaps = WavefunctionSimulator().expectation(pyquil_prog, pauli_sum.terms)
                 result_overlaps = list(result_overlaps)
-                assert len(result_overlaps) == len(operator_progs),\
+                assert len(result_overlaps) == len(pauli_sum),\
                     """Somehow we didn't get the correct number of results back from the QVM"""
-                expectation = sum(list(map(lambda x: x[0] * x[1],
-                                           zip(result_overlaps, operator_coeffs))))
+                expectation = sum(result_overlaps)
                 return expectation.real
             else:
                 if not isinstance(samples, int):
