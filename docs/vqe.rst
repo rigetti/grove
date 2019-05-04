@@ -20,7 +20,7 @@ The quantum subroutine has two fundamental steps:
 2. Measure the expectation value :math:`\langle\,\Psi(\vec{\theta})\,|\,H\,|\,\Psi(\vec{\theta})\,\rangle`.
 
 The `variational principle <https://en.wikipedia.org/wiki/Variational_method_(quantum_mechanics)>`_ ensures
-that this expectation value is always greater than the smallest eigenvalue of :math:`H`.
+that this expectation value is always greater than or equal to the smallest eigenvalue of :math:`H`, with equality if and only if :math:`\Psi` is exactly equal to the wave function of the ground state of the studied system.
 
 This bound allows us to use classical computation to run an optimization loop to find
 this eigenvalue:
