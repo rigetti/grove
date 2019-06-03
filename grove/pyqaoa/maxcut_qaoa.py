@@ -44,7 +44,7 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
     :param minimizer_kwargs: (Optional. Default=None). Minimizer optional arguments.  If None set to
         ``{'method': 'Nelder-Mead', 'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2, 'disp': False}``
     :param vqe_option: (Optional. Default=None). VQE optional arguments.  If None set to
-        ``vqe_option = {'disp': print_fun, 'return_all': True, 'samples': samples}``
+        ``vqe_option = {'disp': True, 'return_all': True, 'samples': samples}``
 
     """
     if not isinstance(graph, nx.Graph) and isinstance(graph, list):
@@ -68,7 +68,7 @@ def maxcut_qaoa(graph, steps=1, rand_seed=None, connection=None, samples=None,
                             'options': {'ftol': 1.0e-2, 'xtol': 1.0e-2,
                                         'disp': False}}
     if vqe_option is None:
-        vqe_option = {'disp': print, 'return_all': True,
+        vqe_option = {'disp': True, 'return_all': True,
                       'samples': samples}
 
     qaoa_inst = QAOA(connection, list(graph.nodes()), steps=steps, cost_ham=cost_operators,
