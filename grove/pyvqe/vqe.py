@@ -120,8 +120,7 @@ class VQE(object):
                                     returned if 'return_all=True' is set as a
                                     vqe_run() option.
         """
-        # self._disp_fun = disp if disp is not None else lambda x: None
-        self._disp_fun = lambda x: None if disp is not True else print
+        self._disp_fun = print if disp is True else lambda x: None
         iteration_params = []
         expectation_vals = []
         self._current_expectation = None
