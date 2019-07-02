@@ -31,7 +31,7 @@ this eigenvalue:
 
 Practically, the quantum subroutine of VQE amounts to preparing a state based off
 of a set of parameters :math:`\vec{\theta}` and performing a series of measurements
-in the appropriate basis. The paramaterized state (or ansatz) preparation can be tricky
+in the appropriate basis. The parameterized state (or ansatz) preparation can be tricky
 in these algorithms and can dramatically affect performance.  Our ``VQE`` module allows any
 Python function that returns a pyQuil program to be used as an ansatz generator.  This
 function is passed into ``vqe_run`` as the ``variational_state_evolve`` argument. More details
@@ -52,7 +52,7 @@ Basic Usage
 
 Here we will take you through an example of a very small variational
 quantum eigensolver problem. In this example we will use a quantum
-circuit that consists of a single parametrized gate to calculate an
+circuit that consists of a single parameterized gate to calculate an
 eigenvalue of the Pauli Z matrix.
 
 First we import the necessary pyQuil modules to construct our ansatz
