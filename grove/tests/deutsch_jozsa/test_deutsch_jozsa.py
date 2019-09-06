@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch
 from pyquil import Program
 from pyquil.gates import X, H, CNOT
+from pyquil.quilbase import Gate, Qubit
 
 from grove.deutsch_jozsa.deutsch_jozsa import DeutschJosza, ORACLE_GATE_NAME
 
@@ -52,25 +53,21 @@ def test_one_qubit_exact_zeros_circuit():
 
     # We've defined the oracle and its dagger.
     dj_circuit = dj.deutsch_jozsa_circuit
-    assert len(dj_circuit.defined_gates) == 2
+    assert len(dj_circuit.defined_gates) == 1
     defined_oracle = None
-    defined_oracle_inv = None
     for gate in dj_circuit.defined_gates:
         if gate.name == ORACLE_GATE_NAME:
             defined_oracle = gate
-        else:
-            defined_oracle_inv = gate
 
     assert defined_oracle is not None
-    assert defined_oracle_inv is not None
 
     expected_prog.defgate(defined_oracle.name, defined_oracle.matrix)
-    expected_prog.defgate(defined_oracle_inv.name, defined_oracle_inv.matrix)
     expected_prog.inst([X(1),
                         H(1),
                         H(0),
-                        (defined_oracle.name, 2, 0),
+                        Gate(defined_oracle.name, [], list(map(Qubit, [2, 0]))),
                         CNOT(0, 1),
-                        (defined_oracle_inv.name, 2, 0),
+                        Gate(defined_oracle.name, [], list(map(Qubit, [2, 0]))).dagger(),
                         H(0)])
+
     assert expected_prog.out() == dj.deutsch_jozsa_circuit.out()

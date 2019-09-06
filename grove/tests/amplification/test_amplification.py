@@ -56,7 +56,18 @@ def test_amplify():
     Test the generic usage of amplify
     """
     # Essentially Grover's to select 011 or 111
-    desired = (triple_hadamard.dagger()
+
+    # Note: slight hack here. Technically DAGGER H 0 is equivalent to
+    # H 0, however since many tests simply test for string equality
+    # (not program semantic equality) "DAGGER H 0" != "H 0". The
+    # Program.dagger() operation was changed to use the DAGGER keyword
+    # in Quil, rather than manually calculate and insert the
+    # appropriate matrix into the target program. Hence, old tests
+    # expect that Program("H 0").dagger() == Program("H 0"), but new
+    # pyquil produces Program("H 0").dagger() == Program("DAGGER H
+    # 0"). If anything looks weird below, it's probably because of
+    # this.
+    desired = (triple_hadamard[::-1]
                + cz_gate
                + triple_hadamard.dagger()
                + diffusion_program(qubits)
@@ -67,7 +78,7 @@ def test_amplify():
                + diffusion_program(qubits).instructions
                + triple_hadamard)
     created = amplification_circuit(triple_hadamard, cz_gate, qubits, iters)
-    assert desired == created
+    assert desired.out() == created.out()
 
 
 def test_trivial_diffusion():
