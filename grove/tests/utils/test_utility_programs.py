@@ -37,7 +37,8 @@ def double_control_test(instructions, target_qubit, control_qubit_one, control_q
     assert instructions[1].name == CNOT(control_qubit_one, control_qubit_two).name
     assert instructions[1].qubits == [control_qubit_one, control_qubit_two]
 
-    assert instructions[2].name == cpg.format_gate_name("C", sqrt_z) + '-INV'
+    assert instructions[2].name == cpg.format_gate_name("C", sqrt_z)
+    assert instructions[2].modifiers == ["DAGGER"]
     assert instructions[2].qubits == [control_qubit_two, target_qubit]
 
     assert instructions[3].name == CNOT(control_qubit_one, control_qubit_two).name
