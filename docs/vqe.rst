@@ -177,7 +177,7 @@ variational quantum eigensolver.
 
 .. code:: python
 
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, None, qvm=qvm)
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, None, qc=qvm)
     print(result)
 
 .. parsed-literal::
@@ -227,7 +227,7 @@ with a larger simplex so we don't get stuck at an initial minimum.
 .. code:: python
 
     vqe_inst.minimizer_kwargs = {'method': 'Nelder-mead', 'options': {'initial_simplex': np.array([[0.0], [0.05]]), 'xatol': 1.0e-2}}
-    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
+    result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qc=noisy_qvm)
     print(result)
 
 .. parsed-literal::
@@ -296,7 +296,7 @@ Measurement noise has a different effect:
     for noise in noises:
         meas_channel = [noise] * 3
         noisy_qvm = api.QVMConnection(measurement_noise=meas_channel)
-        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qvm=noisy_qvm)
+        result = vqe_inst.vqe_run(small_ansatz, hamiltonian, initial_angle, samples=10000, qc=noisy_qvm)
         data.append(result['fun'])
 
 .. code:: python
@@ -336,7 +336,7 @@ easily change the number of gates.
     vqe_inst = VQE(minimizer=minimize,
                    minimizer_kwargs={'method': 'nelder-mead'})
     initial_angles = [1.0, 1.0]
-    result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles, None, qvm=qvm)
+    result = vqe_inst.vqe_run(smallish_ansatz, hamiltonian, initial_angles, None, qc=qvm)
     print(result)
 
 .. parsed-literal::
@@ -367,7 +367,7 @@ parameterization:
 .. code:: python
 
     initial_params = [1.0, 3]
-    result = vqe_inst.vqe_run(variable_gate_ansatz, hamiltonian, initial_params, None, qvm=qvm)
+    result = vqe_inst.vqe_run(variable_gate_ansatz, hamiltonian, initial_params, None, qc=qvm)
     print(result)
 
 .. parsed-literal::
