@@ -52,5 +52,6 @@ setup(
         'pytest >= 3.0.0',
     ],
     license='LICENSE',
+    license_files=['LICENSE', 'NOTICE'],
     keywords='quantum quil programming hybrid'
 )
